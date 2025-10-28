@@ -7,28 +7,64 @@
             <button class="btn btn-success me-2">
                 <i class="fas fa-save me-1"></i> Save
             </button>
-            <button class="btn btn-secondary">
-                <i class="fas fa-undo me-1"></i> Return
-            </button>
+
         </div>
     </div>
 
     <!-- Main Content -->
     <div class="main-content">
-        <!-- Header Section -->
-        <div class="row mb-4">
-            <div class="col-md-8">
+        <!-- Table Section -->
+        <div id="tableContent" class="row mb-4">
+            <div class="col-12">
                 <div class="card">
-                    <div class="card-header bg-light">
-                        <h6 class="mb-0 fw-bold">Study Information</h6>
-                    </div>
                     <div class="card-body">
-                        <?php
-                        // require_once '../database/db_functions.php';
-                        $meetings = getMeetings();
-                        if (!empty($meetings)) {
-                            $meeting = $meetings[0]; // Get first meeting for demo
-                            echo '<div class="row mb-3">
+                        <table class="table table-bordered agenda-table">
+                            <thead>
+                                <tr>
+                                    <th>Item #</th>
+                                    <th>IRB#</th>
+                                    <th>Source Number</th>
+                                    <th>Agenda Group</th>
+                                    <th>Action Taken</th>
+                                    <th>PI</th>
+                                    <th>Title</th>
+                                    <th>RefNumber</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td>0123-2-15</td>
+                                    <td>5605</td>
+                                    <td>New Protocol</td>
+                                    <td>-</td>
+                                    <td>Abdel Samed</td>
+                                    <td>Assessing the Future that Influence Critical Training of Student Nurses in Nursing College of the North East Region of Ghana</td>
+                                    <td>HGQ1Y2S-3606R</td>
+                                </tr>
+                                <!-- More rows as needed -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="studyContent">
+            <!-- Header Section -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0 fw-bold">Study Information</h6>
+                        </div>
+                        <div class="card-body">
+                            <?php
+                            // require_once '../database/db_functions.php';
+                            $meetings = getMeetings();
+                            if (!empty($meetings)) {
+                                $meeting = $meetings[0]; // Get first meeting for demo
+                                echo '<div class="row mb-3">
                                 <div class="col-md-6">
                                     <strong class="text-muted d-block">Name</strong>
                                     <span>' . htmlspecialchars($meeting['name'] ?? 'RDB') . '</span>
@@ -54,9 +90,9 @@
                                     <p class="mb-0">' . htmlspecialchars($meeting['protocol_title'] ?? 'Assessing the Future that Influence Critical Training of Student Nurses in Nursing College of the North East Region of Ghana') . '</p>
                                 </div>
                             </div>';
-                        } else {
-                            // Fallback to static data
-                            echo '<div class="row mb-3">
+                            } else {
+                                // Fallback to static data
+                                echo '<div class="row mb-3">
                                 <div class="col-md-6">
                                     <strong class="text-muted d-block">Name</strong>
                                     <span>RDB</span>
@@ -82,88 +118,89 @@
                                     <p class="mb-0">Assessing the Future that Influence Critical Training of Student Nurses in Nursing College of the North East Region of Ghana</p>
                                 </div>
                             </div>';
-                        }
-                        ?>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header bg-light">
-                        <h6 class="mb-0 fw-bold">Meeting Details</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <strong class="text-muted d-block">Meeting Date</strong>
-                            <span>2025-10-21</span>
-                        </div>
-                        <div class="mb-3">
-                            <strong class="text-muted d-block">Study #</strong>
-                            <span>0123-2-15</span>
-                        </div>
-                        <div>
-                            <strong class="text-muted d-block">Internal Source Number</strong>
-                            <span>5605</span>
+                            }
+                            ?>
                         </div>
                     </div>
                 </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0 fw-bold">Meeting Details</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <strong class="text-muted d-block">Meeting Date</strong>
+                                <span>2025-10-21</span>
+                            </div>
+                            <div class="mb-3">
+                                <strong class="text-muted d-block">Study #</strong>
+                                <span>0123-2-15</span>
+                            </div>
+                            <div>
+                                <strong class="text-muted d-block">Internal Source Number</strong>
+                                <span>5605</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <!-- Protocol Details -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header bg-light">
-                        <h6 class="mb-0 fw-bold">Protocol Details</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <strong class="text-muted d-block">Principal Investigator</strong>
-                                <span>Abdel Samed</span>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <strong class="text-muted d-block">Review Cycle</strong>
-                                <span>12</span>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <strong class="text-muted d-block">Exp. Date</strong>
-                                <span>2025-10-16</span>
-                            </div>
+            <!-- Protocol Details -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0 fw-bold">Protocol Details</h6>
                         </div>
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <strong class="text-muted d-block">Date Received</strong>
-                                <span>2025-04-23</span>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">Principal Investigator</strong>
+                                    <span>Abdel Samed</span>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">Review Cycle</strong>
+                                    <span>12</span>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">Exp. Date</strong>
+                                    <span>2025-10-16</span>
+                                </div>
                             </div>
-                            <div class="col-md-4 mb-3">
-                                <strong class="text-muted d-block">First IRB Review</strong>
-                                <span>2025-06-08</span>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">Date Received</strong>
+                                    <span>2025-04-23</span>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">First IRB Review</strong>
+                                    <span>2025-06-08</span>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">Original Approval</strong>
+                                    <span>2025-06-08</span>
+                                </div>
                             </div>
-                            <div class="col-md-4 mb-3">
-                                <strong class="text-muted d-block">Original Approval</strong>
-                                <span>2025-06-08</span>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">Last Review by IRB</strong>
+                                    <span>2025-06-08</span>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">Last IRB Renewal</strong>
+                                    <span>2025-06-08</span>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">Study Status</strong>
+                                    <span class="badge bg-success">Open</span>
+                                </div>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <strong class="text-muted d-block">Last Review by IRB</strong>
-                                <span>2025-06-08</span>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <strong class="text-muted d-block">Last IRB Renewal</strong>
-                                <span>2025-06-08</span>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <strong class="text-muted d-block">Study Status</strong>
-                                <span class="badge bg-success">Open</span>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-4">
-                                <strong class="text-muted d-block">Type</strong>
-                                <span class="badge bg-primary">Full Board</span>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <strong class="text-muted d-block">Type</strong>
+                                    <span class="badge bg-primary">Full Board</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -268,12 +305,16 @@ The plan assumes a parallel and logical approach on August 4th, 2023. The follow
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
+                            <label class="form-label fw-semibold">Action Explanation</label>
+                            <input type="text" class="form-control" value="">
+                        </div>
+                        <div class="mb-3">
                             <label class="form-label fw-semibold">Discussion</label>
-                            <input type="text" class="form-control" value="B / E - IE -">
+                            <input type="text" class="form-control" value="">
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Vote</label>
-                            <input type="text" class="form-control" value="B / E - IE -">
+                            <input type="text" class="form-control" value="">
                         </div>
                     </div>
                 </div>
@@ -290,18 +331,18 @@ The plan assumes a parallel and logical approach on August 4th, 2023. The follow
                                 <h6 class="mb-0 fw-bold">Quick Actions</h6>
                             </div>
                             <div>
-                                <button class="btn btn-outline-primary me-2">
-                                    <i class="fas fa-file-alt me-1"></i> View Study Details
+                                <button id="recordBtn" class="btn btn-outline-primary me-2" onclick="showHideRecordtable()">
+                                    <i class="fas fa-file-alt me-1"></i> Hide Record Table
                                 </button>
-                                <button class="btn btn-outline-primary me-2">
-                                    <i class="fas fa-question-circle me-1"></i> Help Report Help
+                                <button id="studyBtn" class="btn btn-outline-primary me-2" onclick="showHideStudyDetials()">
+                                    <i class="fas fa-question-circle me-1"></i> Hide Study Details
                                 </button>
-                                <button class="btn btn-outline-primary me-2">
+                                <a href="/minutes" class="btn btn-outline-primary me-2">
                                     <i class="fas fa-clipboard me-1"></i> Meeting Minutes
-                                </button>
-                                <button class="btn btn-outline-primary">
-                                    <i class="fas fa-envelope me-1"></i> Start Correspondence
-                                </button>
+                                </a>
+                                <a href="/generate-letter" class="btn btn-outline-primary">
+                                    <i class="fas fa-envelope me-1"></i> Send Correspondence
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -311,23 +352,51 @@ The plan assumes a parallel and logical approach on August 4th, 2023. The follow
     </div>
 </div>
 
+
+
 <style>
-.agenda-details .card {
-    border: 1px solid #e0e0e0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
+    .agenda-details .card {
+        border: 1px solid #e0e0e0;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
 
-.agenda-details .card-header {
-    background-color: #f8f9fa !important;
-    border-bottom: 1px solid #e0e0e0;
-}
+    .agenda-details .card-header {
+        background-color: #f8f9fa !important;
+        border-bottom: 1px solid #e0e0e0;
+    }
 
-.agenda-details .form-label {
-    color: #495057;
-    font-weight: 600;
-}
+    .agenda-details .form-label {
+        color: #495057;
+        font-weight: 600;
+    }
 
-.agenda-details .text-muted {
-    font-size: 0.875rem;
-}
+    .agenda-details .text-muted {
+        font-size: 0.875rem;
+    }
 </style>
+
+<script>
+    function showHideRecordtable() {
+        const tableContent = document.getElementById('tableContent');
+        const recordButton = document.getElementById('recordBtn');
+        if (tableContent.style.display === 'none') {
+            tableContent.style.display = 'block';
+            recordButton.innerHTML = '<i class="fas fa-file-alt me-1"></i> Hide Record Table';
+        } else {
+            tableContent.style.display = 'none';
+            recordButton.innerHTML = '<i class="fas fa-file-alt me-1"></i> Show Record Table';
+        }
+    }
+
+    function showHideStudyDetials() {
+        const studyContent = document.getElementById('studyContent');
+        const studyButton = document.getElementById('studyBtn');
+        if (studyContent.style.display === 'none') {
+            studyContent.style.display = 'block';
+            studyButton.innerHTML = '<i class="fas fa-question-circle me-1"></i> Hide Study Details';
+        } else {
+            studyContent.style.display = 'none';
+            studyButton.innerHTML = '<i class="fas fa-question-circle me-1"></i> Show Study Details';
+        }
+    }
+</script>

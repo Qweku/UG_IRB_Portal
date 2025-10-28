@@ -1,6 +1,6 @@
 <?php
 
-session_start();
+// session_start();
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header('Location: login');
     exit;
@@ -28,7 +28,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                     <!-- Main sections -->
                     <!-- Add or Modify Section -->
                     <div class="sidebar-section mb-3">
-                        <h6 class="sidebar-header ms-3">
+                        <h6 class="sidebar-header ms-4">
                             <i class="fas fa-plus-circle me-2"></i>Add or Modify
                         </h6>
                         <ul class="nav flex-column submenu-nav">
@@ -42,8 +42,13 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                                     <i class="fas fa-calendar-alt me-2"></i>Preliminary Agenda Items
                                 </a>
                             </li>
+                             <li class="nav-item">
+                                <a class="nav-link submenu-link" href="#" data-target="due-continue-review-content">
+                                    <i class="fas fa-eye me-2"></i>Due for Continuing Review
+                                </a>
+                            </li>
                             <li class="nav-item">
-                                <a class="nav-link submenu-link" href="#"  data-target="post-meeting-content">
+                                <a class="nav-link submenu-link" href="#" data-bs-target="#postIrbModal" data-bs-toggle="modal" data-target="post-meeting-content">
                                     <i class="fas fa-clipboard-check me-2"></i>Post IRB Meeting Actions
                                 </a>
                             </li>
@@ -57,7 +62,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 
                     <!-- Task Managers Section -->
                     <div class="sidebar-section mb-3">
-                        <h6 class="sidebar-header ms-3">
+                        <h6 class="sidebar-header ms-4">
                             <i class="fas fa-tasks me-2"></i>Task Managers
                         </h6>
                         <ul class="nav flex-column submenu-nav">
@@ -93,9 +98,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         <div id="reports-content" class="content-section col-lg-10 col-md-9 ms-sm-auto px-4 py-3" style="display: none;">
             <?php include 'contents/reports_content.php'; ?>
         </div>
-        <div id="search-content" class="content-section col-lg-10 col-md-9 ms-sm-auto px-4 py-3" style="display: none;">
-            <?php include 'contents/search_content.php'; ?>
-        </div>
+        
         <div id="task-managers-content" class="content-section col-lg-10 col-md-9 ms-sm-auto px-4 py-3" style="display: none;">
             <?php include 'contents/task_managers_content.php'; ?>
         </div>
@@ -110,6 +113,9 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         <div id="preliminary-agenda-content" class="content-section col-lg-10 col-md-9 ms-sm-auto px-4 py-3" style="display: none;">
             <?php include 'contents/preliminary_agenda_content.php'; ?>
         </div>
+        <div id="due-continue-review-content" class="content-section col-lg-10 col-md-9 ms-sm-auto px-4 py-3" style="display: none;">
+            <?php include 'contents/due_continue_review_content.php'; ?>
+        </div>
         <div id="post-meeting-content" class="content-section col-lg-10 col-md-9 ms-sm-auto px-4 py-3" style="display: none;">
             <?php include 'contents/post_meeting_content.php'; ?>
         </div>
@@ -120,5 +126,64 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 
 
     </div>
+
 </div>
 
+
+
+<!-- Post IRB Actions Modal -->
+<div class="modal fade" id="postIrbModal" tabindex="-1" aria-labelledby="postIrbModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="postIrbModalLabel">Post IRB Actions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <h6 class="fw-bold text-primary mb-2">IRB NOGUCHI MEMORIAL INSTITUTE FOR MEDICAL RESEARCH-IRB</h6>
+                    <p class="text-muted small">
+                        Verify the IRB and the Meeting Date you wish to Post IRB Actions to
+                    </p>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Select a meeting date</label>
+                    <div class="list-group">
+                        <label class="list-group-item list-group-item-action">
+                            <input class="form-check-input me-2" type="radio" name="meetingDate" value="2026-01-07" checked>
+                            2026-01-07
+                        </label>
+                        <label class="list-group-item list-group-item-action">
+                            <input class="form-check-input me-2" type="radio" name="meetingDate" value="2025-12-03">
+                            2025-12-03
+                        </label>
+                        <label class="list-group-item list-group-item-action">
+                            <input class="form-check-input me-2" type="radio" name="meetingDate" value="2025-11-05">
+                            2025-11-05
+                        </label>
+                        <label class="list-group-item list-group-item-action">
+                            <input class="form-check-input me-2" type="radio" name="meetingDate" value="2025-10-01">
+                            2025-10-01
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="postIrbOkBtn" data-target="post-meeting-content" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+   const postIrbOkBtn = document.getElementById('postIrbOkBtn');
+    postIrbOkBtn.addEventListener('click', () => {
+        const target = postIrbOkBtn.getAttribute('data-target');
+        const menuSystem = new MenuSystem();
+        menuSystem.showContent(target);
+    });
+</script>

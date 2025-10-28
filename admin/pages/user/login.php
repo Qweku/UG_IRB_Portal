@@ -1,5 +1,14 @@
+<?php
+if (is_admin_logged_in()) {
+    header('Location: /dashboard');
+    exit;
+}
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,9 +18,10 @@
     <link href="/admin/assets/style.css" rel="stylesheet">
     <style>
         body {
-            background: linear-gradient(135deg, var(--royal-blue) 0%, var(--royal-blue-light) 100%);
+            /* background: linear-gradient(135deg, var(--royal-blue) 0%, var(--royal-blue-light) 100%); */
             min-height: 100vh;
         }
+
         .login-card {
             background: white;
             border-radius: 8px;
@@ -19,6 +29,7 @@
             max-width: 400px;
             width: 100%;
         }
+
         .login-header {
             background: var(--royal-blue);
             color: white;
@@ -26,21 +37,24 @@
             padding: 20px;
             text-align: center;
         }
+
         .login-header i {
             font-size: 48px;
             margin-bottom: 10px;
         }
+
         .form-control:focus {
             border-color: var(--royal-blue);
             box-shadow: 0 0 0 0.2rem rgba(36, 63, 129, 0.25);
         }
     </style>
 </head>
+
 <body>
     <div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center">
         <div class="login-card">
             <div class="login-header">
-                 <img src="/admin/assets/images/ug-nmimr-logo.jpg" alt="Noguchi Logo" height="50" class="d-inline-block align-text-top me-2">
+                <img src="/admin/assets/images/ug-nmimr-logo.jpg" alt="Noguchi Logo" height="50" class="d-inline-block align-text-top me-2">
                 <h4>ProIRB</h4>
                 <p>Please sign in to continue</p>
             </div>
@@ -59,7 +73,7 @@
                     </div>
                 </form>
                 <?php if (isset($_GET['error'])): ?>
-                <div class="alert alert-danger mt-3">Invalid email or password. Please try again.</div>
+                    <div class="alert alert-danger mt-3">Invalid email or password. Please try again.</div>
                 <?php endif; ?>
                 <div class="text-center mt-3">
                     <a href="#" class="text-decoration-none">Forgot password?</a>
@@ -70,4 +84,5 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

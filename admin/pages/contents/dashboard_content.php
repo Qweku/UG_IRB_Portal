@@ -112,7 +112,7 @@ $recentActivities = getRecentActivities();
                     <?php
                     foreach ($recentActivities as $activity) {
                         $statusBadge = '';
-                        switch ($activity['status']) {
+                        switch ($activity['study_status']) {
                             case 'open':
                                 $statusBadge = '<span class="badge bg-success">Open</span>';
                                 break;
@@ -123,7 +123,7 @@ $recentActivities = getRecentActivities();
                                 $statusBadge = '<span class="badge bg-secondary">Closed</span>';
                                 break;
                             default:
-                                $statusBadge = '<span class="badge bg-info">' . ucfirst($activity['status']) . '</span>';
+                                $statusBadge = '<span class="badge bg-info">' . ucfirst($activity['study_status']) . '</span>';
                         }
                         $lastActivity = date('M j, Y', strtotime($activity['updated_at']));
                         echo "<tr>

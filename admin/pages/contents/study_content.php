@@ -83,6 +83,7 @@ $pi_names = getDistinctPINames();
                         <th>Title</th>
                         <th>Study Active?</th>
                         <th>Study Type</th>
+                        <th>Study Status</th>
                         <th>PI</th>
                         <th>Review Cycle</th>
                         <th>Data Received</th>
@@ -127,8 +128,9 @@ $pi_names = getDistinctPINames();
                             <tr>
                                 <td><?php echo htmlspecialchars($study['protocol_number']); ?></td>
                                 <td><?php echo htmlspecialchars($study['title']); ?></td>
-                                <td><span class="status-badge status-<?php echo strtolower($study['status']); ?>"><?php echo ucfirst($study['status']); ?></span></td>
+                                <td><span class="status-badge status-<?php echo strtolower($study['study_active']); ?>"><?php echo ucfirst($study['study_active']); ?></span></td>
                                 <td><?php echo ucwords(str_replace('_', ' ', $study['review_type'])); ?></td>
+                                 <td><span class="status-badge status-<?php echo strtolower($study['study_status']); ?>"><?php echo ucfirst($study['study_status']); ?></span></td>
                                 <td><?php echo htmlspecialchars(isset($study['pi_name']) ? $study['pi_name'] : ''); ?></td>
                                 <td><?php echo htmlspecialchars($study['review_cycle']); ?></td>
                                 <td><?php echo !empty($study['data_received']) ? htmlspecialchars(date('m/d/y', strtotime($study['data_received']))) : ''; ?></td>

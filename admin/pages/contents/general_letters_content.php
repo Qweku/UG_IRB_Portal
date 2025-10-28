@@ -1,237 +1,295 @@
-<!-- General Letters Content -->
-<div class="">
+<!-- Letter Manager Content -->
+<div class="letter-manager p-5">
     <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">General Letters</h2>
-        <button class="btn btn-primary">
-            <i class="fas fa-plus me-1"></i> Compose New Letter
-        </button>
+        <h2 class="mb-0">Letter Manager</h2>
+        <div class="badge bg-primary fs-6">From: General</div>
     </div>
 
-    <!-- Letter Templates -->
-    <div class="row mb-4">
-        <div class="col-md-3 mb-3">
-            <div class="card text-center p-3">
-                <i class="fas fa-file-signature fa-2x text-primary mb-2"></i>
-                <h6>Approval Letters</h6>
-                <p class="small">Study approval notifications</p>
-                <button class="btn btn-outline-primary btn-sm">Browse Templates</button>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card text-center p-3">
-                <i class="fas fa-clock fa-2x text-primary mb-2"></i>
-                <h6>Extension Requests</h6>
-                <p class="small">Protocol extension letters</p>
-                <button class="btn btn-outline-primary btn-sm">Browse Templates</button>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card text-center p-3">
-                <i class="fas fa-exclamation-triangle fa-2x text-primary mb-2"></i>
-                <h6>Safety Reports</h6>
-                <p class="small">Adverse event communications</p>
-                <button class="btn btn-outline-primary btn-sm">Browse Templates</button>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card text-center p-3">
-                <i class="fas fa-handshake fa-2x text-primary mb-2"></i>
-                <h6>Correspondence</h6>
-                <p class="small">General IRB communications</p>
-                <button class="btn btn-outline-primary btn-sm">Browse Templates</button>
-            </div>
+    <!-- Institution Header -->
+    <div class="card mb-4">
+        <div class="card-body text-center bg-light">
+            <h4 class="text-primary mb-0">IRB NOGUCHI MEMORIAL INSTITUTE FOR MEDICAL RESEARCH-IRB</h4>
         </div>
     </div>
 
-    <!-- Recent Letters -->
+    <!-- Main Content -->
     <div class="main-content">
-        <h4 class="section-title">Recent Letters & Communications</h4>
+        <div class="row">
+            <!-- Left Column - Letter Details -->
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0 fw-bold">Letter Details</h6>
+                    </div>
+                    <div class="card-body">
+                         <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Study#</label>
+                                <input type="text" class="form-control" placeholder="#" disabled>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Meeting Date</label>
+                                <input type="date" class="form-control" disabled>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="responseRequired">
+                                    <label class="form-check-label fw-semibold" for="responseRequired">
+                                        Response Required?
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Date Required</label>
+                                <input type="date" class="form-control">
+                            </div>
+                        </div>
 
-        <!-- Search and Filter -->
-        <div class="filter-section mb-4">
-            <div class="row">
-                <div class="col-md-4 mb-2">
-                    <label class="form-label">Letter Type</label>
-                    <select class="form-select">
-                        <option selected>All Types</option>
-                        <option>Approval Letter</option>
-                        <option>Extension Request</option>
-                        <option>Safety Report</option>
-                        <option>General Correspondence</option>
-                    </select>
+                        
+
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Addressee</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">To:</span>
+                                    <input type="text" class="form-control" placeholder="Enter addressee name">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Select Unagreee</label>
+                                <select class="form-select">
+                                    <option selected disabled>Choose option</option>
+                                    <option>Option 1</option>
+                                    <option>Option 2</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Select Pretest</label>
+                                <select class="form-select">
+                                    <option selected disabled>Choose pretest</option>
+                                    <option>Pretest A</option>
+                                    <option>Pretest B</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">CC (Copy to clipcare)</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" placeholder="Enter CC recipients">
+                                    <button class="btn btn-outline-secondary">(Add/Remove)</button>
+                                </div>
+                            </div>
+                        </div>
+
+                       
+                    </div>
                 </div>
-                <div class="col-md-4 mb-2">
-                    <label class="form-label">Date Range</label>
-                    <select class="form-select">
-                        <option selected>Last 30 Days</option>
-                        <option>Last 90 Days</option>
-                        <option>Last Year</option>
-                        <option>Custom Range</option>
-                    </select>
-                </div>
-                <div class="col-md-4 mb-2">
-                    <label class="form-label">Recipient</label>
-                    <input type="text" class="form-control" placeholder="Search by recipient...">
+            </div>
+
+            <!-- Right Column - Letter Configuration -->
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0 fw-bold">Letter Configuration</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Date To Follow Up</label>
+                            <input type="date" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Letter Date</label>
+                            <input type="text" class="form-control" value="10/27/2023" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Letter Format</label>
+                            <select class="form-select">
+                                <option selected>Standard</option>
+                                <option>Formal</option>
+                                <option>Informal</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Select your Letter</label>
+                            <select class="form-select">
+                                <option selected disabled>Choose letter type</option>
+                                <option>Approval Letter</option>
+                                <option>Modification Request</option>
+                                <option>Continuing Review</option>
+                                <option>SAE Notification</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Letters Table -->
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Letter Type</th>
-                        <th>Subject</th>
-                        <th>Recipient</th>
-                        <th>Study Protocol</th>
-                        <th>Date Sent</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    if (empty($correspondence)) {
-                        // Fallback to static data
-                        echo '<tr>
-                            <td><span class="badge bg-success">Approval Letter</span></td>
-                            <td>Study Protocol Approval - 00102-26</td>
-                            <td>Dr. Sarah Johnson</td>
-                            <td>00102-26</td>
-                            <td>2024-09-15</td>
-                            <td><span class="badge bg-success">Sent</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary">View</button>
-                                <button class="btn btn-sm btn-outline-secondary">Download</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><span class="badge bg-warning text-dark">Extension Request</span></td>
-                            <td>Request for Protocol Extension - 00219-16</td>
-                            <td>Dr. Michael Chen</td>
-                            <td>00219-16</td>
-                            <td>2024-09-12</td>
-                            <td><span class="badge bg-info">Pending Response</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary">View</button>
-                                <button class="btn btn-sm btn-outline-secondary">Download</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><span class="badge bg-danger">Safety Report</span></td>
-                            <td>Serious Adverse Event Report - SAE-2024-001</td>
-                            <td>Dr. Emily Williams</td>
-                            <td>00219-18</td>
-                            <td>2024-09-10</td>
-                            <td><span class="badge bg-success">Sent</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary">View</button>
-                                <button class="btn btn-sm btn-outline-secondary">Download</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><span class="badge bg-info">General Correspondence</span></td>
-                            <td>IRB Committee Meeting Reminder</td>
-                            <td>All Committee Members</td>
-                            <td>N/A</td>
-                            <td>2024-09-08</td>
-                            <td><span class="badge bg-success">Sent</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary">View</button>
-                                <button class="btn btn-sm btn-outline-secondary">Download</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><span class="badge bg-success">Approval Letter</span></td>
-                            <td>Amendment Approval - Amendment 2</td>
-                            <td>Dr. Robert Martinez</td>
-                            <td>00220-21</td>
-                            <td>2024-09-05</td>
-                            <td><span class="badge bg-success">Sent</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary">View</button>
-                                <button class="btn btn-sm btn-outline-secondary">Download</button>
-                            </td>
-                        </tr>';
-                    } else {
-                        foreach ($correspondence as $letter) {
-                            $typeBadge = 'bg-info';
-                            if (isset($letter['type'])) {
-                                switch ($letter['type']) {
-                                    case 'approval': $typeBadge = 'bg-success'; break;
-                                    case 'extension_request': $typeBadge = 'bg-warning text-dark'; break;
-                                    case 'safety_report': $typeBadge = 'bg-danger'; break;
-                                    case 'general': $typeBadge = 'bg-info'; break;
-                                }
-                            }
-                            $statusBadge = 'bg-success';
-                            if (isset($letter['status'])) {
-                                switch ($letter['status']) {
-                                    case 'sent': $statusBadge = 'bg-success'; break;
-                                    case 'pending_response': $statusBadge = 'bg-info'; break;
-                                    case 'draft': $statusBadge = 'bg-secondary'; break;
-                                }
-                            }
-                            echo '<tr>
-                                <td><span class="badge ' . $typeBadge . '">' . ucfirst(str_replace('_', ' ', $letter['type'] ?? 'general')) . '</span></td>
-                                <td>' . htmlspecialchars($letter['subject'] ?? 'Study Protocol Approval') . '</td>
-                                <td>' . htmlspecialchars($letter['recipient'] ?? 'Dr. Sarah Johnson') . '</td>
-                                <td>' . htmlspecialchars($letter['study_protocol'] ?? '00102-26') . '</td>
-                                <td>' . htmlspecialchars($letter['date_sent'] ?? '2024-09-15') . '</td>
-                                <td><span class="badge ' . $statusBadge . '">' . ucfirst(str_replace('_', ' ', $letter['status'] ?? 'sent')) . '</span></td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-primary">View</button>
-                                    <button class="btn btn-sm btn-outline-secondary">Download</button>
-                                </td>
-                            </tr>';
-                        }
-                    }
-                    ?>
-                </tbody>
-            </table>
+        <!-- Closing and Signatory Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 fw-bold">Closing and Signatory</h6>
+                        <div>
+                            <button class="btn btn-sm btn-outline-secondary me-2">
+                                Reset To Details
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary">
+                                Change Closing
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">For this Letter:</label>
+                                <textarea class="form-control" rows="4" placeholder="Enter custom closing message..."></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Signatory</label>
+                                <select class="form-select mb-3">
+                                    <option selected>IRB Chairperson</option>
+                                    <option>IRB Director</option>
+                                    <option>Committee Secretary</option>
+                                    <option>Custom Signatory</option>
+                                </select>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="includeSignature">
+                                    <label class="form-check-label" for="includeSignature">
+                                        Include Digital Signature
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="includeStamp">
+                                    <label class="form-check-label" for="includeStamp">
+                                        Include Official Stamp
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Letter Statistics -->
+        <!-- Action Buttons -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0 fw-bold">Letter Actions</h6>
+                            </div>
+                            <div>
+                                <button class="btn btn-outline-primary me-2">
+                                    <i class="fas fa-eye me-1"></i> Preview
+                                </button>
+                                <button class="btn btn-success me-2">
+                                    <i class="fas fa-paper-plane me-1"></i> Send
+                                </button>
+                                <button class="btn btn-secondary">
+                                    <i class="fas fa-times me-1"></i> Dismissed
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Letters (Optional Section) -->
         <div class="row mt-4">
-            <?php
-            // require_once '../database/db_functions.php';
-            $correspondence = getCorrespondence();
-            $lettersSentThisMonth = count(array_filter($correspondence, function($c) {
-                if (!isset($c['date_sent'])) return false;
-                $sentDate = strtotime($c['date_sent']);
-                $monthAgo = strtotime('-1 month');
-                return $sentDate >= $monthAgo;
-            }));
-            $approvalLetters = count(array_filter($correspondence, function($c) { return isset($c['type']) && $c['type'] === 'approval'; }));
-            $pendingResponses = count(array_filter($correspondence, function($c) { return isset($c['status']) && $c['status'] === 'pending_response'; }));
-            $safetyReports = count(array_filter($correspondence, function($c) { return isset($c['type']) && $c['type'] === 'safety_report'; }));
-            ?>
-            <div class="col-md-3">
-                <div class="card text-center p-3">
-                    <div class="h4 text-primary"><?php echo $lettersSentThisMonth ?: 47; ?></div>
-                    <div class="small">Letters Sent (This Month)</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-center p-3">
-                    <div class="h4 text-success"><?php echo $approvalLetters ?: 32; ?></div>
-                    <div class="small">Approval Letters</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-center p-3">
-                    <div class="h4 text-warning"><?php echo $pendingResponses ?: 8; ?></div>
-                    <div class="small">Pending Responses</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-center p-3">
-                    <div class="h4 text-info"><?php echo $safetyReports ?: 7; ?></div>
-                    <div class="small">Safety Reports</div>
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0 fw-bold">Recent Letters</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Addressee</th>
+                                        <th>Study#</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>10/25/2023</td>
+                                        <td>Approval Letter</td>
+                                        <td>Dr. Sarah Johnson</td>
+                                        <td>00102-26</td>
+                                        <td><span class="badge bg-success">Sent</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>10/20/2023</td>
+                                        <td>Modification Request</td>
+                                        <td>Dr. Michael Chen</td>
+                                        <td>00219-16</td>
+                                        <td><span class="badge bg-warning text-dark">Draft</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.letter-manager .card {
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.letter-manager .card-header {
+    background-color: #f8f9fa !important;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.letter-manager .form-label {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.letter-manager .input-group-text {
+    background-color: #f8f9fa;
+    font-weight: 500;
+}
+
+.letter-manager .table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.letter-manager .form-check-input:checked {
+    background-color: var(--royal-blue);
+    border-color: var(--royal-blue);
+}
+</style>

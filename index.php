@@ -157,8 +157,8 @@ function handleFrontendRoutes($segments) {
             require_once $frontend_path . 'contents/prepare_agenda.php';
             break;
 
-        case 'order-confirmation':
-            require_once $frontend_path . 'cart/order-confirmation.php';
+        case 'minutes':
+            require_once $frontend_path . 'contents/minutes_preparation.php';
             break;
 
         case 'login':
@@ -169,8 +169,8 @@ function handleFrontendRoutes($segments) {
             require_once $frontend_path . 'user/register.php';
             break;
 
-        case 'profile':
-            require_once $frontend_path . 'user/profile.php';
+        case 'generate-letter':
+            require_once $frontend_path . 'contents/general_letters_content.php';
             break;
 
         case 'orders':

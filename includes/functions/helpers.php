@@ -12,6 +12,24 @@ require_once __DIR__ . '/../config/database.php';
  * @return int
  */
 
+function is_admin_logged_in() {
+    // Check admin session for admin login
+    error_log("Session status before check: " . session_status());
+    if (session_status() === PHP_SESSION_NONE) {
+        session_name('admin_session');
+        session_start();
+        error_log("Session name set to 'admin_session', but session_start is commented out");
+    }
+    error_log("Session status after check: " . session_status());
+    if (!isset($_SESSION)) {
+        error_log("$_SESSION is not set");
+    } else {
+        error_log("$_SESSION is set");
+    }
+    $admin_session = isset($_SESSION['logged_in']) && isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
+    error_log("Admin login result: " . ($admin_session ? 'logged in' : 'not logged in'));
+    return $admin_session;
+}
 
 
 
@@ -24,7 +42,7 @@ function getActiveStudiesCount()
     }
 
     try {
-        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM studies WHERE status = 'open'");
+        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM studies WHERE study_status = 'open'");
         $stmt->execute();
         $result = $stmt->fetch();
         return (int) $result['count'];
@@ -47,7 +65,7 @@ function getPendingReviewsCount()
     }
 
     try {
-        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM studies WHERE status = 'pending'");
+        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM studies WHERE study_status = 'pending'");
         $stmt->execute();
         $result = $stmt->fetch();
         return (int) $result['count'];
@@ -70,7 +88,7 @@ function getOverdueActionsCount()
     }
 
     try {
-        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM studies WHERE status = 'open' AND expiration_date < CURDATE()");
+        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM studies WHERE study_status = 'open' AND expiration_date < CURDATE()");
         $stmt->execute();
         $result = $stmt->fetch();
         return (int) $result['count'];
@@ -104,7 +122,7 @@ function getRecentActivities()
     }
 
     try {
-        $stmt = $conn->prepare("SELECT title, status, updated_at FROM studies ORDER BY updated_at DESC LIMIT 5");
+        $stmt = $conn->prepare("SELECT title, study_status, updated_at FROM studies ORDER BY updated_at DESC LIMIT 5");
         $stmt->execute();
         return $stmt->fetchAll();
     } catch (PDOException $e) {
@@ -206,7 +224,7 @@ function getRecentReports()
 
     try {
         // Assuming a reports table exists with columns: report_name, generated_date, filters_applied, format
-        $stmt = $conn->prepare("SELECT report_name, generated_date, filters_applied, format FROM reports ORDER BY generated_date DESC LIMIT 5");
+        $stmt = $conn->prepare("SELECT report_name, generated_date, filters_applied, doc_format FROM reports ORDER BY generated_date DESC LIMIT 5");
         $stmt->execute();
         return $stmt->fetchAll();
     } catch (PDOException $e) {
@@ -314,11 +332,11 @@ function getMeetings()
 
     try {
         // Assuming a meetings table exists
-        $stmt = $conn->prepare("SELECT * FROM meetings ORDER BY meeting_date DESC");
+        $stmt = $conn->prepare("SELECT * FROM agenda_items ORDER BY meeting_date DESC");
         $stmt->execute();
         return $stmt->fetchAll();
     } catch (PDOException $e) {
-        error_log("Error fetching meetings: " . $e->getMessage());
+        error_log("Error fetching agenda_items: " . $e->getMessage());
         return [];
     }
 }

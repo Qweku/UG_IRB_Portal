@@ -36,9 +36,7 @@
                 <button class="btn btn-outline-secondary me-2">
                     <i class="fas fa-eye me-1"></i> Preview Summary Report
                 </button>
-                <button class="btn btn-secondary">
-                    <i class="fas fa-undo me-1"></i> Return
-                </button>
+                
             </div>
         </div>
     </div>
@@ -51,7 +49,7 @@
             <table class="table table-hover agenda-table">
                 <thead>
                     <tr>
-                        <th width="50px">Position</th>
+                        <th>Position</th>
                         <th>IRB #</th>
                         <th>Agenda Category</th>
                         <th>Agenda Group</th>
@@ -78,7 +76,13 @@
                         echo '<tr>
                             <td>0</td>
                             <td>013/25-26</td>
-                            <td><span class="badge bg-info">Expedited</span></td>
+                            <td><select class="form-select">
+                            <option selected>Expedited</option>
+                            <option>Procedure</option>
+                            <option>Exempt</option>
+                            <option>Renewal</option>
+                            <option>Resubmission</option>
+                            </select></td>
                             <td>Expedited</td>
                             <td><span class="badge bg-success">True</span></td>
                             <td>5085</td>
@@ -96,7 +100,13 @@
                         <tr>
                             <td>1</td>
                             <td>014/25-26</td>
-                            <td><span class="badge bg-primary">Full Board</span></td>
+                            <td><select class="form-select">
+                            <option selected>Expedited</option>
+                            <option>Procedure</option>
+                            <option>Exempt</option>
+                            <option>Renewal</option>
+                            <option>Resubmission</option>
+                            </select></td>
                             <td>New Protocols</td>
                             <td><span class="badge bg-secondary">False</span></td>
                             <td>5086</td>
@@ -114,7 +124,13 @@
                         <tr>
                             <td>2</td>
                             <td>015/25-26</td>
-                            <td><span class="badge bg-warning text-dark">Continuing Review</span></td>
+                            <td><select class="form-select">
+                            <option selected>Expedited</option>
+                            <option>Procedure</option>
+                            <option>Exempt</option>
+                            <option>Renewal</option>
+                            <option>Resubmission</option>
+                            </select></td>
                             <td>Continuing Reviews</td>
                             <td><span class="badge bg-secondary">False</span></td>
                             <td>5087</td>
@@ -134,14 +150,22 @@
                             $badgeClass = 'bg-info';
                             if (isset($meeting['agenda_category'])) {
                                 switch ($meeting['agenda_category']) {
-                                    case 'Full Board': $badgeClass = 'bg-primary'; break;
-                                    case 'Continuing Review': $badgeClass = 'bg-warning text-dark'; break;
+                                    case 'Full Board':
+                                        $badgeClass = 'bg-primary';
+                                        break;
+                                    case 'Continuing Review':
+                                        $badgeClass = 'bg-warning text-dark';
+                                        break;
                                 }
                             }
                             echo '<tr>
                                 <td>' . $index . '</td>
                                 <td>' . htmlspecialchars($meeting['irb_number'] ?? '013/25-26') . '</td>
-                                <td><span class="badge ' . $badgeClass . '">' . htmlspecialchars($meeting['agenda_category'] ?? 'Expedited') . '</span></td>
+                                 <td><select class="form-select">
+                            <option>' . htmlspecialchars($meeting['agenda_category'] ?? 'Expedited') . '</option>
+                            
+                            </select></td>
+                                
                                 <td>' . htmlspecialchars($meeting['agenda_group'] ?? 'Expedited') . '</td>
                                 <td><span class="badge ' . (($meeting['expedite'] ?? false) ? 'bg-success' : 'bg-secondary') . '">' . (($meeting['expedite'] ?? false) ? 'True' : 'False') . '</span></td>
                                 <td>' . htmlspecialchars($meeting['internal_number'] ?? '5085') . '</td>
@@ -187,4 +211,3 @@
         </div>
     </div>
 </div>
-

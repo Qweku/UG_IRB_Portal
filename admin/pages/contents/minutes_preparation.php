@@ -1,10 +1,10 @@
-<div class="agenda-preparation p-5">
+<div class="minutes-preparation p-5">
     <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">Agenda Preparation</h2>
+        <h2 class="mb-0">Minutes Preparation</h2>
         <div>
             <button class="btn btn-success me-2">
-                <i class="fas fa-save me-1"></i> Save Agenda
+                <i class="fas fa-save me-1"></i> Save Minutes
             </button>
             <a class="btn btn-secondary" href="/">
                 <i class="fas fa-times me-1"></i> Cancel
@@ -65,7 +65,7 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0 fw-bold">IRB Members Section</h6>
+                        <h6 class="mb-0 fw-bold">Board Members Section</h6>
                         <div class="d-flex w-25 gap-2">
                             <label for="search" class="form-label">Search</label>
                             <input type="search" class="form-control">
@@ -78,7 +78,7 @@
                                 <thead>
                                     <tr>
                                         <th>IRB Member</th>
-                                        <th>List</th>
+                                        <th>Attend</th>
                                         <th>Representing</th>
                                         <th>Perm/Alternate</th>
                                     </tr>
@@ -105,18 +105,17 @@
                         </div>
 
                         <div class="row mb-3">
-                            <div class="col-md-12">
+                            <div class="col-md-6 col-sm-12 col-xs-12">
+                                <label class="form-label fw-semibold">Minutes Heading Paragraph</label>
+                                <textarea type="text" class="form-control"></textarea>
+                            </div> 
+                            <div class="col-md-6 col-sm-12 col-xs-12">
                                 <label class="form-label fw-semibold">Guests/Staff</label>
                                 <textarea type="text" class="form-control"></textarea>
                             </div>
                         </div>
 
-                        <div class="row mb-3">
-                            <div class="col-md-12">
-                                <label class="form-label fw-semibold">Education/Training</label>
-                                <textarea type="text" class="form-control"></textarea>
-                            </div>
-                        </div>
+                        
                     </div>
                 </div>
             </div>
@@ -127,7 +126,7 @@
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-header bg-light">
-                        <h6 class="mb-0 fw-bold">Agenda Detials</h6>
+                        <h6 class="mb-0 fw-bold">Minutes Detials</h6>
                     </div>
                     <div class="card-body">
 
@@ -143,34 +142,61 @@
                         </div>
                         <div class="row mb-3">
                             <div class="col-md-12">
-                                <label class="form-label fw-semibold">Agenda Heading</label>
-                                <textarea type="text" class="form-control"></textarea>
+                                <label class="form-label fw-semibold">Next Meeting Date</label>
+                                <input type="date" class="form-control">
                             </div>
 
 
                         </div>
                         <div class="row mb-3">
-                            <div class="col-md-12">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Next Meeting Time</label>
+                                <input type="time" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Next Meeting Location</label>
+                                <input type="text" class="form-control">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6 col-sm-12 col-xs-12">
+                                <label class="form-label fw-semibold">Education/Training</label>
+                                <textarea type="text" class="form-control"></textarea>
+                            </div>
+                            <div class="col-md-6 col-sm-12 col-xs-12">
+                                <label class="form-label fw-semibold">Call To Order</label>
+                                <textarea type="text" class="form-control"></textarea>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                             <div class="col-md-6 col-sm-12 col-xs-12">
+                                <label class="form-label fw-semibold">Approval Of Minutes</label>
+                                <textarea type="text" class="form-control"></textarea>
+                            </div>
+                             <div class="col-md-6 col-sm-12 col-xs-12">
                                 <label class="form-label fw-semibold">Old Business</label>
                                 <textarea type="text" class="form-control"></textarea>
                             </div>
                         </div>
                         <div class="row mb-3">
-                            <div class="col-md-12">
-                                <label class="form-label fw-semibold">New Business</label>
+                           <div class="col-md-6 col-sm-12 col-xs-12">
+                                <label class="form-label fw-semibold">New business</label>
+                                <textarea type="text" class="form-control"></textarea>
+                            </div>
+                             <div class="col-md-6 col-sm-12 col-xs-12">
+                                <label class="form-label fw-semibold">Quorum Notes</label>
                                 <textarea type="text" class="form-control"></textarea>
                             </div>
 
                         </div>
-                        <div class="row mb-3">
-                            <div class="col-md-12">
-                                <label class="form-label fw-semibold">Additional Heading</label>
+
+                         <div class="row mb-3">
+                           <div class="col-md-6 col-sm-12 col-xs-12">
+                                <label class="form-label fw-semibold">Custom Heading</label>
                                 <textarea type="text" class="form-control"></textarea>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12">
-                                <label class="form-label fw-semibold">Additional Remarks</label>
+                             <div class="col-md-6 col-sm-12 col-xs-12">
+                                <label class="form-label fw-semibold">Remarks</label>
                                 <textarea type="text" class="form-control"></textarea>
                             </div>
 

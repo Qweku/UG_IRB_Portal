@@ -1,6 +1,10 @@
 <?php
 // require_once __DIR__ . '/../database/db_functions.php';
 
+// echo '<pre> Admin Header Included </pre>';
+// echo "\n";
+// echo '<pre> User Logged In: ' . (is_admin_logged_in() ? 'Yes' : 'No') . ' </pre>';
+
 ?>
 
 <!DOCTYPE html>
@@ -17,12 +21,15 @@
 
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark" style=<?= $_SESSION['logged_in'] === true ? "display: block;" :  "display: none;" ?>>
+    <?php
+    $navbar_display = is_admin_logged_in() ? 'block' : 'none';
+    ?>
+    <nav class="navbar navbar-expand-lg navbar-dark" style="display: <?= htmlspecialchars($navbar_display); ?>;">
         <div class="container-fluid">
             <button class="btn btn-outline-light me-2 d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar">
                 <i class="fas fa-bars"></i>
             </button>
-            <a class="navbar-brand" href="#">
+            <a class="navbar-brand" href="/">
                 <img src="/admin/assets/images/ug-nmimr-logo.jpg" alt="Noguchi Logo" height="50" class="d-inline-block align-text-top me-2">
                 ProIRB
             </a>
@@ -38,7 +45,7 @@
                         <a class="nav-link" href="#"><i class="fas fa-cog"></i></a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="logout.php"><i class="fas fa-sign-out-alt me-1"></i> Logout</a>
+                        <a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt me-1"></i> Logout</a>
                     </li>
                 </ul>
             </div>

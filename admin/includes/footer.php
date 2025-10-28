@@ -75,23 +75,7 @@
             this.showContent(targetId);
         }
 
-        handleSidebarToggle() {
-            console.log('handleSidebarToggle called');
-            const sidebar = document.getElementById('sidebar');
-            if (sidebar) {
-                console.log('Sidebar element found:', sidebar.classList);
-                try {
-                    const bsCollapse = bootstrap.Collapse.getOrCreateInstance(sidebar, { toggle: false });
-                    console.log('Bootstrap Collapse instance created');
-                    bsCollapse.toggle();
-                    console.log('Sidebar toggle executed');
-                } catch (error) {
-                    console.error('Error with Bootstrap Collapse:', error);
-                }
-            } else {
-                console.log('Sidebar element not found');
-            }
-        }
+       
 
         ensureSidebarVisibility() {
             const sidebar = document.getElementById('sidebar');
@@ -182,39 +166,8 @@
             return submenuNav;
         }
 
-        // Method to dynamically add new sections
-        addSection(sectionData) {
-            const accordion = document.getElementById('sidebarAccordion');
-
-            const accordionItem = document.createElement('div');
-            accordionItem.className = 'accordion-item';
-
-            accordionItem.innerHTML = `
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed sidebar-accordion-btn" type="button" data-bs-toggle="collapse" data-bs-target="#${sectionData.id}Collapse" aria-expanded="false" aria-controls="${sectionData.id}Collapse">
-                        <i class="${sectionData.icon} me-2"></i>${sectionData.title}
-                    </button>
-                </h2>
-                <div id="${sectionData.id}Collapse" class="accordion-collapse collapse" data-bs-parent="#sidebarAccordion">
-                    <div class="accordion-body p-0">
-                        <ul class="nav flex-column submenu-nav">
-                            ${sectionData.items.map(item => `
-                                <li class="nav-item">
-                                    <a class="nav-link submenu-link" href="#" data-target="${item.target}">
-                                        <i class="${item.icon} me-2"></i>${item.title}
-                                    </a>
-                                </li>
-                            `).join('')}
-                        </ul>
-                    </div>
-                </div>
-            `;
-
-            accordion.appendChild(accordionItem);
-
-            // Re-bind events for new elements
-            this.bindEvents();
-        }
+        
+       
     }
 
     // Initialize the menu system when DOM is loaded
