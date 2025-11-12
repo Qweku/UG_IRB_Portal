@@ -15,28 +15,68 @@ $recentActivities = getRecentActivities();
 
     <!-- Quick Stats -->
     <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card-dashboard text-center p-3">
-                <div class="stats-number"><?php echo $activeStudies; ?></div>
-                <div class="stats-label">Active Studies</div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-card active-studies-card">
+                <div class="stats-card-inner">
+                    <div class="stats-icon">
+                        <i class="fas fa-flask"></i>
+                    </div>
+                    <div class="stats-content">
+                        <div class="stats-number"><?php echo $activeStudies; ?></div>
+                        <div class="stats-label">Active Studies</div>
+                        <div class="stats-trend">
+                            <i class="fas fa-arrow-up"></i> +12% this month
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card-dashboard text-center p-3">
-                <div class="stats-number"><?php echo $pendingReviews; ?></div>
-                <div class="stats-label">Pending Reviews</div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-card pending-reviews-card">
+                <div class="stats-card-inner">
+                    <div class="stats-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stats-content">
+                        <div class="stats-number"><?php echo $pendingReviews; ?></div>
+                        <div class="stats-label">Pending Reviews</div>
+                        <div class="stats-trend">
+                            <i class="fas fa-exclamation-triangle"></i> Requires attention
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card-dashboard text-center p-3">
-                <div class="stats-number"><?php echo $overdueActions; ?></div>
-                <div class="stats-label">Overdue Actions</div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-card overdue-actions-card">
+                <div class="stats-card-inner">
+                    <div class="stats-icon">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                    <div class="stats-content">
+                        <div class="stats-number"><?php echo $overdueActions; ?></div>
+                        <div class="stats-label">Overdue Actions</div>
+                        <div class="stats-trend">
+                            <i class="fas fa-arrow-down"></i> -5% from last week
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card-dashboard text-center p-3">
-                <div class="stats-number"><?php echo $newSAEReports; ?></div>
-                <div class="stats-label">New SAE Reports</div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-card sae-reports-card">
+                <div class="stats-card-inner">
+                    <div class="stats-icon">
+                        <i class="fas fa-file-medical"></i>
+                    </div>
+                    <div class="stats-content">
+                        <div class="stats-number"><?php echo $newSAEReports; ?></div>
+                        <div class="stats-label">New SAE Reports</div>
+                        <div class="stats-trend">
+                            <i class="fas fa-plus"></i> New this week
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

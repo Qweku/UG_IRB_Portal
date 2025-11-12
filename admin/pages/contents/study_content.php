@@ -77,7 +77,7 @@ $pi_names = getDistinctPINames();
 
         <div class="table-container">
             <table class="table table-hover study-table">
-                <thead>
+                <thead class="table-primary">
                     <tr>
                         <th>Protocol Number</th>
                         <th>Title</th>
@@ -125,14 +125,14 @@ $pi_names = getDistinctPINames();
                 <tbody>
                     <?php if (!empty($studies)): ?>
                         <?php foreach ($studies as $study): ?>
-                            <tr>
+                            <tr onclick="window.location.href='/add-study?edit=1&id=<?php echo $study['id']; ?>'" style="cursor: pointer;">
                                 <td><?php echo htmlspecialchars($study['protocol_number']); ?></td>
                                 <td><?php echo htmlspecialchars($study['title']); ?></td>
                                 <td><span class="status-badge status-<?php echo strtolower($study['study_active']); ?>"><?php echo ucfirst($study['study_active']); ?></span></td>
                                 <td><?php echo ucwords(str_replace('_', ' ', $study['review_type'])); ?></td>
                                  <td><span class="status-badge status-<?php echo strtolower($study['study_status']); ?>"><?php echo ucfirst($study['study_status']); ?></span></td>
                                 <td><?php echo htmlspecialchars(isset($study['pi_name']) ? $study['pi_name'] : ''); ?></td>
-                                <td><?php echo htmlspecialchars($study['review_cycle']); ?></td>
+                                <td><?php echo htmlspecialchars($study['renewal_cycle']); ?></td>
                                 <td><?php echo !empty($study['data_received']) ? htmlspecialchars(date('m/d/y', strtotime($study['data_received']))) : ''; ?></td>
                                 <td><?php echo !empty($study['first_irb_review']) ? htmlspecialchars(date('m/d/y', strtotime($study['first_irb_review']))) : ''; ?></td>
                                 <td><?php echo !empty($study['approval_date']) ? htmlspecialchars(date('m/d/y', strtotime($study['approval_date']))) : ''; ?></td>

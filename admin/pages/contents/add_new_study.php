@@ -1,13 +1,13 @@
 <?php
+// session_start();
 
-// New Study Input Form Content
 $study_number = '';
 $ref_number = '';
 $exp_date = '';
 $protocol_title = '';
 $sponsor = '';
 $active = '';
-$type = '';
+$review_type = '';
 $status = '';
 $risk_category = '';
 $approval_patient_enrollment = '';
@@ -21,76 +21,123 @@ $first_irb_review = '';
 $original_approval = '';
 $last_seen_by_irb = '';
 $last_irb_renewal = '';
-$number_of_saes = '';
-$number_of_cpas = '';
-$initial_summary_of_agenda = '';
 $internal_notes = '';
+$is_edit = false;
+$study_id = null;
 
+// Get staff types from the database
+$staffTypes = [];
+$sponsors = [];
+$study_types = [];
+$study_statuses = [];
+$risk_categories = [];
+error_log("Starting staff types fetch");
+try {
+    $db = new Database();
+    error_log("Database instance created");
+    $conn = $db->connect();
+    error_log("Database connected: " . ($conn ? "success" : "failed"));
 
-
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Process form submission
-    $study_number = $_POST['studyNumber'] ?? '';
-    $ref_number = $_POST['refNumber'] ?? '';
-    $exp_date = $_POST['expDate'] ?? '';
-    $protocol_title = $_POST['protocolTitle'] ?? '';
-    $sponsor = $_POST['sponsor'] ?? '';
-    $active = $_POST['actv'] ?? '';
-    $type = $_POST['type'] ?? '';
-    $status = $_POST['status'] ?? '';
-    $risk_category = $_POST['riskCat'] ?? '';
-    $approval_patient_enrollment = $_POST['ape'] ?? '';
-    $current_enrolled = $_POST['currentEnroll'] ?? '';
-    $on_agenda_date = $_POST['oad'] ?? '';
-    $irb_of_record = $_POST['ior'] ?? '';
-    $cr_required = $_POST['cRequired'] ?? '';
-    $renewal_cycle = $_POST['rcm'] ?? '';
-    $date_received = $_POST['dateReceived'] ?? '';
-    $first_irb_review = $_POST['fir'] ?? '';
-    $original_approval = $_POST['origApp'] ?? '';
-    $last_seen_by_irb = $_POST['lsbi'] ?? '';
-    $last_irb_renewal = $_POST['lir'] ?? '';
-    $number_of_saes = $_POST['nos'] ?? '';
-    $number_of_cpas = $_POST['noc'] ?? '';
-    $initial_summary_of_agenda = $_POST['isoa'] ?? '';
-    $internal_notes = $_POST['internalNotes'] ?? '';
-
-    if (empty($study_number) || empty($ref_number) || empty($exp_date) || empty($protocol_title) || empty($sponsor) || empty($active) || empty($date_received)) {
-        echo '<div class="alert alert-danger">Please fill in all required fields.</div>';
-    } else {
-        // $db = new Database();
-        // $conn = $db->connect();
-        // if (!$conn) {
-        //     return 0;
-        // }
-        // // Insert new study into the database
-        // try {
-        //     $stmt = $conn->prepare("INSERT INTO studies (protocol_number, ref_num, expiration_date, title, sponsor_displayname, study_active, review_type, study_status, risk_category, patients_enrolled, init_enroll, on_agenda_date, irb_of_record, cr_required, renewal_cycle, date_received, first_irb_review, original_approval, last_irb_review, last_renewal_date, remarks) VALUES (:study_number, :ref_number, :exp_date, :protocol_title, :sponsor, :active, :type, :status, :risk_category, :approval_patient_enrollment, :current_enrolled, :on_agenda_date, :irb_of_record, :cr_required, :renewal_cycle, :date_received, :first_irb_review, :original_approval, :last_seen_by_irb, :last_irb_renewal, :internal_notes)");
-        //     $stmt->execute();
-        //     // $result = $stmt->fetch();
-        //     echo '<div class="alert alert-success">New study has been saved successfully!</div>';
-        //     return 1;
-        // } catch (PDOException $e) {
-        //     error_log("Error saving studies to database: " . $e->getMessage());
-        //     return 0;
-        // }
-
-        echo '<div class="alert alert-success">New study has been saved successfully!</div>';
+    if (!$conn) {
+        throw new Exception("Database connection failed");
     }
 
+    // Fetch staff types
+    $stmt = $conn->prepare("SELECT type_name FROM staff_types ORDER BY type_name ASC");
+    error_log("Query prepared");
+    $stmt->execute();
+    error_log("Query executed");
+    $staffTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    error_log("Fetched " . count($staffTypes) . " staff types");
+
+    // Fetch sponsors
+    $stmt = $conn->prepare("SELECT sponsor_name FROM sponsors ORDER BY sponsor_name ASC");
+    $stmt->execute();
+    $sponsors = $stmt->fetchAll(PDO::FETCH_COLUMN); 
+    error_log("Fetched " . count($sponsors) . " sponsors");
+   
+    // Fetch study types
+    $stmt = $conn->prepare("SELECT type_name FROM review_types ORDER BY type_name ASC");
+    $stmt->execute();
+    $study_types = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    error_log("Fetched " . count($study_types) . " study types");
+   
+    // Fetch study statuses
+    $stmt = $conn->prepare("SELECT status_name FROM study_status ORDER BY status_name ASC");
+    $stmt->execute();
+    $study_statuses = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    error_log("Fetched " . count($study_statuses) . " study statuses");
     
-    // For now, we will just display a success message
-    // echo '<div class="alert alert-success">New study has been saved successfully!</div>';
+    // Fetch risk categories
+    $stmt = $conn->prepare("SELECT category_name FROM risks_category ORDER BY category_name ASC");
+    $stmt->execute();
+    $risk_categories = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    error_log("Fetched " . count($risk_categories) . " risk categories");
+
+
+    error_log("Staff types fetched: " . implode(", ", $staffTypes));
+    error_log("Sponsors fetched: " . implode(", ", $sponsors));
+    error_log("Study types fetched: " . implode(", ", $study_types));
+    error_log("Study statuses fetched: " . implode(", ", $study_statuses));
+    error_log("Risk categories fetched: " . implode(", ", $risk_categories));
+
+    // Check for edit mode
+    $is_edit = isset($_GET['edit']) && $_GET['edit'] == '1' && isset($_GET['id']) && is_numeric($_GET['id']);
+    $study_id = null;
+    $personnel_data = [];
+
+    if ($is_edit) {
+        $study_id = (int)$_GET['id'];
+        // Fetch study data
+        $stmt = $conn->prepare("SELECT * FROM studies WHERE id = ?");
+        $stmt->execute([$study_id]);
+        $study = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($study) {
+            $study_number = $study['protocol_number'];
+            $ref_number = $study['ref_num'];
+            $exp_date = $study['expiration_date'];
+            $protocol_title = $study['title'];
+            $sponsor = $study['sponsor_displayname'];
+            $active = $study['study_active'];
+            $review_type = $study['review_type'];
+            $status = $study['study_status'];
+            $risk_category = $study['risk_category'];
+            $approval_patient_enrollment = $study['patients_enrolled'];
+            $current_enrolled = $study['init_enroll'];
+            $on_agenda_date = $study['on_agenda_date'];
+            $irb_of_record = $study['irb_of_record'];
+            $cr_required = $study['cr_required'];
+            $renewal_cycle = $study['renewal_cycle'];
+            $date_received = $study['date_received'];
+            $first_irb_review = $study['first_irb_review'];
+            $original_approval = $study['approval_date'];
+            $last_seen_by_irb = $study['last_irb_review'];
+            $last_irb_renewal = $study['last_renewal_date'];
+            $internal_notes = $study['remarks'];
+        } else {
+            // Study not found, handle error
+            $is_edit = false;
+        }
+
+        // Fetch personnel
+        $stmt = $conn->prepare("SELECT * FROM study_personnel WHERE study_id = ?");
+        $stmt->execute([$study_id]);
+        $personnel_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+} catch (PDOException $e) {
+    error_log("Database error: " . $e->getMessage());
+} catch (Exception $e) {
+    error_log("General error: " . $e->getMessage());
 }
-
-
 
 ?>
 
 
 <!-- New Study Input Form Content -->
 <div class="new-study-form p-5">
-    <form method="POST" action="/add-study" class="needs-validation">
+    <form class="needs-validation" id="studyForm">
+        <input type="hidden" name="study_id" value="<?php echo $is_edit ? $study_id : ''; ?>">
         <!-- Page Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="mb-0">Study Input Form</h2>
@@ -101,7 +148,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div class="card mb-4">
             <div class="card-body text-center bg-light">
                 <h4 class="text-dark mb-1 fw-bold">NOGUCHI MEMORIAL INSTITUTE FOR MEDICAL RESEARCH-IRB</h4>
-                <h5 class="text-muted">New Study</h5>
+                <h5 class="text-muted"><?php echo $is_edit ? 'Edit Study' : 'New Study'; ?></h5>
             </div>
         </div>
 
@@ -115,26 +162,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <div class="card-header bg-light">
                             <div class="d-flex justify-content-between align-items-center">
                                 <h6 class="mb-0 fw-bold">Study</h6>
-                                <span class="badge bg-warning text-dark">New Study</span>
+                                <span class="badge bg-warning text-dark"><?php echo $is_edit ? 'Edit Study' : 'New Study'; ?></span>
                             </div>
                         </div>
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label fw-semibold">Study Number</label>
-                                    <input type="text" id="studyNumber" name="studyNumber" class="form-control" value="<?= htmlspecialchars($study_number) ?>" required>
+                                    <input type="text" id="study_number" name="study_number" class="form-control" value="<?= htmlspecialchars($study_number) ?>" required>
                                     <div class="valid-feedback">Valid.</div>
                                     <div class="invalid-feedback">Please fill out this field.</div>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label fw-semibold">Reference Number</label>
-                                    <input type="text" id="refNumber" name="refNumber" class="form-control" value="<?= htmlspecialchars($ref_number) ?>" required>
+                                    <input type="text" id="ref_number" name="ref_number" class="form-control" value="<?= htmlspecialchars($ref_number) ?>" required>
                                     <div class="valid-feedback">Valid.</div>
                                     <div class="invalid-feedback">Please fill out this field.</div>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label fw-semibold">Expiration Date</label>
-                                    <input type="date" id="expDate" name="expDate" class="form-control" value="<?= htmlspecialchars($exp_date) ?>" required>
+                                    <input type="date" id="exp_date" name="exp_date" class="form-control" value="<?= htmlspecialchars($exp_date) ?>" required>
                                     <div class="valid-feedback">Valid.</div>
                                     <div class="invalid-feedback">Please fill out this field.</div>
                                 </div>
@@ -142,7 +189,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <div class="row">
                                 <div class="col-md-12 mb-3">
                                     <label class="form-label fw-semibold">Protocol Title</label>
-                                    <input type="text" id="protocolTitle" name="protocolTitle" class="form-control" value="<?= htmlspecialchars($protocol_title) ?>" required>
+                                    <input type="text" id="protocol_title" name="protocol_title" class="form-control" value="<?= htmlspecialchars($protocol_title) ?>" required>
                                     <div class="valid-feedback">Valid.</div>
                                     <div class="invalid-feedback">Please fill out this field.</div>
                                 </div>
@@ -175,19 +222,32 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>-- No personnel added --</td>
-                                            <td>-</td>
-                                            <td>-</td>
-                                            <td>-</td>
-
-                                            <td>
-                                                <button class="btn btn-sm btn-outline-primary" disabled>
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
+                                    <tbody id="personnel-table">
+                                        <?php if ($is_edit && !empty($personnel_data)): ?>
+                                            <?php foreach ($personnel_data as $person): ?>
+                                                <tr>
+                                                    <td><?php echo htmlspecialchars($person['name']); ?></td>
+                                                    <td><?php echo htmlspecialchars($person['role']); ?></td>
+                                                    <td><?php echo htmlspecialchars($person['title']); ?></td>
+                                                    <td><?php echo htmlspecialchars($person['start_date']); ?></td>
+                                                    <td>
+                                                        <button class="btn btn-sm btn-outline-primary">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                <input type="hidden" name="personnel[]" value='<?php echo json_encode([
+                                                    'name' => $person['name'],
+                                                    'staffType' => $person['role'],
+                                                    'title' => $person['title'],
+                                                    'dateAdded' => $person['start_date'],
+                                                    'companyName' => $person['company_name'],
+                                                    'email' => $person['email'],
+                                                    'mainPhone' => $person['phone'],
+                                                    'comments' => $person['comments']
+                                                ]); ?>'>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
                                     </tbody>
                                 </table>
                             </div>
@@ -211,10 +271,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     <div class="row">
                                         <div class="col-md-10">
                                             <select id="sponsor" name="sponsor" class="form-select" required>
-                                                <option>John Doe</option>
-                                                <option>Mary Jane</option>
-                                                <option>Michael Brown</option>
-                                                <option>Suspended</option>
+                                                <?php foreach ($sponsors as $s): ?>
+                                                    <option value="<?= htmlspecialchars($s) ?>" <?= $s == $sponsor ? 'selected' : '' ?>><?= htmlspecialchars($s) ?></option>
+                                                <?php endforeach; ?>
                                             </select>
                                         </div>
                                         <div class="col-md-2">
@@ -232,10 +291,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <div class="col-md-4">
                                     <label class="form-label fw-semibold">Active?<span class="text-danger">*</span></label>
                                     <select id="actv" name="actv" class="form-select" required>
-                                        <option selected>Open</option>
-                                        <option>Closed</option>
-                                        <option>Pending</option>
-                                        <option>Suspended</option>
+                                        <option value="Open" <?= $active == 'Open' ? 'selected' : '' ?>>Open</option>
+                                        <option value="Closed" <?= $active == 'Closed' ? 'selected' : '' ?>>Closed</option>
+                                        <option value="External" <?= $active == 'External' ? 'selected' : '' ?>>External</option>
                                     </select>
                                     <div class="valid-feedback">Valid.</div>
                                     <div class="invalid-feedback">Please fill out this field.</div>
@@ -243,10 +301,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                                 <div class="col-md-4">
                                     <label class="form-label fw-semibold">Type<span class="text-danger">*</span></label>
-                                    <select id="type" name="type" class="form-select" required>
-                                        <option selected>Full Board</option>
-                                        <option>Expedited</option>
-                                        <option>Exempt</option>
+                                    <select id="review_type" name="review_type" class="form-select" required>
+                                        <?php foreach ($study_types as $type): ?>
+                                            <option value="<?= htmlspecialchars($type) ?>" <?= $type == $review_type ? 'selected' : '' ?>><?= htmlspecialchars(ucwords(str_replace('_', ' ', $type))) ?></option>
+                                        <?php endforeach; ?>
                                     </select>
                                     <div class="valid-feedback">Valid.</div>
                                     <div class="invalid-feedback">Please fill out this field.</div>
@@ -254,10 +312,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <div class="col-md-4">
                                     <label class="form-label fw-semibold">Status<span class="text-danger">*</span></label>
                                     <select id="status" name="status" class="form-select" required>
-                                        <option selected>Pending</option>
-                                        <option>Approved</option>
-                                        <option>Opened</option>
-                                        <option>Inactive</option>
+                                        <?php foreach ($study_statuses as $status_option): ?>
+                                            <option value="<?= htmlspecialchars($status_option) ?>" <?= $status_option == $status ? 'selected' : '' ?>><?= htmlspecialchars($status_option) ?></option>
+                                        <?php endforeach; ?>
                                     </select>
                                     <div class="valid-feedback">Valid.</div>
                                     <div class="invalid-feedback">Please fill out this field.</div>
@@ -267,31 +324,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <div class="col-md-12">
                                     <label class="form-label fw-semibold">Risk Category</label>
                                     <select id="riskCat" name="riskCat" class="form-select">
-                                        <option selected>Minimal Risk</option>
-                                        <option>Low Risk</option>
-                                        <option>Moderate Risk</option>
-                                        <option>High Risk</option>
+                                        <?php foreach ($risk_categories as $category): ?>
+                                            <option value="<?= htmlspecialchars($category) ?>" <?= $category == $risk_category ? 'selected' : '' ?>><?= htmlspecialchars($category) ?></option>
+                                        <?php endforeach; ?>
                                     </select>
                                 </div>
                             </div>
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Approval Patient Enrollment</label>
-                                    <input id="ape" name="ape" type="text" class="form-control" placeholder="e.g, Open">
+                                    <input id="ape" name="ape" type="text" class="form-control" placeholder="e.g, Open" value="<?= htmlspecialchars($approval_patient_enrollment) ?>">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Currently Enrolled</label>
-                                    <input id="currentEnroll" name="currentEnroll" type="text" class="form-control">
+                                    <input id="currentEnroll" name="currentEnroll" type="text" class="form-control" value="<?= htmlspecialchars($current_enrolled) ?>">
                                 </div>
                             </div>
                             <div class="row mb-3">
                                 <div class="col-md-12">
                                     <label class="form-label fw-semibold">On Agenda Date</label>
                                     <select id="oad" name="oad" class="form-select" disabled>
-                                        <option selected>No Meetings</option>
-                                        <option>Approved</option>
-                                        <option>Opened</option>
-                                        <option>Inactive</option>
+                                        <option value="No Meetings" <?= $on_agenda_date == 'No Meetings' ? 'selected' : '' ?>>No Meetings</option>
+                                        <option value="Approved" <?= $on_agenda_date == 'Approved' ? 'selected' : '' ?>>Approved</option>
+                                        <option value="Opened" <?= $on_agenda_date == 'Opened' ? 'selected' : '' ?>>Opened</option>
+                                        <option value="Inactive" <?= $on_agenda_date == 'Inactive' ? 'selected' : '' ?>>Inactive</option>
                                     </select>
                                 </div>
                             </div>
@@ -321,7 +377,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <div class="row mb-3">
                                 <div class="col-md-12">
                                     <label class="form-label fw-semibold">CR Required</label>
-                                    <input id="cRequired" name="cRequired" type="text" class="form-control">
+                                    <input id="cRequired" name="cRequired" type="text" class="form-control" value="<?= htmlspecialchars($cr_required) ?>">
                                 </div>
 
                             </div>
@@ -329,10 +385,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Renewal Cycle (Mo)</label>
                                     <select id="rcm" name="rcm" class="form-select">
-                                        <option selected>12</option>
-                                        <option>11</option>
-                                        <option>10</option>
-                                        <option>9</option>
+                                        <option value="12" <?= $renewal_cycle == '12' ? 'selected' : '' ?>>12</option>
+                                        <option value="11" <?= $renewal_cycle == '11' ? 'selected' : '' ?>>11</option>
+                                        <option value="10" <?= $renewal_cycle == '10' ? 'selected' : '' ?>>10</option>
+                                        <option value="9" <?= $renewal_cycle == '9' ? 'selected' : '' ?>>9</option>
                                     </select>
                                 </div>
 
@@ -391,14 +447,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <div class="row mb-3">
                                 <div class="col-md-12">
                                     <label class="form-label fw-semibold">Initial Summary of Agenda</label>
-                                    <textarea id="isoa" name="isoa" type="text" class="form-control"></textarea>
+                                    <textarea id="isoa" name="isoa" type="text" class="form-control"><?php echo htmlspecialchars($initial_summary_of_agenda ?? ''); ?></textarea>
                                 </div>
 
                             </div>
                             <div class="row">
                                 <div class="col-md-12">
                                     <label class="form-label fw-semibold">Internal Notes</label>
-                                    <textarea id="internalNotes" name="internalNotes" type="text" class="form-control"></textarea>
+                                    <textarea id="internalNotes" name="internalNotes" type="text" class="form-control"><?php echo htmlspecialchars($internal_notes); ?></textarea>
                                 </div>
 
                             </div>
@@ -457,7 +513,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
         <div class="d-flex justify-content-end">
             <button type="submit" class="btn btn-success me-2">
-                <i class="fas fa-save me-1"></i> Save Study
+                <i class="fas fa-save me-1"></i> <?php echo $is_edit ? 'Update Study' : 'Save Study'; ?>
             </button>
             <a class="btn btn-secondary" href="/">
                 <i class="fas fa-times me-1"></i> Cancel
@@ -482,54 +538,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <div class="bg-light p-3 mb-3">
                                 <h4 class="text-md">Assigned Personnel</h4>
                             </div>
-                            <!-- <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-semibold">Name</label>
-                                        <input type="text" class="form-control" placeholder="Enter name">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-semibold">Staff Type</label>
-                                        <select class="form-select">
-                                            <option>Principal Investigator</option>
-                                            <option>Co-Investigator</option>
-                                            <option>Study Coordinator</option>
-                                            <option>Other</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-semibold">Title</label>
-                                        <input type="text" class="form-control" placeholder="Enter title">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-semibold">Date Added</label>
-                                        <input type="date" class="form-control">
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-semibold">Company Name</label>
-                                        <input type="text" class="form-control" placeholder="Enter title">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-semibold">Main Phone</label>
-                                        <input type="phone" class="form-control">
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-semibold">Email</label>
-                                        <input type="email" class="form-control" placeholder="Enter title">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-semibold">Comments</label>
-                                        <input type="text" class="form-control">
-                                    </div>
-                                </div>-->
                         </div>
 
                     </form>
@@ -541,15 +549,82 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     </div>
                 </div>
             </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success" onclick="savePersonnel()">Save Personnel</button>
+            </div>
         </div>
-    </div>
 
-</div>
-<script>
-    function addMorePersonnel() {
-        // Function to add more personnel fields dynamically
-        const form = document.getElementById('contentArea');
-        const newFields = `
+    </div>
+    <script>
+        function showToast(type, message) {
+            // Create toast container if not exists
+            let toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'toast-container';
+                toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+                toastContainer.style.zIndex = '1050';
+                document.body.appendChild(toastContainer);
+            }
+
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+
+            toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        `;
+
+            toastContainer.appendChild(toast);
+
+            // Initialize and show toast
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+
+            // Remove toast after it's hidden
+            toast.addEventListener('hidden.bs.toast', () => {
+                toast.remove();
+            });
+        }
+
+        // Handle form submission
+        document.getElementById('studyForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+
+            try {
+                const response = await fetch('/admin/pages/handlers/add_study_handler.php', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    showToast('success', result.message);
+                    // Optionally redirect or reset form
+                    // window.location.href = '/some-success-page';
+                } else {
+                    showToast('error', result.message);
+                }
+            } catch (error) {
+                // console.log('Error:', error);
+                showToast('error', 'An unexpected error occurred.');
+            }
+        });
+
+        function addMorePersonnel() {
+            // Function to add more personnel fields dynamically
+            const form = document.getElementById('contentArea');
+            const newFields = `
                         
                         <div class="new-personnel-section">
                             <hr>
@@ -566,10 +641,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Staff Type</label>
                                     <select class="form-select">
-                                        <option>Principal Investigator</option>
-                                        <option>Co-Investigator</option>
-                                        <option>Study Coordinator</option>
-                                        <option>Other</option>
+                                       <?php foreach ($staffTypes as $type): ?>
+                                            <option><?= htmlspecialchars($type) ?></option>
+                                        <?php endforeach; ?>
                                     </select>
                                 </div>
                             </div>
@@ -580,7 +654,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         <input type="text" class="form-control" placeholder="Enter title">
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label fw-semibold">Date Added</label>
+                                        <label class="form-label fw-semibold">Start Date</label>
                                         <input type="date" class="form-control">
                                     </div>
                                 </div>
@@ -603,13 +677,79 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label fw-semibold">Comments</label>
-                                        <input type="text" class="form-control">
+                                        <input type="text" class="form-control" id="comments" placeholder="Enter comments">
                                     </div>
                                 </div> 
                                 </div>`;
-        form.insertAdjacentHTML('beforeend', newFields);
+            form.insertAdjacentHTML('beforeend', newFields);
+        }
 
+        function savePersonnel() {
+            const button = document.querySelector('#addPersonnel .modal-footer .btn-success');
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
 
+            setTimeout(() => {
+                // Function to save personnel data
+                const personnelSections = document.querySelectorAll('.new-personnel-section');
+                const personnelTable = document.getElementById('personnel-table');
+                const studyForm = document.getElementById('studyForm');
 
-    }
-</script>
+                personnelSections.forEach(section => {
+                    const name = section.querySelector('input[placeholder="Enter name"]').value;
+                    const staffType = section.querySelector('select').value;
+                    const title = section.querySelector('input[placeholder="Enter title"]').value;
+                    const dateAdded = section.querySelector('input[type="date"]').value;
+                    const companyName = section.querySelector('input[placeholder="Enter company name"]').value;
+                    const email = section.querySelector('input[type="email"]').value;
+                    const mainPhone = section.querySelector('input[type="phone"]').value;
+                    const comments = section.querySelector('input[placeholder="Enter comments"]').value; //
+
+                    const personnelData = {
+                        name: name,
+                        staffType: staffType,
+                        title: title,
+                        dateAdded: dateAdded,
+                        companyName: companyName,
+                        email: email,
+                        mainPhone: mainPhone,
+                        comments: comments
+                    };
+
+                    // Add to table
+                    const newRow = `
+                    <tr>
+                        <td>${name}</td>
+                        <td>${staffType}</td>
+                        <td>${title}</td>
+                        <td>${dateAdded}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                    personnelTable.insertAdjacentHTML('beforeend', newRow);
+
+                    // Add hidden input to form
+                    const hiddenInput = `<input type="hidden" name="personnel[]" value='${JSON.stringify(personnelData)}'>`;
+                    studyForm.insertAdjacentHTML('beforeend', hiddenInput);
+                });
+
+                // Close the modal after saving
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addPersonnel'));
+                modal.hide();
+
+                // Clear the form for next use
+                document.getElementById('contentArea').innerHTML = `
+                <div class="bg-light p-3 mb-3">
+                    <h4 class="text-md">Assigned Personnel</h4>
+                </div>
+            `;
+
+                button.disabled = false;
+                button.innerHTML = 'Save Personnel';
+            }, 500);
+        }
+    </script>

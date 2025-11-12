@@ -141,29 +141,140 @@ body {
     margin: 20px 0;
 }
 
-.card-dashboard {
+/* Modern Stats Cards */
+.stats-card {
     border: none;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    transition: transform 0.2s, box-shadow 0.2s;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    position: relative;
+    height: 100%;
+    min-height: 140px;
 }
 
-.card-dashboard:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+.stats-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
 }
 
-.card-dashboard .card-icon {
-    background-color: var(--royal-blue);
-    color: white;
+.stats-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.4) 100%);
+}
+
+.stats-card-inner {
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    position: relative;
+    z-index: 1;
+}
+
+.stats-icon {
     width: 60px;
     height: 60px;
-    border-radius: 50%;
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 15px;
     font-size: 24px;
+    color: white;
+    margin-right: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    flex-shrink: 0;
+}
+
+.stats-content {
+    flex: 1;
+}
+
+.stats-number {
+    font-size: 32px;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 4px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.stats-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgb(255, 255, 255);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stats-trend {
+    font-size: 12px;
+    font-weight: 500;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.stats-trend i {
+    font-size: 10px;
+    color: white;
+}
+
+/* Individual Card Backgrounds */
+.active-studies-card {
+    background: linear-gradient(135deg, #66ea7c 0%, #167c2c 100%);
+}
+
+.active-studies-card .stats-icon {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.pending-reviews-card {
+    background: linear-gradient(135deg, #ffd16d 0%, #c99a02 100%);
+}
+
+.pending-reviews-card .stats-icon {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.overdue-actions-card {
+    background: linear-gradient(135deg, #fc7373 0%, #fe0000 100%);
+}
+
+.overdue-actions-card .stats-icon {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.sae-reports-card {
+    background: linear-gradient(135deg, #437de9 0%, #1a2370 100%);
+}
+
+.sae-reports-card .stats-icon {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .stats-card-inner {
+        padding: 20px;
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .stats-icon {
+        margin-right: 0;
+        margin-bottom: 16px;
+    }
+
+    .stats-card {
+        min-height: 160px;
+    }
 }
 
 .btn-primary {
@@ -233,12 +344,12 @@ body {
 .stats-number {
     font-size: 24px;
     font-weight: 700;
-    color: var(--royal-blue);
+    color: var(--light-gray);
 }
 
 .stats-label {
     font-size: 14px;
-    color: #6c757d;
+    color: #ffffff;
 }
 
 .study-table {

@@ -12,7 +12,7 @@ if (is_admin_logged_in()) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - IRB Management System</title>
+    <title>Login - UG HARES Software</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="/admin/assets/style.css" rel="stylesheet">
@@ -55,7 +55,7 @@ if (is_admin_logged_in()) {
         <div class="login-card">
             <div class="login-header">
                 <img src="/admin/assets/images/ug-nmimr-logo.jpg" alt="Noguchi Logo" height="50" class="d-inline-block align-text-top me-2">
-                <h4>ProIRB</h4>
+                <h4>UG HARES Software</h4>
                 <p>Please sign in to continue</p>
             </div>
             <div class="card-body p-4">

@@ -25,8 +25,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                         </li>
                     </ul>
 
-                    <!-- Main sections -->
-                    <!-- Add or Modify Section -->
+                  
                     <div class="sidebar-section mb-3">
                         <h6 class="sidebar-header ms-4">
                             <i class="fas fa-plus-circle me-2"></i>Add or Modify

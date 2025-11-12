@@ -14,18 +14,18 @@ require_once __DIR__ . '/../config/database.php';
 
 function is_admin_logged_in() {
     // Check admin session for admin login
-    error_log("Session status before check: " . session_status());
+    // error_log("Session status before check: " . session_status());
     if (session_status() === PHP_SESSION_NONE) {
         session_name('admin_session');
         session_start();
-        error_log("Session name set to 'admin_session', but session_start is commented out");
+        // error_log("Session name set to 'admin_session', but session_start is commented out");
     }
-    error_log("Session status after check: " . session_status());
-    if (!isset($_SESSION)) {
-        error_log("$_SESSION is not set");
-    } else {
-        error_log("$_SESSION is set");
-    }
+    // error_log("Session status after check: " . session_status());
+    // if (!isset($_SESSION)) {
+    //     error_log("$_SESSION is not set");
+    // } else {
+    //     error_log("$_SESSION is set");
+    // }
     $admin_session = isset($_SESSION['logged_in']) && isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
     error_log("Admin login result: " . ($admin_session ? 'logged in' : 'not logged in'));
     return $admin_session;
@@ -607,7 +607,7 @@ function getStudyRisks($study_id)
     }
 
     try {
-        $stmt = $conn->prepare("SELECT risk_type FROM risks WHERE study_id = ?");
+        $stmt = $conn->prepare("SELECT category_name FROM risks_category WHERE study_id = ?");
         $stmt->execute([$study_id]);
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
     } catch (PDOException $e) {

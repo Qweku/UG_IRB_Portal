@@ -173,8 +173,8 @@ function handleFrontendRoutes($segments) {
             require_once $frontend_path . 'contents/general_letters_content.php';
             break;
 
-        case 'orders':
-            require_once $frontend_path . 'user/orders.php';
+        case 'contacts':
+            require_once $frontend_path . 'contents/create_contact.php';
             break;
 
         case 'logout':
@@ -185,12 +185,9 @@ function handleFrontendRoutes($segments) {
             require_once $frontend_path . 'static/about.php';
             break;
 
-        case 'contact':
-            require_once $frontend_path . 'static/contact.php';
-            break;
 
-        case 'faq':
-            require_once $frontend_path . 'static/faq.php';
+        case 'account-information':
+            require_once $frontend_path . 'contents/account_information.php';
             break;
 
         case 'shipping':
