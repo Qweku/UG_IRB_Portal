@@ -1,5 +1,5 @@
 <?php
-require_once '../../../includes/config/database.php';
+require_once '../../includes/config/database.php';
 header('Content-Type: application/json');
 
 // New Study Input Form Content

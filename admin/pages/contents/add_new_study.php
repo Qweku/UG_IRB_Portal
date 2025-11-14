@@ -556,6 +556,7 @@ try {
         </div>
 
     </div>
+</div>
     <script>
         function showToast(type, message) {
             // Create toast container if not exists
@@ -601,7 +602,7 @@ try {
             const formData = new FormData(this);
 
             try {
-                const response = await fetch('/admin/pages/handlers/add_study_handler.php', {
+                const response = await fetch('/admin/handlers/add_study_handler.php', {
                     method: 'POST',
                     body: formData
                 });
