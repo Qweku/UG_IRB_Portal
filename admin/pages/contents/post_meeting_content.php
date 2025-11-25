@@ -18,7 +18,7 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-body">
-                        <table class="table table-bordered agenda-table">
+                        <table class="table table-hover agenda-table">
                             <thead>
                                 <tr>
                                     <th>Item #</th>
@@ -31,18 +31,8 @@
                                     <th>RefNumber</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td>1</td>
-                                    <td>0123-2-15</td>
-                                    <td>5605</td>
-                                    <td>New Protocol</td>
-                                    <td>-</td>
-                                    <td>Abdel Samed</td>
-                                    <td>Assessing the Future that Influence Critical Training of Student Nurses in Nursing College of the North East Region of Ghana</td>
-                                    <td>HGQ1Y2S-3606R</td>
-                                </tr>
-                                <!-- More rows as needed -->
+                            <tbody id="postMeetingRow">
+                                
                             </tbody>
                         </table>
                     </div>
@@ -51,161 +41,8 @@
         </div>
 
         <div id="studyContent">
-            <!-- Header Section -->
-            <div class="row mb-4">
-                <div class="col-md-8">
-                    <div class="card">
-                        <div class="card-header bg-light">
-                            <h6 class="mb-0 fw-bold">Study Information</h6>
-                        </div>
-                        <div class="card-body">
-                            <?php
-                            // require_once '../database/db_functions.php';
-                            $meetings = getMeetings();
-                            if (!empty($meetings)) {
-                                $meeting = $meetings[0]; // Get first meeting for demo
-                                echo '<div class="row mb-3">
-                                <div class="col-md-6">
-                                    <strong class="text-muted d-block">Name</strong>
-                                    <span>' . htmlspecialchars($meeting['name'] ?? 'RDB') . '</span>
-                                </div>
-                                <div class="col-md-6">
-                                    <strong class="text-muted d-block">Source Number</strong>
-                                    <span>' . htmlspecialchars($meeting['source_number'] ?? '9:00:05') . '</span>
-                                </div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <strong class="text-muted d-block">Agenda Group</strong>
-                                    <span>' . htmlspecialchars($meeting['agenda_group'] ?? 'Expedited') . '</span>
-                                </div>
-                                <div class="col-md-6">
-                                    <strong class="text-muted d-block">RefNum</strong>
-                                    <span>' . htmlspecialchars($meeting['ref_num'] ?? 'HGQ1Y2S-3606R') . '</span>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-12">
-                                    <strong class="text-muted d-block">Protocol Title</strong>
-                                    <p class="mb-0">' . htmlspecialchars($meeting['protocol_title'] ?? 'Assessing the Future that Influence Critical Training of Student Nurses in Nursing College of the North East Region of Ghana') . '</p>
-                                </div>
-                            </div>';
-                            } else {
-                                // Fallback to static data
-                                echo '<div class="row mb-3">
-                                <div class="col-md-6">
-                                    <strong class="text-muted d-block">Name</strong>
-                                    <span>RDB</span>
-                                </div>
-                                <div class="col-md-6">
-                                    <strong class="text-muted d-block">Source Number</strong>
-                                    <span>9:00:05</span>
-                                </div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <strong class="text-muted d-block">Agenda Group</strong>
-                                    <span>Expedited</span>
-                                </div>
-                                <div class="col-md-6">
-                                    <strong class="text-muted d-block">RefNum</strong>
-                                    <span>HGQ1Y2S-3606R</span>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-12">
-                                    <strong class="text-muted d-block">Protocol Title</strong>
-                                    <p class="mb-0">Assessing the Future that Influence Critical Training of Student Nurses in Nursing College of the North East Region of Ghana</p>
-                                </div>
-                            </div>';
-                            }
-                            ?>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-header bg-light">
-                            <h6 class="mb-0 fw-bold">Meeting Details</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <strong class="text-muted d-block">Meeting Date</strong>
-                                <span>2025-10-21</span>
-                            </div>
-                            <div class="mb-3">
-                                <strong class="text-muted d-block">Study #</strong>
-                                <span>0123-2-15</span>
-                            </div>
-                            <div>
-                                <strong class="text-muted d-block">Internal Source Number</strong>
-                                <span>5605</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Protocol Details -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header bg-light">
-                            <h6 class="mb-0 fw-bold">Protocol Details</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-4 mb-3">
-                                    <strong class="text-muted d-block">Principal Investigator</strong>
-                                    <span>Abdel Samed</span>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <strong class="text-muted d-block">Review Cycle</strong>
-                                    <span>12</span>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <strong class="text-muted d-block">Exp. Date</strong>
-                                    <span>2025-10-16</span>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-4 mb-3">
-                                    <strong class="text-muted d-block">Date Received</strong>
-                                    <span>2025-04-23</span>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <strong class="text-muted d-block">First IRB Review</strong>
-                                    <span>2025-06-08</span>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <strong class="text-muted d-block">Original Approval</strong>
-                                    <span>2025-06-08</span>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-4 mb-3">
-                                    <strong class="text-muted d-block">Last Review by IRB</strong>
-                                    <span>2025-06-08</span>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <strong class="text-muted d-block">Last IRB Renewal</strong>
-                                    <span>2025-06-08</span>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <strong class="text-muted d-block">Study Status</strong>
-                                    <span class="badge bg-success">Open</span>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <strong class="text-muted d-block">Type</strong>
-                                    <span class="badge bg-primary">Full Board</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+           
+        
         </div>
 
         <!-- Agenda Information -->
@@ -399,4 +236,177 @@ The plan assumes a parallel and logical approach on August 4th, 2023. The follow
             studyButton.innerHTML = '<i class="fas fa-question-circle me-1"></i> Show Study Details';
         }
     }
+
+
+// Function that loads the details (so we don't repeat code)
+function loadAgendaDetails(id) {
+    fetch("/admin/handlers/fetch_agenda_details.php?id=" + id)
+        .then(res => res.json())
+        .then(data => {
+
+            if (data.error) {
+                alert("Error: " + data.error);
+                return;
+            }
+
+            document.getElementById("studyContent").innerHTML = `
+                <div class="row mb-4">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0 fw-bold">Study Information</h6>
+                        </div>
+                        <div class="card-body">
+                           
+                                <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <strong class="text-muted d-block">PI</strong>
+                                    <span>${data.pi}</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong class="text-muted d-block">Source Number</strong>
+                                    <span>${data.irb_number}</span>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <strong class="text-muted d-block">Agenda Group</strong>
+                                    <span>${data.agenda_group}</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong class="text-muted d-block">RefNum</strong>
+                                    <span>${data.reference_number}</span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <strong class="text-muted d-block">Protocol Title</strong>
+                                    <p class="mb-0">${data.title}</p>
+                                </div>
+                            </div>
+                           
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0 fw-bold">Meeting Details</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <strong class="text-muted d-block">Meeting Date</strong>
+                                <span>${data.meeting_date}</span>
+                            </div>
+                            
+                            <div>
+                                <strong class="text-muted d-block">Internal Number</strong>
+                                <span>${data.internal_number}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Protocol Details -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0 fw-bold">Protocol Details</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">Principal Investigator</strong>
+                                    <span>${data.pi}</span>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">Review Cycle</strong>
+                                    <span>${data.renewal_cycle}</span>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">Exp. Date</strong>
+                                    <span>${data.expiration_date}</span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">Date Received</strong>
+                                    <span>${data.date_received}</span>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">First IRB Review</strong>
+                                    <span>${data.first_irb_review}</span>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">Original Approval</strong>
+                                    <span>${data.approval_date}</span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">Last Review by IRB</strong>
+                                    <span>${data.last_irb_review}</span>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">Last IRB Renewal</strong>
+                                    <span>${data.last_renewal_date}</span>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">Study Status</strong>
+                                    <span class="badge bg-success">${data.study_status}</span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <strong class="text-muted d-block">Type</strong>
+                                    <span class="badge bg-primary">${data.review_type}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            `;
+
+        })
+        .catch(err => {
+            alert("Request Failed");
+            console.log(err);
+        });
+}
+
+// On page load
+document.addEventListener("DOMContentLoaded", () => {
+
+    const rows = document.querySelectorAll(".meeting-row");
+
+    // Attach click event to each row
+    rows.forEach(row => {
+        row.addEventListener("click", function () {
+
+            const id = this.dataset.id;
+
+            // Remove active class from all rows
+            rows.forEach(r => r.classList.remove("active"));
+
+            // Add active class to clicked row
+            this.classList.add("active");
+
+            loadAgendaDetails(id);
+        });
+    });
+
+    // AUTO SELECT FIRST ROW ON PAGE LOAD
+    if (rows.length > 0) {
+        const firstRow = rows[0];
+        firstRow.classList.add("active");             // highlight
+        const firstId = firstRow.dataset.id;
+
+        loadAgendaDetails(firstId);                   // load first item
+    }
+});
+
+
 </script>

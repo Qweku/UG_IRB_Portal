@@ -26,8 +26,8 @@ try {
         exit;
     }
 
-    // Fetch benefit options
-    $stmt = $conn->prepare("SELECT id, meeting_date, irb_code FROM irb_meetings ORDER BY id ASC");
+    // Fetch meetings
+    $stmt = $conn->prepare("SELECT id, meeting_date, irb_code FROM irb_meetings ORDER BY meeting_date DESC");
     $stmt->execute();
     $irbMeetings = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -40,6 +40,7 @@ echo '<thead>
             
             <th>Meeting Date</th>
             <th>IRB Code</th>
+            <th>Actions</th>
         </tr>
         </thead><tbody>';
 foreach ( $irbMeetings as $row) {

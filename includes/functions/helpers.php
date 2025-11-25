@@ -383,6 +383,45 @@ function getRecentActivities()
     }
 }
 
+
+function getMeetingDates()
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) {
+        return [];
+    }
+
+    try {
+        $stmt = $conn->prepare("SELECT meeting_date FROM irb_meetings ORDER BY meeting_date DESC");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+        error_log("MEETING DATES :" . $stmt->fetchAll(PDO::FETCH_COLUMN));
+    } catch (PDOException $e) {
+        error_log("Error fetching meeting dates: " . $e->getMessage());
+        return [];
+    }
+}
+
+
+function getAgendaRecords()
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) {
+        return [];
+    }
+
+    try {
+        $stmt = $conn->prepare("SELECT irb_code, meeting_date, agenda_heading FROM agenda_records ORDER BY meeting_date DESC");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error fetching agenda records: " . $e->getMessage());
+        return [];
+    }
+}
+
 /**
  * Get studies with filtering capabilities
  * @param string $status Filter by status (all, open, closed, pending)

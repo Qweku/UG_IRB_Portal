@@ -53,21 +53,21 @@ try {
     // Fetch sponsors
     $stmt = $conn->prepare("SELECT sponsor_name FROM sponsors ORDER BY sponsor_name ASC");
     $stmt->execute();
-    $sponsors = $stmt->fetchAll(PDO::FETCH_COLUMN); 
+    $sponsors = $stmt->fetchAll(PDO::FETCH_COLUMN);
     error_log("Fetched " . count($sponsors) . " sponsors");
-   
+
     // Fetch study types
     $stmt = $conn->prepare("SELECT type_name FROM review_types ORDER BY type_name ASC");
     $stmt->execute();
     $study_types = $stmt->fetchAll(PDO::FETCH_COLUMN);
     error_log("Fetched " . count($study_types) . " study types");
-   
+
     // Fetch study statuses
     $stmt = $conn->prepare("SELECT status_name FROM study_status ORDER BY status_name ASC");
     $stmt->execute();
     $study_statuses = $stmt->fetchAll(PDO::FETCH_COLUMN);
     error_log("Fetched " . count($study_statuses) . " study statuses");
-    
+
     // Fetch risk categories
     $stmt = $conn->prepare("SELECT category_name FROM risks_category ORDER BY category_name ASC");
     $stmt->execute();
@@ -135,7 +135,7 @@ try {
 
 
 <!-- New Study Input Form Content -->
-<div class="new-study-form p-5">
+<div id="addStudy" class="new-study-form p-5">
     <form class="needs-validation" id="studyForm">
         <input type="hidden" name="study_id" value="<?php echo $is_edit ? $study_id : ''; ?>">
         <!-- Page Header -->
@@ -237,15 +237,15 @@ try {
                                                     </td>
                                                 </tr>
                                                 <input type="hidden" name="personnel[]" value='<?php echo json_encode([
-                                                    'name' => $person['name'],
-                                                    'staffType' => $person['role'],
-                                                    'title' => $person['title'],
-                                                    'dateAdded' => $person['start_date'],
-                                                    'companyName' => $person['company_name'],
-                                                    'email' => $person['email'],
-                                                    'mainPhone' => $person['phone'],
-                                                    'comments' => $person['comments']
-                                                ]); ?>'>
+                                                                                                    'name' => $person['name'],
+                                                                                                    'staffType' => $person['role'],
+                                                                                                    'title' => $person['title'],
+                                                                                                    'dateAdded' => $person['start_date'],
+                                                                                                    'companyName' => $person['company_name'],
+                                                                                                    'email' => $person['email'],
+                                                                                                    'mainPhone' => $person['phone'],
+                                                                                                    'comments' => $person['comments']
+                                                                                                ]); ?>'>
                                             <?php endforeach; ?>
                                         <?php endif; ?>
                                     </tbody>
@@ -515,9 +515,9 @@ try {
             <button type="submit" class="btn btn-success me-2">
                 <i class="fas fa-save me-1"></i> <?php echo $is_edit ? 'Update Study' : 'Save Study'; ?>
             </button>
-            <a class="btn btn-secondary" href="/">
+            <button class="btn btn-secondary">
                 <i class="fas fa-times me-1"></i> Cancel
-            </a>
+            </button>
         </div>
     </form>
 
@@ -557,75 +557,83 @@ try {
 
     </div>
 </div>
-    <script>
-        function showToast(type, message) {
-            // Create toast container if not exists
-            let toastContainer = document.getElementById('toast-container');
-            if (!toastContainer) {
-                toastContainer = document.createElement('div');
-                toastContainer.id = 'toast-container';
-                toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
-                toastContainer.style.zIndex = '1050';
-                document.body.appendChild(toastContainer);
-            }
+<script>
+    function showToast(type, message) {
+        // Create toast container if not exists
+        let toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toast-container';
+            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+            toastContainer.style.zIndex = '1050';
+            document.body.appendChild(toastContainer);
+        }
 
-            // Create toast element
-            const toast = document.createElement('div');
-            toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
-            toast.setAttribute('role', 'alert');
-            toast.setAttribute('aria-live', 'assertive');
-            toast.setAttribute('aria-atomic', 'true');
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
 
-            toast.innerHTML = `
+        toast.innerHTML = `
             <div class="d-flex">
                 <div class="toast-body">${message}</div>
                 <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
-        `;
+             `;
 
-            toastContainer.appendChild(toast);
+        toastContainer.appendChild(toast);
 
-            // Initialize and show toast
-            const bsToast = new bootstrap.Toast(toast);
-            bsToast.show();
+        // Initialize and show toast
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
 
-            // Remove toast after it's hidden
-            toast.addEventListener('hidden.bs.toast', () => {
-                toast.remove();
-            });
-        }
-
-        // Handle form submission
-        document.getElementById('studyForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const formData = new FormData(this);
-
-            try {
-                const response = await fetch('/admin/handlers/add_study_handler.php', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const result = await response.json();
-
-                if (result.status === 'success') {
-                    showToast('success', result.message);
-                    // Optionally redirect or reset form
-                    // window.location.href = '/some-success-page';
-                } else {
-                    showToast('error', result.message);
-                }
-            } catch (error) {
-                // console.log('Error:', error);
-                showToast('error', 'An unexpected error occurred.');
-            }
+        // Remove toast after it's hidden
+        toast.addEventListener('hidden.bs.toast', () => {
+            toast.remove();
         });
+    }
 
-        function addMorePersonnel() {
-            // Function to add more personnel fields dynamically
-            const form = document.getElementById('contentArea');
-            const newFields = `
+    // Handle form submission
+    document.getElementById('studyForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        toggleLoader(true); // 🔹 Show loader immediately
+
+        const formData = new FormData(this);
+
+        try {
+            const response = await fetch('/admin/handlers/add_study_handler.php', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+
+            if (result.status === 'success') {
+                showToast('success', result.message);
+                // Optionally redirect or reset form
+                // window.location.href = '/some-success-page';
+                toggleLoader(false);
+                window.location.reload();
+            } else {
+                showToast('error', result.message);
+            }
+        } catch (error) {
+            // console.log('Error:', error);
+            showToast('error', 'An unexpected error occurred.');
+        } finally {
+            // 🔹 Always hide loader after operations
+            toggleLoader(false);
+        }
+    });
+
+    function addMorePersonnel() {
+        // Function to add more personnel fields dynamically
+        const form = document.getElementById('contentArea');
+        const newFields = `
                         
                         <div class="new-personnel-section">
                             <hr>
@@ -637,11 +645,16 @@ try {
                         <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Name</label>
-                                    <input type="text" class="form-control" placeholder="Enter name">
+                                   <select name="contact" class="form-select">
+                                        <option >Johne Doe</option>
+                                        <option >Mary Adjei</option>
+                                        <option >Michael Fosu</option>
+                                        <option >Anna George</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Staff Type</label>
-                                    <select class="form-select">
+                                    <select name="staffType" class="form-select">
                                        <?php foreach ($staffTypes as $type): ?>
                                             <option><?= htmlspecialchars($type) ?></option>
                                         <?php endforeach; ?>
@@ -682,43 +695,43 @@ try {
                                     </div>
                                 </div> 
                                 </div>`;
-            form.insertAdjacentHTML('beforeend', newFields);
-        }
+        form.insertAdjacentHTML('beforeend', newFields);
+    }
 
-        function savePersonnel() {
-            const button = document.querySelector('#addPersonnel .modal-footer .btn-success');
-            button.disabled = true;
-            button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+    function savePersonnel() {
+        const button = document.querySelector('#addPersonnel .modal-footer .btn-success');
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
 
-            setTimeout(() => {
-                // Function to save personnel data
-                const personnelSections = document.querySelectorAll('.new-personnel-section');
-                const personnelTable = document.getElementById('personnel-table');
-                const studyForm = document.getElementById('studyForm');
+        setTimeout(() => {
+            // Function to save personnel data
+            const personnelSections = document.querySelectorAll('.new-personnel-section');
+            const personnelTable = document.getElementById('personnel-table');
+            const studyForm = document.getElementById('studyForm');
 
-                personnelSections.forEach(section => {
-                    const name = section.querySelector('input[placeholder="Enter name"]').value;
-                    const staffType = section.querySelector('select').value;
-                    const title = section.querySelector('input[placeholder="Enter title"]').value;
-                    const dateAdded = section.querySelector('input[type="date"]').value;
-                    const companyName = section.querySelector('input[placeholder="Enter company name"]').value;
-                    const email = section.querySelector('input[type="email"]').value;
-                    const mainPhone = section.querySelector('input[type="phone"]').value;
-                    const comments = section.querySelector('input[placeholder="Enter comments"]').value; //
+            personnelSections.forEach(section => {
+                const name = section.querySelector('select[name="contact"]').value;
+                const staffType = section.querySelector('select[name="staffType"]').value;
+                const title = section.querySelector('input[placeholder="Enter title"]').value;
+                const dateAdded = section.querySelector('input[type="date"]').value;
+                const companyName = section.querySelector('input[placeholder="Enter company name"]').value;
+                const email = section.querySelector('input[type="email"]').value;
+                const mainPhone = section.querySelector('input[type="phone"]').value;
+                const comments = section.querySelector('input[placeholder="Enter comments"]').value; //
 
-                    const personnelData = {
-                        name: name,
-                        staffType: staffType,
-                        title: title,
-                        dateAdded: dateAdded,
-                        companyName: companyName,
-                        email: email,
-                        mainPhone: mainPhone,
-                        comments: comments
-                    };
+                const personnelData = {
+                    name: name,
+                    staffType: staffType,
+                    title: title,
+                    dateAdded: dateAdded,
+                    companyName: companyName,
+                    email: email,
+                    mainPhone: mainPhone,
+                    comments: comments
+                };
 
-                    // Add to table
-                    const newRow = `
+                // Add to table
+                const newRow = `
                     <tr>
                         <td>${name}</td>
                         <td>${staffType}</td>
@@ -731,26 +744,64 @@ try {
                         </td>
                     </tr>
                 `;
-                    personnelTable.insertAdjacentHTML('beforeend', newRow);
+                personnelTable.insertAdjacentHTML('beforeend', newRow);
 
-                    // Add hidden input to form
-                    const hiddenInput = `<input type="hidden" name="personnel[]" value='${JSON.stringify(personnelData)}'>`;
-                    studyForm.insertAdjacentHTML('beforeend', hiddenInput);
-                });
+                // Add hidden input to form
+                const hiddenInput = `<input type="hidden" name="personnel[]" value='${JSON.stringify(personnelData)}'>`;
+                studyForm.insertAdjacentHTML('beforeend', hiddenInput);
+            });
 
-                // Close the modal after saving
-                const modal = bootstrap.Modal.getInstance(document.getElementById('addPersonnel'));
-                modal.hide();
+            // Close the modal after saving
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addPersonnel'));
+            modal.hide();
 
-                // Clear the form for next use
-                document.getElementById('contentArea').innerHTML = `
+            // Clear the form for next use
+            document.getElementById('contentArea').innerHTML = `
                 <div class="bg-light p-3 mb-3">
                     <h4 class="text-md">Assigned Personnel</h4>
                 </div>
             `;
 
-                button.disabled = false;
-                button.innerHTML = 'Save Personnel';
-            }, 500);
+            button.disabled = false;
+            button.innerHTML = 'Save Personnel';
+        }, 500);
+    }
+
+    function toggleLoader(show = true) {
+        let section = document.getElementById('loader-container');
+
+        // Create wrapper if not exist
+        if (!section) {
+            section = document.createElement('div');
+            section.id = 'loader-container';
+            section.className = 'loader-container';
+            section.style.position = 'fixed';
+            section.style.top = '0';
+            section.style.left = '0';
+            section.style.width = '100%';
+            section.style.height = '100%';
+            section.style.zIndex = '1150';
+            document.body.appendChild(section);
         }
-    </script>
+
+        let loader = section.querySelector('.section-loader');
+
+        // Create loader if not exist
+        if (!loader) {
+            loader = document.createElement('div');
+            loader.className = `
+            section-loader fade-loader d-flex justify-content-center align-items-center
+            w-100 h-100 bg-dark bg-opacity-50
+        `;
+            loader.innerHTML = `
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        `;
+            section.appendChild(loader);
+        }
+
+        // Toggle visibility
+        loader.style.display = show ? 'flex' : 'none';
+    }
+</script>

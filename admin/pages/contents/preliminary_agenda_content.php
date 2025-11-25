@@ -1,3 +1,12 @@
+<?php
+$meetingDates = getMeetingDates();
+$agendaCategoriesList = getAgendaCategoriesList();
+?>
+<style>
+    .table-active {
+        background-color: #9da0c2ff !important;
+    }
+</style>
 <!-- Preliminary Agenda Items Content -->
 <div class="preliminary-agenda">
     <!-- Page Header -->
@@ -19,10 +28,10 @@
             <div class="col-md-6">
                 <h5 class="section-title mb-3">Meeting Dates</h5>
                 <div class="d-flex align-items-center">
-                    <select class="form-select me-2" style="max-width: 200px;">
-                        <option selected>2025-10-01</option>
-                        <option>2025-11-05</option>
-                        <option>2025-12-03</option>
+                    <select id="meetingFilter" class="form-select me-2" style="max-width: 200px;">
+                        <?php foreach ($meetingDates as $mDate): ?>
+                            <option value="<?= htmlspecialchars($mDate) ?>"><?= htmlspecialchars($mDate) ?></option>
+                        <?php endforeach; ?>
                     </select>
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="keepItemsTogether" checked>
@@ -36,7 +45,7 @@
                 <button class="btn btn-outline-secondary me-2">
                     <i class="fas fa-eye me-1"></i> Preview Summary Report
                 </button>
-                
+
             </div>
         </div>
     </div>
@@ -46,7 +55,7 @@
         <h4 class="section-title">Agenda Items</h4>
 
         <div class="table-responsive">
-            <table class="table table-hover agenda-table">
+            <table id="agendaTable" class="table table-hover agenda-table" style="table-layout: auto;">
                 <thead>
                     <tr>
                         <th>Position</th>
@@ -97,54 +106,7 @@
                             <td>REF-001</td>
                             <td>REC-123</td>
                         </tr>
-                        <tr>
-                            <td>1</td>
-                            <td>014/25-26</td>
-                            <td><select class="form-select">
-                            <option selected>Expedited</option>
-                            <option>Procedure</option>
-                            <option>Exempt</option>
-                            <option>Renewal</option>
-                            <option>Resubmission</option>
-                            </select></td>
-                            <td>New Protocols</td>
-                            <td><span class="badge bg-secondary">False</span></td>
-                            <td>5086</td>
-                            <td>Initial review required</td>
-                            <td>Diabetes Treatment Study</td>
-                            <td>Dr. Jane Doe</td>
-                            <td>Approved</td>
-                            <td>Approved</td>
-                            <td>No</td>
-                            <td>Initial</td>
-                            <td>2025-10-01</td>
-                            <td>REF-002</td>
-                            <td>REC-124</td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>015/25-26</td>
-                            <td><select class="form-select">
-                            <option selected>Expedited</option>
-                            <option>Procedure</option>
-                            <option>Exempt</option>
-                            <option>Renewal</option>
-                            <option>Resubmission</option>
-                            </select></td>
-                            <td>Continuing Reviews</td>
-                            <td><span class="badge bg-secondary">False</span></td>
-                            <td>5087</td>
-                            <td>Annual review pending</td>
-                            <td>Cardiovascular Health</td>
-                            <td>Dr. Alex Johnson</td>
-                            <td>Pending</td>
-                            <td>Approved</td>
-                            <td>Yes</td>
-                            <td>Annual</td>
-                            <td>2025-10-01</td>
-                            <td>REF-003</td>
-                            <td>REC-125</td>
-                        </tr>';
+                        ';
                     } else {
                         foreach ($meetings as $index => $meeting) {
                             $badgeClass = 'bg-info';
@@ -158,25 +120,26 @@
                                         break;
                                 }
                             }
-                            echo '<tr>
+                            echo '<tr id="agendaRow"  data-id="' . $meeting['id'] . '">
                                 <td>' . $index . '</td>
                                 <td>' . htmlspecialchars($meeting['irb_number'] ?? '013/25-26') . '</td>
-                                 <td><select class="form-select">
-                            <option>' . htmlspecialchars($meeting['agenda_category'] ?? 'Expedited') . '</option>
-                            
-                            </select></td>
+                                 <td><select class="form-select" style="width:200px;">';
+                            foreach ($agendaCategoriesList as $category) {
+                                echo '<option value="' . htmlspecialchars($category) . '" ' . ($category == htmlspecialchars($meeting["agenda_category"]) ? "selected" : "") . '>' . htmlspecialchars($category) . '</option>';
+                            }
+                            echo '</select></td>
                                 
                                 <td>' . htmlspecialchars($meeting['agenda_group'] ?? 'Expedited') . '</td>
                                 <td><span class="badge ' . (($meeting['expedite'] ?? false) ? 'bg-success' : 'bg-secondary') . '">' . (($meeting['expedite'] ?? false) ? 'True' : 'False') . '</span></td>
                                 <td>' . htmlspecialchars($meeting['internal_number'] ?? '5085') . '</td>
-                                <td>' . htmlspecialchars($meeting['agenda_explanation'] ?? 'The protocol was gr') . '</td>
-                                <td>' . htmlspecialchars($meeting['title'] ?? 'Assessing the') . '</td>
-                                <td>' . htmlspecialchars($meeting['pi'] ?? 'Dr. John Smith') . '</td>
-                                <td>' . htmlspecialchars($meeting['condition1'] ?? 'Approved') . '</td>
-                                <td>' . htmlspecialchars($meeting['condition2'] ?? 'Pending') . '</td>
-                                <td>' . htmlspecialchars($meeting['renewal'] ?? 'Yes') . '</td>
-                                <td>' . htmlspecialchars($meeting['review'] ?? 'Initial') . '</td>
-                                <td>' . htmlspecialchars($meeting['meeting_date'] ?? '2025-10-01') . '</td>
+                                <td>' . htmlspecialchars($meeting['agenda_explanation'] ?? '') . '</td>
+                                <td> <div style="width:250px;">' . htmlspecialchars($meeting['title'] ?? '') . '</div></td>
+                                <td><div style="width:200px;">' . htmlspecialchars($meeting['pi'] ?? '') . '</div></td>
+                                <td>' . htmlspecialchars($meeting['condition1'] ?? '') . '</td>
+                                <td>' . htmlspecialchars($meeting['condition2'] ?? '') . '</td>
+                                <td>' . htmlspecialchars($meeting['renewal'] ?? '') . '</td>
+                                <td>' . htmlspecialchars($meeting['review'] ?? '') . '</td>
+                                <td class="meeting-date">' . htmlspecialchars($meeting['meeting_date'] ?? '') . '</td>
                                 <td>' . htmlspecialchars($meeting['reference_num'] ?? 'REF-001') . '</td>
                                 <td>' . htmlspecialchars($meeting['recorder_id'] ?? 'REC-123') . '</td>
                             </tr>';
@@ -190,10 +153,10 @@
         <!-- Action Buttons -->
         <div class="d-flex justify-content-between mt-4">
             <div>
-                <button class="btn btn-outline-primary me-2">
+                <button class="btn btn-outline-primary me-2" data-bs-target="#assignMeetingModal" data-bs-toggle="modal">
                     <i class="fas fa-copy me-1"></i> Assign Selected Study(s) to Another Meeting
                 </button>
-                <button class="btn btn-outline-primary me-2">
+                <button class="btn btn-outline-primary me-2" data-bs-target="#assignMeetingModal" data-bs-toggle="modal">
                     <i class="fas fa-calendar-plus me-1"></i> Assign All To New Meeting
                 </button>
                 <button class="btn btn-outline-danger">
@@ -211,3 +174,204 @@
         </div>
     </div>
 </div>
+
+<!-- Assign Meeting Modal -->
+<div class="modal fade" id="assignMeetingModal" tabindex="-1" aria-labelledby="assignMeetingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="assignMeetingModalLabel">Select a meeting Date</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <h6 class="fw-bold text-primary mb-2">IRB NOGUCHI MEMORIAL INSTITUTE FOR MEDICAL RESEARCH-IRB</h6>
+                    <p class="text-muted small">
+                        Verify the IRB and the Meeting Date you wish to Post IRB Actions to
+                    </p>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Select a meeting date</label>
+                    <div class="list-group">
+                        <?php foreach ($meetingDates as $mDate): ?>
+                            <label class="list-group-item list-group-item-action">
+                                <input class="form-check-input me-2" type="radio" name="meetingDate" value="<?= htmlspecialchars($mDate) ?>">
+                                <?= htmlspecialchars($mDate) ?>
+                            </label>
+
+                        <?php endforeach; ?>
+
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="assignOkBtn" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function filterAgendaByMeetingDate() {
+        const selectedDate = document.getElementById("meetingFilter").value.trim();
+        const rows = document.querySelectorAll("#agendaTable tbody tr");
+
+        rows.forEach(row => {
+            const meetingDateCell = row.cells[13]?.innerText.trim(); // Meeting Date column
+            if (meetingDateCell === selectedDate || selectedDate === "") {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
+    }
+
+    // Run on page load
+    window.addEventListener('DOMContentLoaded', filterAgendaByMeetingDate);
+
+    // Run when dropdown changes
+    document.getElementById("meetingFilter").addEventListener("change", filterAgendaByMeetingDate);
+
+    function showToast(type, message) {
+        // Create toast container if not exists
+        let toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toast-container';
+            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+            toastContainer.style.zIndex = '1050';
+            document.body.appendChild(toastContainer);
+        }
+
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+             `;
+
+        toastContainer.appendChild(toast);
+
+        // Initialize and show toast
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+
+        // Remove toast after it's hidden
+        toast.addEventListener('hidden.bs.toast', () => {
+            toast.remove();
+        });
+    }
+    // document.getElementById("meetingFilter").addEventListener("change", function() {
+    //     const selectedDate = this.value.trim();
+    //     const rows = document.querySelectorAll("#agendaTable tbody tr");
+
+    //     rows.forEach(row => {
+    //         const meetingDateCell = row.cells[13]?.innerText.trim(); // Meeting Date column
+
+    //         if (meetingDateCell === selectedDate || selectedDate === "") {
+    //             row.style.display = "";
+    //         } else {
+    //             row.style.display = "none";
+    //         }
+    //     });
+    // });
+
+    // Select all rows in the table
+    const rows = document.querySelectorAll("#agendaTable tbody tr");
+
+    rows.forEach(row => {
+        row.addEventListener("click", function() {
+            // Toggle the highlight on this row
+            this.classList.toggle("table-active");
+
+            selectedRow = this;
+        });
+    });
+
+    document.getElementById("assignOkBtn").addEventListener("click", function() {
+        const selectedDateInput = document.querySelector('input[name="meetingDate"]:checked');
+        if (!selectedDateInput) {
+            alert("Please select a meeting date.");
+            return;
+        }
+
+        const newMeetingDate = selectedDateInput.value;
+        const selectedRows = document.querySelectorAll("#agendaTable tbody tr.table-active");
+
+        if (selectedRows.length === 0) {
+            alert("Please select at least one row.");
+            return;
+        }
+
+        // Collect all fetch promises
+        const updatePromises = Array.from(selectedRows).map(row => {
+            row.querySelector(".meeting-date").textContent = newMeetingDate;
+            const rowId = row.dataset.id;
+
+            return fetch("/admin/handlers/update_agenda_meeting_date.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        id: rowId,
+                        meetingDate: newMeetingDate
+                    }),
+                })
+                .then(response => response.json());
+        });
+
+        // Wait for all updates to finish
+        Promise.all(updatePromises)
+            .then(results => {
+                const allSuccess = results.every(r => r.success);
+                if (allSuccess) {
+                    showToast('success', "Meeting date updated successfully");
+                } else {
+                    showToast('error', "Some rows failed to update");
+                }
+                // Reload page after updates
+                window.location.reload();
+            })
+            .catch(error => {
+                console.error(error);
+                showToast('error', "Error updating meeting dates");
+            });
+    });
+
+
+    // function saveMeetingDate(rowId, newDate) {
+    //     fetch("/admin/handlers/update_agenda_meeting_date.php", {
+    //             method: "POST",
+    //             headers: {
+    //                 "Content-Type": "application/json",
+    //             },
+    //             body: JSON.stringify({
+    //                 id: rowId,
+    //                 meetingDate: newDate
+    //             }),
+    //         })
+    //         .then(response => response.json())
+    //         .then(data => {
+    //             if (data.success) {
+    //                 showToast('success', "Meeting date updated successfully");
+    //                 console.log("Meeting date updated successfully");
+    //                 window.location.reload();
+    //             } else {
+    //                 showToast('error', "Failed to update meeting date");
+    //             }
+    //         })
+    //         .catch(error => {
+    //             console.error("Error:", error);
+    //         });
+    // }
+</script>

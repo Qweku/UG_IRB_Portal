@@ -75,7 +75,7 @@ $pi_names = getDistinctPINames();
     <div class="main-content">
         <h4 class="section-title">Directory of Open Studies</h4>
 
-        <div class="table-container">
+        <div class="table-responsive">
             <table class="table table-hover study-table">
                 <thead class="table-primary">
                     <tr>
@@ -127,20 +127,20 @@ $pi_names = getDistinctPINames();
                         <?php foreach ($studies as $study): ?>
                             <tr onclick="window.location.href='/add-study?edit=1&id=<?php echo $study['id']; ?>'" style="cursor: pointer;">
                                 <td><?php echo htmlspecialchars($study['protocol_number']); ?></td>
-                                <td><?php echo htmlspecialchars($study['title']); ?></td>
+                                <td><div style="width:250px;"><?php echo htmlspecialchars($study['title']); ?></div></td>
                                 <td><span class="status-badge status-<?php echo strtolower($study['study_active']); ?>"><?php echo ucfirst($study['study_active']); ?></span></td>
                                 <td><?php echo ucwords(str_replace('_', ' ', $study['review_type'])); ?></td>
                                  <td><span class="status-badge status-<?php echo strtolower($study['study_status']); ?>"><?php echo ucfirst($study['study_status']); ?></span></td>
-                                <td><?php echo htmlspecialchars(isset($study['pi_name']) ? $study['pi_name'] : ''); ?></td>
+                                <td><div style="width:200px;"><?php echo htmlspecialchars(isset($study['pi']) ? $study['pi'] : ''); ?></div></td>
                                 <td><?php echo htmlspecialchars($study['renewal_cycle']); ?></td>
-                                <td><?php echo !empty($study['data_received']) ? htmlspecialchars(date('m/d/y', strtotime($study['data_received']))) : ''; ?></td>
-                                <td><?php echo !empty($study['first_irb_review']) ? htmlspecialchars(date('m/d/y', strtotime($study['first_irb_review']))) : ''; ?></td>
-                                <td><?php echo !empty($study['approval_date']) ? htmlspecialchars(date('m/d/y', strtotime($study['approval_date']))) : ''; ?></td>
-                                <td><?php echo !empty($study['last_renewal_date']) ? htmlspecialchars(date('m/d/y', strtotime($study['last_renewal_date']))) : ''; ?></td>
+                                <td><?php echo  htmlspecialchars($study['data_received'] ?? ""); ?></td>
+                                <td><?php echo  htmlspecialchars($study['first_irb_review'] ?? ""); ?></td>
+                                <td><?php echo htmlspecialchars($study['approval_date'] ?? ""); ?></td>
+                                <td><?php echo htmlspecialchars($study['last_renewal_date'] ?? "") ; ?></td>
                                 <td><?php echo htmlspecialchars($study['init_enroll']); ?></td>
                                 <td><?php echo htmlspecialchars($study['patients_enrolled']); ?></td>
-                                <td><?php echo !empty($study['expiration_date']) ? htmlspecialchars(date('m/d/y', strtotime($study['expiration_date']))) : ''; ?></td>
-                                <td><?php echo !empty($study['most_recent_meeting']) ? htmlspecialchars(date('m/d/y', strtotime($study['most_recent_meeting']))) : ''; ?></td>
+                                <td><?php echo htmlspecialchars($study['expiration_date'] ?? ""); ?></td>
+                                <td><?php echo htmlspecialchars($study['most_recent_meeting' ?? ""]) ; ?></td>
                                 <td><?php echo htmlspecialchars($study['exempt_cite']); ?></td>
                                 <td><?php echo htmlspecialchars($study['expedite_cite']); ?></td>
                                 <td><?php echo htmlspecialchars($study['remarks']); ?></td>
@@ -152,36 +152,21 @@ $pi_names = getDistinctPINames();
                                 <td><?php echo !empty($study['fee_required']) ? 'Yes' : 'No'; ?></td>
                                 <td><?php echo htmlspecialchars($study['coor_displayname']); ?></td>
                                 <td><?php echo htmlspecialchars($study['sponsor_displayname']); ?></td>
-                                <td><?php $vals = getStudyReviewers($study['id']);
-                                    echo htmlspecialchars(implode(', ', $vals)); ?></td>
-                                <td><?php $cols = array_column(getStudyColumns($study['id']), 'column_value');
-                                    echo htmlspecialchars(implode(', ', $cols)); ?></td>
-                                <td><?php $vals = getStudyAdmins($study['id']);
-                                    echo htmlspecialchars(implode(', ', $vals)); ?></td>
-                                <td><?php $vals = getStudyClassifications($study['id']);
-                                    echo htmlspecialchars(implode(', ', $vals)); ?></td>
-                                <td><?php $vals = getStudySites($study['id']);
-                                    echo htmlspecialchars(implode(', ', $vals)); ?></td>
-                                <td><?php $vals = getStudyDeptGroups($study['id']);
-                                    echo htmlspecialchars(implode(', ', $vals)); ?></td>
-                                <td><?php $vals = getStudyVulPops($study['id']);
-                                    echo htmlspecialchars(implode(', ', $vals)); ?></td>
-                                <td><?php $vals = getStudyChildren($study['id']);
-                                    echo htmlspecialchars(implode(', ', $vals)); ?></td>
-                                <td><?php $vals = getStudyDrugs($study['id']);
-                                    echo htmlspecialchars(implode(', ', $vals)); ?></td>
-                                <td><?php $vals = getStudyRisks($study['id']);
-                                    echo htmlspecialchars(implode(', ', $vals)); ?></td>
-                                <td><?php $vals = getStudyBenefits($study['id']);
-                                    echo htmlspecialchars(implode(', ', $vals)); ?></td>
-                                <td><?php $vals = getStudyDivisions($study['id']);
-                                    echo htmlspecialchars(implode(', ', $vals)); ?></td>
-                                <td><?php $vals = getStudyGrantProjects($study['id']);
-                                    echo htmlspecialchars(implode(', ', $vals)); ?></td>
-                                <td><?php $vals = getStudyIndustries($study['id']);
-                                    echo htmlspecialchars(implode(', ', $vals)); ?></td>
-                                <td><?php $vals = getStudyUnderGradGrad($study['id']);
-                                    echo htmlspecialchars(implode(', ', $vals)); ?></td>
+                                <td><?php echo htmlspecialchars($study['reviewers']); ?></td>
+                                <td><?php echo htmlspecialchars($study['cols']); ?></td>
+                                <td><?php echo htmlspecialchars($study['admins']); ?></td>
+                                <td><?php echo htmlspecialchars($study['classifications']); ?></td>
+                                <td><?php echo htmlspecialchars($study['sites']); ?></td>
+                                <td><?php echo htmlspecialchars($study['dept_group']); ?></td>
+                                <td><?php echo htmlspecialchars($study['vul_props']); ?></td>
+                                <td><?php echo htmlspecialchars($study['childs']); ?></td>
+                                <td><?php echo htmlspecialchars($study['drugs']); ?></td>
+                                <td><?php echo htmlspecialchars($study['risk_category']); ?></td>
+                                <td><?php echo htmlspecialchars($study['benefits']); ?></td>
+                                <td><?php echo htmlspecialchars($study['divs']); ?></td>
+                                <td><?php echo htmlspecialchars($study['grant_projects']); ?></td>
+                                <td><?php echo htmlspecialchars($study['inds']); ?></td>
+                                <td><?php echo htmlspecialchars($study['under_grad']); ?></td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>

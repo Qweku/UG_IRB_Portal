@@ -5,12 +5,12 @@ header('Content-Type: application/json');
 
 $data = json_decode(file_get_contents('php://input'), true);
 
-if (!$data || !isset($data['agenda_category'])) {
+if (!$data || !isset($data['category_name'])) {
     echo json_encode(['success' => false, 'message' => 'Invalid data']);
     exit;
 }
 
-$agenda_category = trim($data['agenda_category']);
+$agenda_category = trim($data['category_name']);
 $class_code = trim($data['class_code']);
 $agenda_print = trim($data['agenda_print']);
 
