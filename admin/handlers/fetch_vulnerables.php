@@ -1,24 +1,10 @@
-<?php 
-require_once '../../includes/config/database.php';
+<?php
+require_once '../../includes/functions/helpers.php';
 
 $vulnerables = [];
 
-try {
-    $db = new Database();
-    $conn = $db->connect();
-
-    if (!$conn) {
-        throw new Exception("Database connection failed");
-    }
-
-    // Fetch vulnerable options
-    $stmt = $conn->prepare("SELECT id, population_type FROM vulnerable_populations ORDER BY id ASC");
-    $stmt->execute();
-    $vulnerables = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-} catch (Exception $e) {
-    error_log("Error fetching vulnerables: " . $e->getMessage());
-}
+// Fetch all vulnerables
+$vulnerables = executeAssocQuery("SELECT id, population_type FROM vulnerable_populations ORDER BY id ASC");
 echo '<div class="table-responsive" style="height:300px;"><table class="table table-striped">';
 echo '<thead><tr><th>Name</th><th>Actions</th></tr></thead><tbody>';
 foreach ( $vulnerables as $row) {

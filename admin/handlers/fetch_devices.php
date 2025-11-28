@@ -1,24 +1,23 @@
-<?php 
-require_once '../../includes/config/database.php';
+<?php
+require_once '../../includes/functions/helpers.php';
 
 $devices = [];
 
-try {
-    $db = new Database();
-    $conn = $db->connect();
-
-    if (!$conn) {
-        throw new Exception("Database connection failed");
+if (isset($_GET['id'])) {
+    $id = $_GET['id'];
+    $device = executeAssocQuery("SELECT id, device_name FROM device_types WHERE id = ?", [$id]);
+    if ($device) {
+        header('Content-Type: application/json');
+        echo json_encode($device[0]);
+    } else {
+        http_response_code(404);
+        echo json_encode(['error' => 'Not found']);
     }
-
-    // Fetch device options
-    $stmt = $conn->prepare("SELECT id, device_name FROM device_types ORDER BY id ASC");
-    $stmt->execute();
-    $devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-} catch (Exception $e) {
-    error_log("Error fetching devices: " . $e->getMessage());
+    exit;
 }
+
+// Fetch all devices
+$devices = executeAssocQuery("SELECT id, device_name FROM device_types ORDER BY id ASC");
 echo '<div class="table-responsive" style="height:300px;"><table class="table table-striped">';
 echo '<thead><tr><th>Name</th><th>Actions</th></tr></thead><tbody>';
 foreach ( $devices as $row) {

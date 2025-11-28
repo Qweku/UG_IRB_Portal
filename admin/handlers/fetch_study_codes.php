@@ -1,39 +1,23 @@
-<?php 
-require_once '../../includes/config/database.php';
+<?php
+require_once '../../includes/functions/helpers.php';
 
 $studyCodes = [];
 
-try {
-    $db = new Database();
-    $conn = $db->connect();
-
-    if (!$conn) {
-        throw new Exception("Database connection failed");
+if (isset($_GET['id'])) {
+    $id = $_GET['id'];
+    $studyCode = executeAssocQuery("SELECT id, study_type, study_status, study_active_code, seq FROM study_status_codes WHERE id = ?", [$id]);
+    if ($studyCode) {
+        header('Content-Type: application/json');
+        echo json_encode($studyCode[0]);
+    } else {
+        http_response_code(404);
+        echo json_encode(['error' => 'Not found']);
     }
-
-     if (isset($_GET['id'])) {
-        $id = $_GET['id'];
-        $stmt = $conn->prepare("SELECT id, study_type, study_status, study_active_code, seq FROM study_status_codes WHERE id = ?");
-        $stmt->execute([$id]);
-        $studyCode = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($studyCode) {
-            header('Content-Type: application/json');
-            echo json_encode($studyCode);
-        } else {
-            http_response_code(404);
-            echo json_encode(['error' => 'Not found']);
-        }
-        exit;
-    }
-
-    // Fetch benefit options
-    $stmt = $conn->prepare("SELECT id, study_type, study_status, study_active_code, seq FROM study_status_codes ORDER BY id ASC");
-    $stmt->execute();
-    $studyCodes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-} catch (Exception $e) {
-    error_log("Error fetching study status codes: " . $e->getMessage());
+    exit;
 }
+
+// Fetch all study codes
+$studyCodes = executeAssocQuery("SELECT id, study_type, study_status, study_active_code, seq FROM study_status_codes ORDER BY id ASC");
 echo '<div class="table-responsive" style="height:300px;"><table class="table table-striped">';
 echo '<thead>
         <tr>

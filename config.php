@@ -26,7 +26,7 @@ define('BASE_PATH', dirname(__FILE__));
 
 // Database configuration
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'printag_db');
+define('DB_NAME', 'ug_irb_portal');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 

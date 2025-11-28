@@ -1,37 +1,21 @@
 <?php
-require_once '../../includes/config/database.php';
+require_once '../../includes/functions/helpers.php';
 
-try {
-    $db = new Database();
-    $conn = $db->connect();
-
-    if (!$conn) {
-        throw new Exception("Database connection failed");
+if (isset($_GET['id'])) {
+    $id = $_GET['id'];
+    $department = executeAssocQuery("SELECT id, department_name, address_line_1, address_line_2, site, department_id, city, state, zip FROM department_groups WHERE id = ?", [$id]);
+    if ($department) {
+        header('Content-Type: application/json');
+        echo json_encode($department[0]);
+    } else {
+        http_response_code(404);
+        echo json_encode(['error' => 'Not found']);
     }
-
-    if (isset($_GET['id'])) {
-        $id = $_GET['id'];
-        $stmt = $conn->prepare("SELECT id, department_name, address_line_1, address_line_2, site, department_id, city, state, zip FROM department_groups WHERE id = ?");
-        $stmt->execute([$id]);
-        $department = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($department) {
-            header('Content-Type: application/json');
-            echo json_encode($department);
-        } else {
-            http_response_code(404);
-            echo json_encode(['error' => 'Not found']);
-        }
-        exit;
-    }
-
-    // Fetch department options
-    $stmt = $conn->prepare("SELECT id, department_name, address_line_1, address_line_2, site, department_id, city, state, zip FROM department_groups ORDER BY id ASC");
-    $stmt->execute();
-    $departments = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-} catch (Exception $e) {
-    error_log("Error fetching departments: " . $e->getMessage());
+    exit;
 }
+
+// Fetch all departments
+$departments = executeAssocQuery("SELECT id, department_name, address_line_1, address_line_2, site, department_id, city, state, zip FROM department_groups ORDER BY id ASC");
 echo '<div class="table-responsive" style="height:300px;"><table class="table table-striped">';
 echo '<thead>
         <tr>

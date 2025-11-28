@@ -25,7 +25,7 @@ $recentActivities = getRecentActivities();
                         <div class="stats-number"><?php echo $activeStudies; ?></div>
                         <div class="stats-label">Active Studies</div>
                         <div class="stats-trend">
-                            <i class="fas fa-arrow-up"></i> +12% this month
+                            <i class="fas fa-arrow-up"></i> New open studies
                         </div>
                     </div>
                 </div>
@@ -57,7 +57,7 @@ $recentActivities = getRecentActivities();
                         <div class="stats-number"><?php echo $overdueActions; ?></div>
                         <div class="stats-label">Overdue Actions</div>
                         <div class="stats-trend">
-                            <i class="fas fa-arrow-down"></i> -5% from last week
+                            <i class="fas fa-arrow-down"></i> Due for review
                         </div>
                     </div>
                 </div>
@@ -168,7 +168,7 @@ $recentActivities = getRecentActivities();
                         $lastActivity = date('M j, Y', strtotime($activity['updated_at']));
                         echo "<tr>
        <td>{$activity['title']}</td>
-       <td>N/A</td> <!-- Placeholder, as PI not directly in studies table -->
+       <td>{$activity['pi']}</td> <!-- Placeholder, as PI not directly in studies table -->
        <td>{$statusBadge}</td>
        <td>{$lastActivity}</td>
        <td><button class='btn btn-sm btn-outline-primary'>View</button></td>

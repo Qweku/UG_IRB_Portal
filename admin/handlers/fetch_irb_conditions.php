@@ -1,24 +1,10 @@
-<?php 
-require_once '../../includes/config/database.php';
+<?php
+require_once '../../includes/functions/helpers.php';
 
 $irbConditions = [];
 
-try {
-    $db = new Database();
-    $conn = $db->connect();
-
-    if (!$conn) {
-        throw new Exception("Database connection failed");
-    }
-
-    // Fetch benefit options
-    $stmt = $conn->prepare("SELECT id, condition_name FROM irb_condition ORDER BY id ASC");
-    $stmt->execute();
-    $irbConditions = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-} catch (Exception $e) {
-    error_log("Error fetching condition name: " . $e->getMessage());
-}
+// Fetch all irb conditions
+$irbConditions = executeAssocQuery("SELECT id, condition_name FROM irb_condition ORDER BY id ASC");
 echo '<div class="table-responsive" style="height:300px;"><table class="table table-striped">';
 echo '<thead>
         <tr>

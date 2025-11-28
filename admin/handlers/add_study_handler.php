@@ -58,7 +58,7 @@ function processFormSubmission()
     $study_id = $is_edit ? (int)$_POST['study_id'] : null;
 
     // Sanitize and validate input data
-    $required_fields = ['study_number', 'ref_number', 'exp_date', 'protocol_title', 'sponsor', 'actv', 'dateReceived'];
+    $required_fields = ['study_number', 'ref_number', 'exp_date', 'protocol_title', 'sponsor', 'actv', 'date_received'];
     $data = [];
     $pi_names = [];
 
@@ -81,14 +81,14 @@ function processFormSubmission()
         'ior',
         'cRequired',
         'rcm',
-        'fir',
-        'origApp',
-        'lsbi',
-        'lir',
+        'first_irb_review',
+        'original_approval',
+        'last_seen_by_irb',
+        'last_irb_renewal',        
         'nos',
         'noc',
         'isoa',
-        'internalNotes'
+        'internal_notes'
     ];
 
     foreach ($optional_fields as $field) {
@@ -135,12 +135,12 @@ function processFormSubmission()
                 ':irb_of_record' => $data['ior'],
                 ':cr_required' => $data['cRequired'],
                 ':renewal_cycle' => $data['rcm'],
-                ':date_received' => $data['dateReceived'],
-                ':first_irb_review' => $data['fir'],
-                ':original_approval' => $data['origApp'],
-                ':last_seen_by_irb' => $data['lsbi'],
-                ':last_irb_renewal' => $data['lir'],
-                ':internal_notes' => $data['internalNotes'],
+                ':date_received' => $data['date_received'],
+                ':first_irb_review' => $data['first_irb_review'],
+                ':original_approval' => $data['original_approval'],
+                ':last_seen_by_irb' => $data['last_seen_by_irb'],
+                ':last_irb_renewal' => $data['last_irb_renewal'],
+                ':internal_notes' => $data['internal_notes'],
                 ':study_id' => $study_id
             ]);
 
@@ -201,28 +201,7 @@ function processFormSubmission()
 
             ]);
 
-            // Fetch meetings
-            $stmt = $conn->prepare("SELECT meeting_date FROM irb_meetings");
-            $stmt->execute();
-            $irbMeetings = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            // Today's date
-            $today = new DateTime();
-
-            // Variable to store the next meeting
-            $nextMeeting = null;
-
-            foreach ($irbMeetings as $meeting) {
-                $date = new DateTime($meeting['meeting_date']);
-
-                // If date is in the future
-                if ($date > $today) {
-                    // If not set yet or this date is earlier than the currently stored one
-                    if ($nextMeeting === null || $date < $nextMeeting) {
-                        $nextMeeting = $date;
-                    }
-                }
-            }
+            $nextMeeting = getNextMeetingDate();
 
             // Check if agenda item exists
             $stmt = $conn->prepare("SELECT id FROM agenda_items WHERE irb_number = ?");
@@ -238,9 +217,9 @@ function processFormSubmission()
 
                 $stmt->execute([
                     ':title' => $data['protocol_title'],
-                    ':renewal' => $data['lir'],
-                    ':review' => $data['lsbi'],
-                    ':meeting_date' => $nextMeeting ? $nextMeeting->format('Y-m-d') : null,
+                    ':renewal' => $data['last_irb_renewal'],
+                    ':review' => $data['last_seen_by_irb'],
+                    ':meeting_date' => $nextMeeting,
                     ':reference_number' => $data['ref_number'],
                     ':pi' => $pi_string,
                     ':id' => $agenda_id
@@ -257,36 +236,15 @@ function processFormSubmission()
                 $stmt->execute([
                     ':irb_number' => $data['study_number'],
                     ':title' => $data['protocol_title'],
-                    ':renewal' => $data['lir'],
-                    ':review' => $data['lsbi'],
-                    ':meeting_date' => $nextMeeting ? $nextMeeting->format('Y-m-d') : null,
+                    ':renewal' => $data['last_irb_renewal'],
+                    ':review' => $data['last_seen_by_irb'],
+                    ':meeting_date' => $nextMeeting,
                     ':reference_number' => $data['ref_number'],
                     ':pi' => $pi_string,
                 ]);
             }
         } else {
-            // Fetch meetings
-            $stmt = $conn->prepare("SELECT meeting_date FROM irb_meetings");
-            $stmt->execute();
-            $irbMeetings = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            // Today's date
-            $today = new DateTime();
-
-            // Variable to store the next meeting
-            $nextMeeting = null;
-
-            foreach ($irbMeetings as $meeting) {
-                $date = new DateTime($meeting['meeting_date']);
-
-                // If date is in the future
-                if ($date > $today) {
-                    // If not set yet or this date is earlier than the currently stored one
-                    if ($nextMeeting === null || $date < $nextMeeting) {
-                        $nextMeeting = $date;
-                    }
-                }
-            }
+            $nextMeeting = getNextMeetingDate();
             // Insert study
             $stmt = $conn->prepare("INSERT INTO studies (
                 protocol_number, ref_num, expiration_date, title, sponsor_displayname,
@@ -318,13 +276,13 @@ function processFormSubmission()
                 ':irb_of_record' => $data['ior'],
                 ':cr_required' => $data['cRequired'],
                 ':renewal_cycle' => $data['rcm'],
-                ':date_received' => $data['dateReceived'],
-                ':first_irb_review' => $data['fir'],
-                ':original_approval' => $data['origApp'],
-                ':last_seen_by_irb' => $data['lsbi'],
-                ':meeting_date' => $nextMeeting ? $nextMeeting->format('Y-m-d') : null,
-                ':last_irb_renewal' => $data['lir'],
-                ':internal_notes' => $data['internalNotes']
+                ':date_received' => $data['date_received'],
+                ':first_irb_review' => $data['first_irb_review'],
+                ':original_approval' => $data['original_approval'],
+                ':last_seen_by_irb' => $data['last_seen_by_irb'],
+                ':meeting_date' => $nextMeeting,
+                ':last_irb_renewal' => $data['last_irb_renewal'],
+                ':internal_notes' => $data['internal_notes']
             ]);
 
             $study_id = $conn->lastInsertId();
@@ -376,15 +334,6 @@ function processFormSubmission()
 
             $pi_string = implode(', ', $pi_names);
 
-            // // Fetch meetings
-           
-
-            // if ($nextMeeting) {
-            //     echo "Next meeting date: " . $nextMeeting->format("Y-m-d");
-            // } else {
-            //     echo "No upcoming meetings found";
-            // }
-
             // Insert into agenda items
             $stmt = $conn->prepare("INSERT INTO agenda_items (
                 irb_number, agenda_category, agenda_group, expedite, title,
@@ -398,7 +347,7 @@ function processFormSubmission()
                 ':title' => $data['protocol_title'],
                 ':renewal' => $data['lir'],
                 ':review' => $data['lsbi'],
-                ':meeting_date' => $nextMeeting ? $nextMeeting->format('Y-m-d') : null,
+                ':meeting_date' => $nextMeeting,
                 ':reference_number' => $data['ref_number'],
                 ':pi' => $pi_string,
             ]);
@@ -411,6 +360,76 @@ function processFormSubmission()
                 ':pi' => $pi_string,
                 ':study_id' => $study_id
             ]);
+        }
+
+        // Handle file uploads
+        if ($study_id && isset($_FILES['initialApplication'])) {
+            $uploadDir = '../../uploads/';
+            if (!is_dir($uploadDir)) {
+                if (!mkdir($uploadDir, 0755, true)) {
+                    throw new Exception("Failed to create upload directory: $uploadDir");
+                }
+            }
+            if (!is_writable($uploadDir)) {
+                throw new Exception("Upload directory is not writable: $uploadDir");
+            }
+            $files = $_FILES['initialApplication'];
+            $file_count = count($files['name']);
+            for ($i = 0; $i < $file_count; $i++) {
+                if ($files['error'][$i] === UPLOAD_ERR_OK) {
+                    $fileName = basename($files['name'][$i]);
+                    $filePath = $uploadDir . uniqid() . '_' . $fileName;
+                    if (move_uploaded_file($files['tmp_name'][$i], $filePath)) {
+                        $comment = isset($_POST['file_comments'][$i]) ? trim($_POST['file_comments'][$i]) : '';
+                        $exclude = isset($_POST['dont_include'][$i]) ? 1 : 0;
+                        $stmt = $conn->prepare("INSERT INTO documents (study_id, document_type, file_name, file_path, comments, uploaded_at, exclude_from_agenda) VALUES (?, 'initial_application', ?, ?, ?, NOW(), ?)");
+                        if (!$stmt->execute([$study_id, $fileName, $filePath, $comment, $exclude])) {
+                            throw new Exception("Failed to insert document record for file: $fileName");
+                        }
+                    } else {
+                        throw new Exception("Failed to move uploaded file: $fileName");
+                    }
+                } else {
+                    $uploadError = $files['error'][$i];
+                    $message = "Upload error for file " . ($i + 1) . ": ";
+                    switch ($uploadError) {
+                        case UPLOAD_ERR_INI_SIZE:
+                            $message .= "The uploaded file exceeds the maximum allowed size.";
+                            break;
+                        case UPLOAD_ERR_FORM_SIZE:
+                            $message .= "The uploaded file exceeds the form's maximum file size limit.";
+                            break;
+                        case UPLOAD_ERR_PARTIAL:
+                            $message .= "The file was only partially uploaded.";
+                            break;
+                        case UPLOAD_ERR_NO_FILE:
+                            $message .= "No file was uploaded.";
+                            break;
+                        case UPLOAD_ERR_NO_TMP_DIR:
+                            $message .= "Missing temporary folder.";
+                            break;
+                        case UPLOAD_ERR_CANT_WRITE:
+                            $message .= "Failed to write file to disk.";
+                            break;
+                        case UPLOAD_ERR_EXTENSION:
+                            $message .= "File upload stopped by a PHP extension.";
+                            break;
+                        default:
+                            $message .= "Unknown upload error (code: $uploadError).";
+                            break;
+                    }
+                    throw new Exception($message);
+                }
+            }
+        }
+
+        // Update exclude_from_agenda for existing documents during edit
+        if ($is_edit && isset($_POST['exclude_from_agenda'])) {
+            foreach ($_POST['exclude_from_agenda'] as $doc_id => $value) {
+                $exclude = $value ? 1 : 0;
+                $stmt = $conn->prepare("UPDATE documents SET exclude_from_agenda = ? WHERE id = ?");
+                $stmt->execute([$exclude, $doc_id]);
+            }
         }
 
         $conn->commit();

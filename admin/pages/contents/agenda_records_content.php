@@ -5,42 +5,20 @@ $meeting_date = isset($_GET['meeting_date']) ? trim($_GET['meeting_date']) : (is
 $agenda_type = isset($_GET['type']) ? trim($_GET['type']) : null;
 $filteredMeeting = [];
 
-    error_log("MEETING DATE: " . $meeting_date);
-// function getFilteredMeetings($meeting_date, $agenda_type)
-// {
-// try {
-    $db = new Database();
+// Filter meetings by date
+$db = new Database();
+$conn = $db->connect();
 
-    $conn = $db->connect();
-
-    if (!$conn) {
-        throw new Exception("Database connection failed");
-    }
-
+if ($conn) {
     $query = "SELECT a.agenda_group, a.pi, a.title, a.reference_number, s.protocol_number
-                    AS study_number FROM agenda_items a LEFT JOIN studies s
-                    ON a.reference_number = s.ref_num WHERE a.meeting_date = ?";
-    $params = [$meeting_date];
-    // if ($agenda_type) {
-    //     $query .= " AND a.agenda_type = ?";
-    //     $params[] = $agenda_type;
-    // }
+                        AS study_number FROM agenda_items a LEFT JOIN studies s
+                        ON a.reference_number = s.ref_num WHERE a.meeting_date = ?";
     $stmt = $conn->prepare($query);
-    $stmt->execute($params);
-    $filteredMeeting =  $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    error_log("FILTERED AGENDA: " . $stmt->fetchAll(PDO::FETCH_ASSOC));
-
-//     //
-
-// } catch (PDOException $e) {
-//     $conn->rollBack();
-//     error_log("Database error: " . $e->getMessage());
-//     echo json_encode(['status' => 'error', 'message' => 'Failed to fetch agenda. Please try again.']);
-// }
-// }
-
-// $filteredMeeting = getFilteredMeetings($meeting_date, $agenda_type);
+    $stmt->execute([$meeting_date]);
+    $filteredMeeting = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} else {
+    $filteredMeeting = [];
+}
 
 ?>
 
@@ -86,6 +64,12 @@ $filteredMeeting = [];
                                 <td><?php echo htmlspecialchars($agenda['agenda_heading'] ?? '') ?></td>
                                 </tr>
                             <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-3">
+                                    No agenda added yet
+                                </td>
+                            </tr>
                         <?php endif; ?>
                 </tbody>
             </table>
@@ -93,7 +77,7 @@ $filteredMeeting = [];
     </div>
 
     <!-- Navigation & Filters -->
-    <div class="row mb-4">
+    <!-- <div class="row mb-4">
         <div class="col-md-8">
             <div class="navigation-section">
                 <nav aria-label="Meeting navigation">
@@ -167,9 +151,10 @@ $filteredMeeting = [];
                 });
             });
         </script>
-    </div>
+    </div> -->
 
     <!-- Submissions Section -->
+     <?php if (!empty($agendaRecords)): ?>
     <div class="card main-content-card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
             <div>
@@ -232,8 +217,10 @@ $filteredMeeting = [];
             </div>
         </div>
     </div>
+    <?php endif; ?>
 
     <!-- Supporting Documents Section -->
+     <?php if (!empty($agendaRecords)): ?>
     <div class="row">
         <div class="col-md-8">
             <div class="card documents-card">
@@ -321,4 +308,5 @@ $filteredMeeting = [];
             </div>
         </div>
     </div>
+    <?php endif; ?>
 </div>

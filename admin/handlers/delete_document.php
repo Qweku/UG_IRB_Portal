@@ -5,17 +5,12 @@ header('Content-Type: application/json');
 
 $data = json_decode(file_get_contents('php://input'), true);
 
-if (!$data || !isset($data['site_name'])) {
+if (!$data || !isset($data['id'])) {
     echo json_encode(['success' => false, 'message' => 'Invalid data']);
     exit;
 }
 
-$site_name = trim($data['site_name']);
-
-if (empty($site_name)) {
-    echo json_encode(['success' => false, 'message' => 'Site name cannot be empty']);
-    exit;
-}
+$id = $data['id'];
 
 try {
     $db = new Database();
@@ -25,17 +20,17 @@ try {
         throw new Exception("Database connection failed");
     }
 
-    $stmt = $conn->prepare("INSERT INTO sites (site_name) VALUES (?)");
-    $stmt->execute([$site_name]);
+    $stmt = $conn->prepare("DELETE FROM documents WHERE id = ?");
+    $stmt->execute([$id]);
 
     if ($stmt->rowCount() > 0) {
         echo json_encode(['success' => true]);
     } else {
-        echo json_encode(['success' => false, 'message' => 'Failed to add site']);
+        echo json_encode(['success' => false, 'message' => 'Record not found']);
     }
 
 } catch (Exception $e) {
-    error_log("Error adding site: " . $e->getMessage());
+    error_log("Error deleting document: " . $e->getMessage());
     echo json_encode(['success' => false, 'message' => 'Database error']);
 }
 ?>

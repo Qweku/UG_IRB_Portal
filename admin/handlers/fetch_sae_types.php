@@ -1,39 +1,23 @@
-<?php 
-require_once '../../includes/config/database.php';
+<?php
+require_once '../../includes/functions/helpers.php';
 
 $saeTypes = [];
 
-try {
-    $db = new Database();
-    $conn = $db->connect();
-
-    if (!$conn) {
-        throw new Exception("Database connection failed");
+if (isset($_GET['id'])) {
+    $id = $_GET['id'];
+    $saeType = executeAssocQuery("SELECT id, event_type, notify_irb FROM sae_event_types WHERE id = ?", [$id]);
+    if ($saeType) {
+        header('Content-Type: application/json');
+        echo json_encode($saeType[0]);
+    } else {
+        http_response_code(404);
+        echo json_encode(['error' => 'Not found']);
     }
-
-     if (isset($_GET['id'])) {
-        $id = $_GET['id'];
-        $stmt = $conn->prepare("SELECT id, event_type, notify_irb FROM sae_event_types WHERE id = ?");
-        $stmt->execute([$id]);
-        $saeType = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($saeType) {
-            header('Content-Type: application/json');
-            echo json_encode($saeType);
-        } else {
-            http_response_code(404);
-            echo json_encode(['error' => 'Not found']);
-        }
-        exit;
-    }
-
-    // Fetch benefit options
-    $stmt = $conn->prepare("SELECT id, event_type, notify_irb FROM sae_event_types ORDER BY id ASC");
-    $stmt->execute();
-    $saeTypes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-} catch (Exception $e) {
-    error_log("Error fetching sae event types: " . $e->getMessage());
+    exit;
 }
+
+// Fetch all sae types
+$saeTypes = executeAssocQuery("SELECT id, event_type, notify_irb FROM sae_event_types ORDER BY id ASC");
 echo '<div class="table-responsive" style="height:300px;"><table class="table table-striped">';
 echo '<thead>
         <tr>

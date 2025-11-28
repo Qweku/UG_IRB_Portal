@@ -264,7 +264,7 @@ $activeCodes = getActiveCodes();
                         <i class="fas fa-building me-2 text-primary"></i>
                         Entities
                     </h5>
-                    <span class="badge bg-primary">2 Items</span>
+                    <span class="badge bg-primary">1 Items</span>
                 </div>
                 <div class="card-body">
                     <div class="admin-list">
@@ -278,7 +278,7 @@ $activeCodes = getActiveCodes();
                             </div>
                             <a href="/contacts" class="btn btn-sm btn-outline-primary">Manage</a>
                         </div>
-                        <div class="admin-list-item">
+                        <!-- <div class="admin-list-item">
                             <div class="admin-icon">
                                 <i class="fas fa-id-card"></i>
                             </div>
@@ -287,7 +287,7 @@ $activeCodes = getActiveCodes();
                                 <p class="text-muted mb-0">License configuration and renewal</p>
                             </div>
                             <button class="btn btn-sm btn-outline-primary">Configure</button>
-                        </div>
+                        </div> -->
                     </div>
                 </div>
             </div>
@@ -303,7 +303,7 @@ $activeCodes = getActiveCodes();
                 </div>
                 <div class="card-body">
                     <div class="admin-list">
-                        <div class="admin-list-item">
+                        <!-- <div class="admin-list-item">
                             <div class="admin-icon">
                                 <i class="fas fa-crown text-warning"></i>
                             </div>
@@ -312,7 +312,7 @@ $activeCodes = getActiveCodes();
                                 <p class="text-muted mb-0">Access advanced features and analytics</p>
                             </div>
                             <button class="btn btn-sm btn-warning">Upgrade</button>
-                        </div>
+                        </div> -->
                         <div class="admin-list-item">
                             <div class="admin-icon">
                                 <i class="fas fa-info-circle"></i>
@@ -938,6 +938,7 @@ document.getElementById('saveEditBtn').addEventListener('click', function() {
         headers: {
             'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify(formData)
     })
     .then(response => response.json())
@@ -976,6 +977,7 @@ document.getElementById('deleteBtn').addEventListener('click', function() {
         headers: {
             'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({ id: window.currentDeleteId })
     })
     .then(response => response.json())

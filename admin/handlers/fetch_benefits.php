@@ -1,24 +1,10 @@
-<?php 
-require_once '../../includes/config/database.php';
+<?php
+require_once '../../includes/functions/helpers.php';
 
 $benefits = [];
 
-try {
-    $db = new Database();
-    $conn = $db->connect();
-
-    if (!$conn) {
-        throw new Exception("Database connection failed");
-    }
-
-    // Fetch benefit options
-    $stmt = $conn->prepare("SELECT id, benefit_type FROM benefits ORDER BY id ASC");
-    $stmt->execute();
-    $benefits = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-} catch (Exception $e) {
-    error_log("Error fetching benefits: " . $e->getMessage());
-}
+// Fetch all benefits
+$benefits = executeAssocQuery("SELECT id, benefit_type FROM benefits ORDER BY id ASC");
 echo '<div class="table-responsive" style="height:300px;"><table class="table table-striped">';
 echo '<thead><tr><th>Name</th><th>Actions</th></tr></thead><tbody>';
 foreach ( $benefits as $row) {

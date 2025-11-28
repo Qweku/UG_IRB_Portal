@@ -5,17 +5,12 @@ header('Content-Type: application/json');
 
 $data = json_decode(file_get_contents('php://input'), true);
 
-if (!$data || !isset($data['condition_name'])) {
+if (!$data || !isset($data['id'])) {
     echo json_encode(['success' => false, 'message' => 'Invalid data']);
     exit;
 }
 
-$condition_name = trim($data['condition_name']);
-
-if (empty($condition_name)) {
-    echo json_encode(['success' => false, 'message' => 'Condition name cannot be empty']);
-    exit;
-}
+$id = $data['id'];
 
 try {
     $db = new Database();
@@ -25,17 +20,17 @@ try {
         throw new Exception("Database connection failed");
     }
 
-    $stmt = $conn->prepare("INSERT INTO irb_condition (condition_name) VALUES (?)");
-    $stmt->execute([$condition_name]);
+    $stmt = $conn->prepare("DELETE FROM expedited_codes WHERE id = ?");
+    $stmt->execute([$id]);
 
     if ($stmt->rowCount() > 0) {
         echo json_encode(['success' => true]);
     } else {
-        echo json_encode(['success' => false, 'message' => 'Failed to add IRB condition']);
+        echo json_encode(['success' => false, 'message' => 'Record not found']);
     }
 
 } catch (Exception $e) {
-    error_log("Error adding irb condition: " . $e->getMessage());
+    error_log("Error deleting expedited: " . $e->getMessage());
     echo json_encode(['success' => false, 'message' => 'Database error']);
 }
 ?>

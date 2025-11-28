@@ -166,7 +166,6 @@
                     </thead>
                     <tbody>
                         <?php
-                        // require_once '../database/db_functions.php';
                         $recentReports = getRecentReports();
                         if (empty($recentReports)) {
                             // Fallback to static data if no DB data

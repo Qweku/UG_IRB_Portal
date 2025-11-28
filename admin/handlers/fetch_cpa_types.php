@@ -1,39 +1,23 @@
-<?php 
-require_once '../../includes/config/database.php';
+<?php
+require_once '../../includes/functions/helpers.php';
 
 $cpaTypes = [];
 
-try {
-    $db = new Database();
-    $conn = $db->connect();
-
-    if (!$conn) {
-        throw new Exception("Database connection failed");
+if (isset($_GET['id'])) {
+    $id = $_GET['id'];
+    $cpaType = executeAssocQuery("SELECT id, type_name, category, agenda FROM cpa_types WHERE id = ?", [$id]);
+    if ($cpaType) {
+        header('Content-Type: application/json');
+        echo json_encode($cpaType[0]);
+    } else {
+        http_response_code(404);
+        echo json_encode(['error' => 'Not found']);
     }
-
-    if (isset($_GET['id'])) {
-        $id = $_GET['id'];
-        $stmt = $conn->prepare("SELECT id, type_name, category, agenda FROM cpa_types WHERE id = ?");
-        $stmt->execute([$id]);
-        $cpaType = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($cpaType) {
-            header('Content-Type: application/json');
-            echo json_encode($cpaType);
-        } else {
-            http_response_code(404);
-            echo json_encode(['error' => 'Not found']);
-        }
-        exit;
-    }
-
-    // Fetch benefit options
-    $stmt = $conn->prepare("SELECT id, type_name, category, agenda FROM cpa_types ORDER BY id ASC");
-    $stmt->execute();
-    $cpaTypes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-} catch (Exception $e) {
-    error_log("Error fetching cpa types: " . $e->getMessage());
+    exit;
 }
+
+// Fetch all cpa types
+$cpaTypes = executeAssocQuery("SELECT id, type_name, category, agenda FROM cpa_types ORDER BY id ASC");
 echo '<div class="table-responsive" style="height:300px;"><table class="table table-striped">';
 echo '<thead>
         <tr>

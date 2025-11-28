@@ -58,12 +58,96 @@ try {
         </div>
     </div>
 
+    <!-- Actions Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0 fw-bold">Actions</h6>
+                </div>
+                <div class="card-body">
+                    <!-- Initial Application Section -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+
+                            <input type="checkbox">
+                            <label class="form-label fw-semibold">Print Report Date</label>
+                        </div>
+
+                        <div class="col-md-3">
+                            <input type="checkbox">
+                            <label class="form-label fw-semibold">Print Sites</label>
+                        </div>
+
+                        <div class="col-md-3">
+
+                            <input type="checkbox">
+                            <label class="form-label fw-semibold">Print Co-Investigators</label>
+                        </div>
+
+                        <div class="col-md-3">
+
+                            <input type="checkbox">
+                            <label class="form-label fw-semibold">Print Item Numbers</label>
+                        </div>
+                    </div>
+
+                   
+
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <button class="btn btn-primary btn-md">
+                                <i class="fas fa-eye me-1"></i>Preview (Large fonts)
+                            </button>
+                        </div>
+
+                        <div class="col-md-3">
+                            <button class="btn btn-primary btn-md">
+                                <i class="fas fa-eye me-1"></i>Preview (Small fonts)
+                            </button>
+                        </div>
+
+                         <div class="col-md-3">
+                            <button class="btn btn-primary btn-md">
+                                <i class="fas fa-download me-1"></i>Download PDF (Large fonts)
+                            </button>
+                        </div>
+
+                        <div class="col-md-3">
+                            <button class="btn btn-primary btn-md">
+                                <i class="fas fa-dowload me-1"></i>Download PDF (Small fonts)
+                            </button>
+                        </div>
+                    </div>
+
+                
+
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <button class="btn btn-primary btn-md">
+                                <i class="fas fa-download me-1"></i>Download Word (Large fonts)
+                            </button>
+                        </div>
+
+                        <div class="col-md-3">
+                            <button class="btn btn-primary btn-md">
+                                <i class="fas fa-download me-1"></i>Download Word (Small fonts)
+                            </button>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Form Content -->
     <form class="needs-validation" id="agendaForm">
         <div class="main-content">
             <!-- Study Header Section -->
             <div class="row mb-4">
-                <div class="col-12">
+                <div class="col-md-12">
                     <div class="card">
                         <div class="card-header bg-light">
                             <div class="d-flex justify-content-between align-items-center">
@@ -97,11 +181,12 @@ try {
                         </div>
                     </div>
                 </div>
+
             </div>
 
-            <!-- IRB Member Section -->
             <div class="row mb-4">
-                <div class="col-12">
+                <!-- IRB Member Section -->
+                <div class="col-md-6">
                     <div class="card">
                         <div class="card-header bg-light d-flex justify-content-between align-items-center">
                             <h6 class="mb-0 fw-bold">IRB Members Section</h6>
@@ -124,14 +209,9 @@ try {
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td>-- No personnel added --</td>
-                                            <td>
-                                                <input type="checkbox">
+                                            <td colspan="5" class="text-center text-muted py-3">
+                                                -- No member added yet --
                                             </td>
-                                            <td>-</td>
-                                            <td>-</td>
-
-
                                         </tr>
                                     </tbody>
                                 </table>
@@ -159,11 +239,10 @@ try {
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Agenda Details Section -->
-            <div class="row mb-4">
-                <div class="col-md-12">
+
+                <!-- Agenda Details Section -->
+                <div class="col-md-6">
                     <div class="card">
                         <div class="card-header bg-light">
                             <h6 class="mb-0 fw-bold">Agenda Detials</h6>
@@ -217,98 +296,14 @@ try {
                         </div>
                     </div>
                 </div>
-
-
             </div>
 
 
 
-            <!-- Actions Section -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header bg-light">
-                            <h6 class="mb-0 fw-bold">Actions</h6>
-                        </div>
-                        <div class="card-body">
-                            <!-- Initial Application Section -->
-                            <div class="row mb-4">
-                                <div class="col-md-6">
 
-                                    <input type="checkbox">
-                                    <label class="form-label fw-semibold">Print Report Date</label>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <input type="checkbox">
-                                    <label class="form-label fw-semibold">Print Sites</label>
-                                </div>
-                            </div>
-
-                            <div class="row mb-4">
-                                <div class="col-md-6">
-
-                                    <input type="checkbox">
-                                    <label class="form-label fw-semibold">Print Co-Investigators</label>
-                                </div>
-
-                                <div class="col-md-6">
-
-                                    <input type="checkbox">
-                                    <label class="form-label fw-semibold">Print Item Numbers</label>
-                                </div>
-                            </div>
-
-                            <div class="row mb-4">
-                                <div class="col-md-6">
-                                    <button class="btn btn-primary btn-md">
-                                        <i class="fas fa-eye me-1"></i>Preview (Large fonts)
-                                    </button>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <button class="btn btn-primary btn-md">
-                                        <i class="fas fa-eye me-1"></i>Preview (Small fonts)
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="row mb-4">
-                                <div class="col-md-6">
-                                    <button class="btn btn-primary btn-md">
-                                        <i class="fas fa-download me-1"></i>Download PDF (Large fonts)
-                                    </button>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <button class="btn btn-primary btn-md">
-                                        <i class="fas fa-dowload me-1"></i>Download PDF (Small fonts)
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="row mb-4">
-                                <div class="col-md-6">
-                                    <button class="btn btn-primary btn-md">
-                                        <i class="fas fa-download me-1"></i>Download Word (Large fonts)
-                                    </button>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <button class="btn btn-primary btn-md">
-                                        <i class="fas fa-download me-1"></i>Download Word (Small fonts)
-                                    </button>
-                                </div>
-                            </div>
-
-
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
-        <div>
+        <div class="d-flex justify-content-end">
             <button type="submit" class="btn btn-success me-2">
                 <i class="fas fa-save me-1"></i> Save Agenda
             </button>
@@ -451,7 +446,6 @@ try {
                 showToast('error', result.message);
             }
         } catch (error) {
-            // console.log('Error:', error);
             showToast('error', 'An unexpected error occurred.');
         }
     });

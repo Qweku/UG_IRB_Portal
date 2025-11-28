@@ -1,39 +1,23 @@
-<?php 
-require_once '../../includes/config/database.php';
+<?php
+require_once '../../includes/functions/helpers.php';
 
 $cpaActions = [];
 
-try {
-    $db = new Database();
-    $conn = $db->connect();
-
-    if (!$conn) {
-        throw new Exception("Database connection failed");
+if (isset($_GET['id'])) {
+    $id = $_GET['id'];
+    $cpaAction = executeAssocQuery("SELECT id, cpa_action, study_status, sort_sequence FROM cpa_action_codes WHERE id = ?", [$id]);
+    if ($cpaAction) {
+        header('Content-Type: application/json');
+        echo json_encode($cpaAction[0]);
+    } else {
+        http_response_code(404);
+        echo json_encode(['error' => 'Not found']);
     }
-
-     if (isset($_GET['id'])) {
-        $id = $_GET['id'];
-        $stmt = $conn->prepare("SELECT id, cpa_action, study_status, sort_sequence FROM cpa_action_codes WHERE id = ?");
-        $stmt->execute([$id]);
-        $cpaAction = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($cpaAction) {
-            header('Content-Type: application/json');
-            echo json_encode($cpaAction);
-        } else {
-            http_response_code(404);
-            echo json_encode(['error' => 'Not found']);
-        }
-        exit;
-    }
-
-    // Fetch benefit options
-    $stmt = $conn->prepare("SELECT id, cpa_action, study_status, sort_sequence FROM cpa_action_codes ORDER BY id ASC");
-    $stmt->execute();
-    $cpaActions = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-} catch (Exception $e) {
-    error_log("Error fetching cap action codes: " . $e->getMessage());
+    exit;
 }
+
+// Fetch all cpa actions
+$cpaActions = executeAssocQuery("SELECT id, cpa_action, study_status, sort_sequence FROM cpa_action_codes ORDER BY id ASC");
 echo '<div class="table-responsive" style="height:300px;"><table class="table table-striped">';
 echo '<thead>
         <tr>

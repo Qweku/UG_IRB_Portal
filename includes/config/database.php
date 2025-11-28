@@ -1,10 +1,19 @@
 <?php
 class Database {
-    private $host = 'localhost';
-    private $db_name = 'ug_irb_portal';
-    private $username = 'root';
-    private $password = '';
+    private $host;
+    private $db_name;
+    private $username;
+    private $password;
     private $conn;
+
+    public function __construct() {
+        require_once __DIR__ . "/../../config.php";
+
+        $this->host = DB_HOST;
+        $this->db_name = DB_NAME;
+        $this->username = DB_USER;
+        $this->password = DB_PASS;
+    }
 
     public function connect() {
         $this->conn = null;
@@ -16,7 +25,7 @@ class Database {
             );
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch(PDOException $e) {
-            echo "Connection Error: " . $e->getMessage();
+            error_log("Database connection error: " . $e->getMessage());
         }
         return $this->conn;
     }

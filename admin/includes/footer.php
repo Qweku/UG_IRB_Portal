@@ -1,14 +1,5 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-      console.log('Bootstrap JS loaded');
-      // Test if Bootstrap is available
-      if (typeof bootstrap !== 'undefined') {
-          console.log('Bootstrap is available');
-      } else {
-          console.error('Bootstrap is not available');
-      }
-  </script>
-  <script>
       // Generic Menu System for IRB Portal
       class MenuSystem {
           constructor() {
@@ -41,7 +32,6 @@
               const accordionButtons = document.querySelectorAll('.accordion-button');
               accordionButtons.forEach(button => {
                   button.addEventListener('click', (e) => {
-                      console.log('Accordion button clicked:', button);
                       // Let Bootstrap handle the accordion toggle naturally
                   });
               });
@@ -49,14 +39,10 @@
               // Sidebar toggle button (mobile)
               const sidebarToggle = document.querySelector('[data-bs-toggle="collapse"][data-bs-target="#sidebar"]');
               if (sidebarToggle) {
-                  console.log('Sidebar toggle button found:', sidebarToggle);
                   sidebarToggle.addEventListener('click', (e) => {
-                      console.log('Sidebar toggle clicked');
                       e.preventDefault(); // Prevent default Bootstrap behavior
                       this.handleSidebarToggle();
                   });
-              } else {
-                  console.log('Sidebar toggle button not found');
               }
 
               // Sidebar toggle handled by Bootstrap data API; no manual binding required
@@ -200,10 +186,8 @@
 
       // Initialize the menu system when DOM is loaded
       document.addEventListener('DOMContentLoaded', function() {
-          console.log('DOM loaded, initializing MenuSystem');
           try {
               window.menuSystem = new MenuSystem();
-              console.log('MenuSystem initialized successfully');
           } catch (error) {
               console.error('Error initializing MenuSystem:', error);
           }

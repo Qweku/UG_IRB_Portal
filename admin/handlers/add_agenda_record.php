@@ -1,5 +1,5 @@
 <?php
-require_once '../../includes/config/database.php';
+require_once '../../includes/functions/helpers.php';
 header('Content-Type: application/json');
 
 $chair_person = '';
@@ -34,28 +34,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         $conn->beginTransaction();
 
-        // Fetch meetings
-            $stmt = $conn->prepare("SELECT meeting_date FROM irb_meetings");
-            $stmt->execute();
-            $irbMeetings = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            // Today's date
-            $today = new DateTime();
-
-            // Variable to store the next meeting
-            $nextMeeting = null;
-
-            foreach ($irbMeetings as $meeting) {
-                $date = new DateTime($meeting['meeting_date']);
-
-                // If date is in the future
-                if ($date > $today) {
-                    // If not set yet or this date is earlier than the currently stored one
-                    if ($nextMeeting === null || $date < $nextMeeting) {
-                        $nextMeeting = $date;
-                    }
-                }
-            }
+        $nextMeeting = getNextMeetingDate();
         
          $stmt = $conn->prepare("INSERT INTO agenda_records (chair_person, meeting_date, preparer, preparer_title, guests, 
          education, agenda_time, agenda_location, agenda_heading, old_business, new_business, additional_heading, additional_remarks)
@@ -63,8 +42,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
          :education, :agenda_time, :agenda_location, :agenda_heading, :old_business, :new_business, :additional_heading, :additional_remarks) ");
 
          $stmt->execute([
-                    ':chair_person' => $data['chair_person'],                    
-                    ':meeting_date' => $nextMeeting ? $nextMeeting->format('Y-m-d') : null,
+                   ':chair_person' => $data['chair_person'],
+                   ':meeting_date' => $nextMeeting,
                     ':preparer' => $data['preparer'],
                     ':preparer_title' => $data['preparer_title'],
                     ':guests' => $data['guests'],

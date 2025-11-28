@@ -1,5 +1,18 @@
 <?php
 
+
+// Define session lifetime (same as your ini settings)
+$session_lifetime = ini_get('session.gc_maxlifetime');
+
+// Store expiration time in session
+if (!isset($_SESSION['session_expire_time'])) {
+    $_SESSION['session_expire_time'] = time() + $session_lifetime;
+}
+
+error_log("SESSION MAX LIFE: ". $session_lifetime);
+
+// Calculate time remaining
+$time_remaining = $_SESSION['session_expire_time'] - time();
 // session_start();
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header('Location: login');
@@ -193,16 +206,35 @@ $meetingDates = getMeetingDates();
     </div>
 </div>
 
+<div class="modal fade" id="sessionTimeoutModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-center">
+                <div class="modal-header bg-danger text-light">
+                    <h5 class="modal-title">⚠️ Session Expiring Soon</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Your session will expire in <span id="countdown">120</span> seconds.</p>
+                    <p>Would you like to stay logged in?</p>
+                    <button id="stayLoggedIn" class="btn btn-success me-2">Stay Logged In</button>
+                    <button id="logoutNow" class="btn btn-danger">Logout</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
 
 <script>
+     window.sessionTimeout = <?php echo $time_remaining; ?>;
+
+
     const postIrbOkBtn = document.getElementById('postIrbOkBtn');
     postIrbOkBtn.addEventListener('click', () => {
         const target = postIrbOkBtn.getAttribute('data-target');
         const menuSystem = new MenuSystem();
         menuSystem.showContent(target);
 
-         const selectedDateInput = document.querySelector('input[name="meetingDate"]:checked');
+        const selectedDateInput = document.querySelector('input[name="meetingDate"]:checked');
         if (!selectedDateInput) {
             alert("Please select a meeting date.");
             return;
@@ -210,23 +242,23 @@ $meetingDates = getMeetingDates();
 
         const newMeetingDate = selectedDateInput.value;
 
-         loadAgendaMeetings(newMeetingDate);
+        loadAgendaMeetings(newMeetingDate);
     });
 
     function loadAgendaMeetings(meeting_date) {
-    fetch("/admin/handlers/fetch_agenda_meetings.php?meeting_date=" + meeting_date)
-        .then(res => res.json())
-        .then(data => {
+        fetch("/admin/handlers/fetch_agenda_meetings.php?meeting_date=" + meeting_date)
+            .then(res => res.json())
+            .then(data => {
 
-            if (data.error) {
-                alert("Error: " + data.error);
-                return;
-            }
+                if (data.error) {
+                    alert("Error: " + data.error);
+                    return;
+                }
 
-            let rowsHTML = "";
+                let rowsHTML = "";
 
-            data.forEach(item => {
-                rowsHTML += `
+                data.forEach(item => {
+                    rowsHTML += `
                     <tr class="meeting-row" data-id="${item.id}">
                         <td>${item.id}</td>
                         <td>${item.irb_number}</td>
@@ -238,15 +270,235 @@ $meetingDates = getMeetingDates();
                         <td>${item.reference_number}</td>
                     </tr>
                 `;
+                });
+
+                document.getElementById("postMeetingRow").innerHTML = rowsHTML;
+
+                const rows = document.querySelectorAll(".meeting-row");
+
+                // Attach click event to each row
+                rows.forEach(row => {
+                    row.addEventListener("click", function() {
+
+                        const id = this.dataset.id;
+
+                        // Remove active class from all rows
+                        const allRows = document.querySelectorAll(".meeting-row");
+                        allRows.forEach(r => r.classList.remove("active"));
+
+                        // Add active class to clicked row
+                        this.classList.add("active");
+
+                        loadAgendaDetails(id);
+                    });
+                });
+
+                if (rows.length > 0) {
+                    const firstRow = rows[0];
+                    firstRow.classList.add("active"); // highlight
+                    const firstId = firstRow.dataset.id;
+
+                    loadAgendaDetails(firstId); // load first item
+                }
+
+            })
+            .catch(err => {
+                alert("Request Failed");
+                console.log(err);
             });
+    }
 
-            document.getElementById("postMeetingRow").innerHTML = rowsHTML;
 
-        })
-        .catch(err => {
-            alert("Request Failed");
-            console.log(err);
-        });
-}
+    function formatReviewType(str) {
+        return str.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
 
+    // Function that loads the details (so we don't repeat code)
+    function loadAgendaDetails(id) {
+        fetch("/admin/handlers/fetch_agenda_details.php?id=" + id)
+            .then(res => res.json())
+            .then(data => {
+
+                if (data.error) {
+                    alert("Error: " + data.error);
+                    return;
+                }
+
+                document.getElementById("studyContent").innerHTML = `
+                <div class="row mb-4">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0 fw-bold">Study Information</h6>
+                        </div>
+                        <div class="card-body">
+                           
+                                <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <strong class="text-muted d-block">PI</strong>
+                                    <span>${data.pi}</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong class="text-muted d-block">Source Number</strong>
+                                    <span>${data.irb_number}</span>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <strong class="text-muted d-block">Agenda Group</strong>
+                                    <span>${data.agenda_group}</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong class="text-muted d-block">RefNum</strong>
+                                    <span>${data.reference_number}</span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <strong class="text-muted d-block">Protocol Title</strong>
+                                    <p class="mb-0">${data.title}</p>
+                                </div>
+                            </div>
+                           
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0 fw-bold">Meeting Details</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <strong class="text-muted d-block">Meeting Date</strong>
+                                <span>${data.meeting_date}</span>
+                            </div>
+                            
+                            <div>
+                                <strong class="text-muted d-block">Internal Number</strong>
+                                <span>${data.internal_number}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Protocol Details -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0 fw-bold">Protocol Details</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">Principal Investigator</strong>
+                                    <span>${data.pi}</span>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">Review Cycle</strong>
+                                    <span>${data.renewal_cycle}</span>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">Exp. Date</strong>
+                                    <span>${data.expiration_date}</span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">Date Received</strong>
+                                    <span>${data.date_received}</span>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">First IRB Review</strong>
+                                    <span>${data.first_irb_review}</span>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">Original Approval</strong>
+                                    <span>${data.approval_date}</span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">Last Review by IRB</strong>
+                                    <span>${data.last_irb_review}</span>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">Last IRB Renewal</strong>
+                                    <span>${data.last_renewal_date}</span>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <strong class="text-muted d-block">Study Status</strong>
+                                    <span class="badge bg-success">${data.study_status}</span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <strong class="text-muted d-block">Type</strong>
+                                    <span class="badge bg-primary">${formatReviewType(data.review_type)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            `;
+
+            })
+            .catch(err => {
+                alert("Request Failed");
+                console.log(err);
+            });
+    }
 </script>
+
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const sessionDuration = window.sessionTimeout * 1000; // Convert to ms
+            const warningBefore = 60 * 1000; // Show modal 2 minutes before expiry
+
+            // Show modal 2 mins before session ends
+            const warningTimer = setTimeout(() => {
+                const modal = new bootstrap.Modal(document.getElementById('sessionTimeoutModal'));
+                modal.show();
+
+                let remaining = 60; // countdown seconds
+                const countdown = document.getElementById('countdown');
+                const interval = setInterval(() => {
+                    remaining--;
+                    countdown.textContent = remaining;
+                    if (remaining <= 0) {
+                        clearInterval(interval);
+                        window.location.href = '/logout'; // auto logout
+                    }
+                }, 1000);
+
+                // Stay Logged In button
+                document.getElementById('stayLoggedIn').addEventListener('click', () => {
+                    clearInterval(interval);
+                    modal.hide();
+                    extendSession(); // refresh the session
+                });
+
+                // Logout button
+                document.getElementById('logoutNow').addEventListener('click', () => {
+                    window.location.href = '/logout';
+                });
+
+            }, sessionDuration - warningBefore);
+
+            // Extend session via AJAX
+            function extendSession() {
+                fetch('/includes/config/extend_session.php')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'ok') {
+                            console.log('Session extended');
+                            location.reload(); // reload to reset timer
+                        }
+                    })
+                    .catch(err => console.error('Error extending session:', err));
+            }
+        });
+    </script>

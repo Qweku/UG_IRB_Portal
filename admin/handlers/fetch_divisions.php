@@ -1,24 +1,23 @@
 <?php
-require_once '../../includes/config/database.php';
+require_once '../../includes/functions/helpers.php';
 
 $divisions = [];
 
-try {
-    $db = new Database();
-    $conn = $db->connect();
-
-    if (!$conn) {
-        throw new Exception("Database connection failed");
+if (isset($_GET['id'])) {
+    $id = $_GET['id'];
+    $division = executeAssocQuery("SELECT id, division_name FROM divisions WHERE id = ?", [$id]);
+    if ($division) {
+        header('Content-Type: application/json');
+        echo json_encode($division[0]);
+    } else {
+        http_response_code(404);
+        echo json_encode(['error' => 'Not found']);
     }
-
-    // Fetch division options
-    $stmt = $conn->prepare("SELECT id, division_name FROM divisions ORDER BY id ASC");
-    $stmt->execute();
-    $divisions = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-} catch (Exception $e) {
-    error_log("Error fetching divisions: " . $e->getMessage());
+    exit;
 }
+
+// Fetch all divisions
+$divisions = executeAssocQuery("SELECT id, division_name FROM divisions ORDER BY id ASC");
 echo '<div class="table-responsive" style="height:300px;"><table class="table table-striped">';
 echo '<thead><tr><th>Name</th><th>Actions</th></tr></thead><tbody>';
 foreach ( $divisions as $row) {

@@ -110,126 +110,59 @@ function handleApiRoutes($segments) {
 function handleFrontendRoutes($segments) {
     $frontend_path = 'admin/pages/';
 
-    $route = $segments[0];
+    // Define direct route mappings
+    $routes = [
+        'dashboard' => 'dashboard.php',
+        'authenticate' => 'user/authenticate.php',
+        'add-study' => 'contents/add_new_study.php',
+        'prepare-agenda' => 'contents/prepare_agenda.php',
+        'minutes' => 'contents/minutes_preparation.php',
+        'login' => 'user/login.php',
+        // 'logout' => 'user/login.php',
+        'register' => 'user/register.php',
+        'generate-letter' => 'contents/general_letters_content.php',
+        'contacts' => 'contents/create_contact.php',
+        'logout' => 'user/logout.php',
+        'about' => 'static/about.php',
+        'account-information' => 'contents/account_information.php',
+        'shipping' => 'static/shipping.php',
+        'returns' => 'static/returns.php',
+        'terms' => 'static/terms.php',
+        'privacy' => 'static/privacy.php',
+        'size-guide' => 'static/size-guide.php',
+        'careers' => 'static/careers.php',
+        'press' => 'static/press.php',
+        'blog' => 'static/blog.php',
+        'sustainability' => 'static/sustainability.php',
+    ];
 
-    switch ($route) {
-        case 'products':
-            if (count($segments) === 1) {
-                // All products
-                require_once $frontend_path . 'products/category.php';
-            } elseif (count($segments) === 2) {
-                // Category products
-                $_GET['cat'] = $segments[1];
-                require_once $frontend_path . 'products/category.php';
-            } else {
-                require_once 'admin/404.php';
-            }
-            break;
+    $route = $segments[0] ?? '';
 
-        case 'product':
-            if (count($segments) >= 2) {
-                // Product detail - extract ID from slug
-                $slug_parts = explode('-', $segments[1]);
-                if (is_numeric($slug_parts[0])) {
-                    $_GET['id'] = intval($slug_parts[0]);
-                    require_once $frontend_path . 'products/product-detail.php';
-                } else {
-                    require_once 'admin/404.php';
-                }
-            } else {
-                require_once 'admin/404.php';
-            }
-            break;
-
-        case 'dashboard':
-            require_once $frontend_path . 'dashboard.php';
-            break;
-
-        case 'authenticate':
-            require_once $frontend_path . 'user/authenticate.php';
-            break;
-
-        case 'add-study':
-            require_once $frontend_path . 'contents/add_new_study.php';
-            break;
-
-        case 'prepare-agenda':
-            require_once $frontend_path . 'contents/prepare_agenda.php';
-            break;
-
-        case 'minutes':
-            require_once $frontend_path . 'contents/minutes_preparation.php';
-            break;
-
-        case 'login':
-            require_once $frontend_path . 'user/login.php';
-            break;
-
-        case 'register':
-            require_once $frontend_path . 'user/register.php';
-            break;
-
-        case 'generate-letter':
-            require_once $frontend_path . 'contents/general_letters_content.php';
-            break;
-
-        case 'contacts':
-            require_once $frontend_path . 'contents/create_contact.php';
-            break;
-
-        case 'logout':
-            require_once $frontend_path . 'user/logout.php';
-            break;
-
-        case 'about':
-            require_once $frontend_path . 'static/about.php';
-            break;
-
-
-        case 'account-information':
-            require_once $frontend_path . 'contents/account_information.php';
-            break;
-
-        case 'shipping':
-            require_once $frontend_path . 'static/shipping.php';
-            break;
-
-        case 'returns':
-            require_once $frontend_path . 'static/returns.php';
-            break;
-
-        case 'terms':
-            require_once $frontend_path . 'static/terms.php';
-            break;
-
-        case 'privacy':
-            require_once $frontend_path . 'static/privacy.php';
-            break;
-
-        case 'size-guide':
-            require_once $frontend_path . 'static/size-guide.php';
-            break;
-
-        case 'careers':
-            require_once $frontend_path . 'static/careers.php';
-            break;
-
-        case 'press':
-            require_once $frontend_path . 'static/press.php';
-            break;
-
-        case 'blog':
-            require_once $frontend_path . 'static/blog.php';
-            break;
-
-        case 'sustainability':
-            require_once $frontend_path . 'static/sustainability.php';
-            break;
-
-        default:
-            // 404 for unknown routes
+    if (array_key_exists($route, $routes)) {
+        require_once $frontend_path . $routes[$route];
+    } elseif ($route === 'products') {
+        if (count($segments) === 1) {
+            require_once $frontend_path . 'products/category.php';
+        } elseif (count($segments) === 2) {
+            $_GET['cat'] = $segments[1];
+            require_once $frontend_path . 'products/category.php';
+        } else {
             require_once 'admin/404.php';
-            break;
+        }
+    } elseif ($route === 'product') {
+        if (count($segments) >= 2) {
+            $slug_parts = explode('-', $segments[1]);
+            if (is_numeric($slug_parts[0])) {
+                $_GET['id'] = intval($slug_parts[0]);
+                require_once $frontend_path . 'products/product-detail.php';
+            } else {
+                require_once 'admin/404.php';
+            }
+        } else {
+            require_once 'admin/404.php';
+        }
+    } else {
+        require_once 'admin/404.php';
     }
 }
 

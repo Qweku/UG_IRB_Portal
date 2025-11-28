@@ -1,24 +1,23 @@
-<?php 
-require_once '../../includes/config/database.php';
+<?php
+require_once '../../includes/functions/helpers.php';
 
 $drugs = [];
 
-try {
-    $db = new Database();
-    $conn = $db->connect();
-
-    if (!$conn) {
-        throw new Exception("Database connection failed");
+if (isset($_GET['id'])) {
+    $id = $_GET['id'];
+    $drug = executeAssocQuery("SELECT id, drug_name FROM drugs WHERE id = ?", [$id]);
+    if ($drug) {
+        header('Content-Type: application/json');
+        echo json_encode($drug[0]);
+    } else {
+        http_response_code(404);
+        echo json_encode(['error' => 'Not found']);
     }
-
-    // Fetch drug options
-    $stmt = $conn->prepare("SELECT id, drug_name FROM drugs ORDER BY id ASC");
-    $stmt->execute();
-    $drugs = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-} catch (Exception $e) {
-    error_log("Error fetching drugs: " . $e->getMessage());
+    exit;
 }
+
+// Fetch all drugs
+$drugs = executeAssocQuery("SELECT id, drug_name FROM drugs ORDER BY id ASC");
 echo '<div class="table-responsive" style="height:300px;"><table class="table table-striped">';
 echo '<thead><tr><th>Name</th><th>Actions</th></tr></thead><tbody>';
 foreach ( $drugs as $row) {

@@ -1,5 +1,5 @@
 <?php
-require_once '../../includes/config/database.php';
+require_once '../../includes/functions/helpers.php';
 
 header('Content-Type: application/json');
 
@@ -19,30 +19,20 @@ if (empty($exempt_cite)) {
     exit;
 }
 
-try {
-    $db = new Database();
-    $conn = $db->connect();
+$db = new Database();
+$conn = $db->connect();
 
-    if (!$conn) {
-        throw new Exception("Database connection failed");
-    }
+if (!$conn) {
+    echo json_encode(['success' => false, 'message' => 'Database connection failed']);
+    exit;
+}
 
-    $stmt = $conn->prepare("UPDATE exempt_codes SET exempt_cite = :exempt_cite, exempt_description = :exempt_description WHERE id = :id");
+$stmt = $conn->prepare("UPDATE exempt_codes SET exempt_cite = ?, exempt_description = ? WHERE id = ?");
+$stmt->execute([$exempt_cite, $exempt_description, $id]);
 
-    $stmt->bindParam(':exempt_cite', $exempt_cite, PDO::PARAM_STR);
-    $stmt->bindParam(':exempt_description', $exempt_description, PDO::PARAM_STR);
-    $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-
-    $stmt->execute();
-
-    if ($stmt->rowCount() > 0) {
-        echo json_encode(['success' => true]);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'No changes made or record not found']);
-    }
-
-} catch (Exception $e) {
-    error_log("Error updating exempt codes: " . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => 'Database error']);
+if ($stmt->rowCount() > 0) {
+    echo json_encode(['success' => true]);
+} else {
+    echo json_encode(['success' => false, 'message' => 'No changes made or record not found']);
 }
 ?>

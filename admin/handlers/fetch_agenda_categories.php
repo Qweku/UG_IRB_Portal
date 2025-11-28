@@ -1,40 +1,23 @@
 <?php
-require_once '../../includes/config/database.php';
+require_once '../../includes/functions/helpers.php';
 
 $agendaCategories = [];
 
-try {
-    $db = new Database();
-    $conn = $db->connect();
-
-    if (!$conn) {
-        throw new Exception("Database connection failed");
+if (isset($_GET['id'])) {
+    $id = $_GET['id'];
+    $categoryName = executeAssocQuery("SELECT id, category_name, agenda_class_code, agenda_print FROM agenda_category WHERE id = ?", [$id]);
+    if ($categoryName) {
+        header('Content-Type: application/json');
+        echo json_encode($categoryName[0]);
+    } else {
+        http_response_code(404);
+        echo json_encode(['error' => 'Not found']);
     }
-
-    if (isset($_GET['id'])) {
-        $id = $_GET['id'];
-        $stmt = $conn->prepare("SELECT id, category_name, agenda_class_code, agenda_print FROM agenda_category WHERE id = ?");
-        $stmt->execute([$id]);
-        $categoryName = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($categoryName) {
-            header('Content-Type: application/json');
-            echo json_encode($categoryName);
-            error_log("Category Name: ". $categoryName);
-        } else {
-            http_response_code(404);
-            echo json_encode(['error' => 'Not found']);
-        }
-        exit;
-    }
-
-    // Fetch benefit options
-    $stmt = $conn->prepare("SELECT id, category_name, agenda_class_code, agenda_print FROM agenda_category ORDER BY id ASC");
-    $stmt->execute();
-    $agendaCategories = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-} catch (Exception $e) {
-    error_log("Error fetching agenda categories: " . $e->getMessage());
+    exit;
 }
+
+// Fetch all agenda categories
+$agendaCategories = executeAssocQuery("SELECT id, category_name, agenda_class_code, agenda_print FROM agenda_category ORDER BY id ASC");
 echo '<div class="table-responsive" style="height:300px;"><table class="table table-striped">';
 echo '<thead>
         <tr>

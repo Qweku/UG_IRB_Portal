@@ -1,5 +1,8 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_name('admin_session');
+    session_start();
+}
 
 // Hardcoded credentials for demo (replace with database check in production)
 $valid_email = 'admin@irb.com';
@@ -15,13 +18,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['user_email'] = $email;
 
         if (is_admin_logged_in()) {
-            error_log("Admin logged in: " . $email);
-            error_log("Admin Session Role: " . $_SESSION['role']);
-            error_log("Admin Session Logged In: " . ($_SESSION['logged_in'] ? 'true' : 'false'));
             header('Location: /dashboard');
             exit;
-        } else {
-            error_log("Non-admin logged in: " . $email);
         }
     } else {
         // Invalid credentials, redirect back with error

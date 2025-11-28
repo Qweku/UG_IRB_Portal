@@ -1,5 +1,4 @@
 <?php
-// require_once '../database/db_functions.php';
 
 // Get filter parameters from GET request or default
 $status = isset($_GET['status']) ? $_GET['status'] : 'all';

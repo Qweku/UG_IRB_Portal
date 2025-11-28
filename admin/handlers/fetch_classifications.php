@@ -1,24 +1,10 @@
-<?php 
-require_once '../../includes/config/database.php';
+<?php
+require_once '../../includes/functions/helpers.php';
 
 $classifications = [];
 
-try {
-    $db = new Database();
-    $conn = $db->connect();
-
-    if (!$conn) {
-        throw new Exception("Database connection failed");
-    }
-
-    // Fetch classification options
-    $stmt = $conn->prepare("SELECT id, classification_type FROM classifications ORDER BY id ASC");
-    $stmt->execute();
-    $classifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-} catch (Exception $e) {
-    error_log("Error fetching classifications: " . $e->getMessage());
-}
+// Fetch all classifications
+$classifications = executeAssocQuery("SELECT id, classification_type FROM classifications ORDER BY id ASC");
 
 echo '<div class="table-responsive" style="height:300px;"><table class="table table-striped">';
 echo '<thead><tr><th>Name</th><th>Actions</th></tr></thead><tbody>';

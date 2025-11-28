@@ -4,358 +4,161 @@
  * Database Functions for UG IRB Portal
  * Contains helper functions for retrieving data from the database
  */
-
+// require_once "/config.php";
 require_once __DIR__ . '/../config/database.php';
 
 /**
- * Get the count of active studies (status = 'open')
+ * Execute a count query and return the count
+ * @param string $query
+ * @param array $params
  * @return int
  */
+function executeCountQuery($query, $params = []) {
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) return 0;
+    try {
+        $stmt = $conn->prepare($query);
+        $stmt->execute($params);
+        $result = $stmt->fetch();
+        return (int) $result['count'];
+    } catch (PDOException $e) {
+        error_log("Error executing count query: " . $e->getMessage());
+        return 0;
+    }
+}
 
+/**
+ * Execute a list query and return array of values
+ * @param string $query
+ * @param array $params
+ * @return array
+ */
+function executeListQuery($query, $params = []) {
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) return [];
+    try {
+        $stmt = $conn->prepare($query);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    } catch (PDOException $e) {
+        error_log("Error executing list query: " . $e->getMessage());
+        return [];
+    }
+}
+
+/**
+ * Execute a query and return associative array
+ * @param string $query
+ * @param array $params
+ * @return array
+ */
+function executeAssocQuery($query, $params = []) {
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) return [];
+    try {
+        $stmt = $conn->prepare($query);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error executing assoc query: " . $e->getMessage());
+        return [];
+    }
+}
+
+/**
+ * Check if admin is logged in
+ * @return bool
+ */
 function is_admin_logged_in() {
-    // Check admin session for admin login
-    // error_log("Session status before check: " . session_status());
     if (session_status() === PHP_SESSION_NONE) {
         session_name('admin_session');
         session_start();
-        // error_log("Session name set to 'admin_session', but session_start is commented out");
     }
-    // error_log("Session status after check: " . session_status());
-    // if (!isset($_SESSION)) {
-    //     error_log("$_SESSION is not set");
-    // } else {
-    //     error_log("$_SESSION is set");
-    // }
-    $admin_session = isset($_SESSION['logged_in']) && isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
-    error_log("Admin login result: " . ($admin_session ? 'logged in' : 'not logged in'));
-    return $admin_session;
+    return isset($_SESSION['logged_in']) && isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
 }
 
 
 
-function getActiveStudiesCount()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return 0;
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM studies WHERE study_status = 'open'");
-        $stmt->execute();
-        $result = $stmt->fetch();
-        return (int) $result['count'];
-    } catch (PDOException $e) {
-        error_log("Error fetching active studies count: " . $e->getMessage());
-        return 0;
-    }
+function getActiveStudiesCount() {
+    return executeCountQuery("SELECT COUNT(*) as count FROM studies WHERE study_status = 'open'");
 }
 
-function getCPATypesCount()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return 0;
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM cpa_types");
-        $stmt->execute();
-        $result = $stmt->fetch();
-        return (int) $result['count'];
-    } catch (PDOException $e) {
-        error_log("Error fetching active cpa types count: " . $e->getMessage());
-        return 0;
-    }
+function getCPATypesCount() {
+    return executeCountQuery("SELECT COUNT(*) as count FROM cpa_types");
 }
 
-function getInvestigatorCount()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return 0;
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM investigator");
-        $stmt->execute();
-        $result = $stmt->fetch();
-        return (int) $result['count'];
-    } catch (PDOException $e) {
-        error_log("Error fetching active investigator count: " . $e->getMessage());
-        return 0;
-    }
+function getInvestigatorCount() {
+    return executeCountQuery("SELECT COUNT(*) as count FROM investigator");
 }
 
-function getIRBMeetingsCount()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return 0;
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM irb_meetings");
-        $stmt->execute();
-        $result = $stmt->fetch();
-        return (int) $result['count'];
-    } catch (PDOException $e) {
-        error_log("Error fetching active irb meetings count: " . $e->getMessage());
-        return 0;
-    }
+function getIRBMeetingsCount() {
+    return executeCountQuery("SELECT COUNT(*) as count FROM irb_meetings");
 }
 
-function getIRBActionsCount()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return 0;
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM irb_action_codes");
-        $stmt->execute();
-        $result = $stmt->fetch();
-        return (int) $result['count'];
-    } catch (PDOException $e) {
-        error_log("Error fetching active irb action codes count: " . $e->getMessage());
-        return 0;
-    }
+function getIRBActionsCount() {
+    return executeCountQuery("SELECT COUNT(*) as count FROM irb_action_codes");
 }
 
-function getSAETypesCount()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return 0;
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM sae_event_types");
-        $stmt->execute();
-        $result = $stmt->fetch();
-        return (int) $result['count'];
-    } catch (PDOException $e) {
-        error_log("Error fetching active sae event types count: " . $e->getMessage());
-        return 0;
-    }
-}
-function getCPAActionCount()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return 0;
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM cpa_action_codes");
-        $stmt->execute();
-        $result = $stmt->fetch();
-        return (int) $result['count'];
-    } catch (PDOException $e) {
-        error_log("Error fetching active cpa action codes count: " . $e->getMessage());
-        return 0;
-    }
+function getSAETypesCount() {
+    return executeCountQuery("SELECT COUNT(*) as count FROM sae_event_types");
 }
 
-function getStudyCodesCount()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return 0;
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM study_status_codes");
-        $stmt->execute();
-        $result = $stmt->fetch();
-        return (int) $result['count'];
-    } catch (PDOException $e) {
-        error_log("Error fetching active study status codes count: " . $e->getMessage());
-        return 0;
-    }
+function getCPAActionCount() {
+    return executeCountQuery("SELECT COUNT(*) as count FROM cpa_action_codes");
 }
 
-function getAgendaCategoriesCount()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return 0;
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM agenda_category");
-        $stmt->execute();
-        $result = $stmt->fetch();
-        return (int) $result['count'];
-    } catch (PDOException $e) {
-        error_log("Error fetching active agenda category count: " . $e->getMessage());
-        return 0;
-    }
+function getStudyCodesCount() {
+    return executeCountQuery("SELECT COUNT(*) as count FROM study_status_codes");
 }
 
-function getIRBConditionCount()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return 0;
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM irb_condition");
-        $stmt->execute();
-        $result = $stmt->fetch();
-        return (int) $result['count'];
-    } catch (PDOException $e) {
-        error_log("Error fetching irb condition count: " . $e->getMessage());
-        return 0;
-    }
+function getAgendaCategoriesCount() {
+    return executeCountQuery("SELECT COUNT(*) as count FROM agenda_category");
 }
 
-function getAgendaCategoriesList()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return [];
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT category_name FROM agenda_category ORDER BY category_name ASC");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_COLUMN);
-
-        error_log("Agenda Categories: ". $stmt->fetchAll(PDO::FETCH_COLUMN));
-    } catch (PDOException $e) {
-        error_log("Error fetching agenda categories: " . $e->getMessage());
-        return [];
-    }
+function getIRBConditionCount() {
+    return executeCountQuery("SELECT COUNT(*) as count FROM irb_condition");
 }
 
-
-function getStudyStatus()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return [];
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT status_name FROM study_status ORDER BY status_name ASC");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_COLUMN);
-
-        error_log("Study status: ". $stmt->fetchAll(PDO::FETCH_COLUMN));
-    } catch (PDOException $e) {
-        error_log("Error fetching Study status: " . $e->getMessage());
-        return [];
-    }
+function getAgendaCategoriesList() {
+    return executeListQuery("SELECT category_name FROM agenda_category ORDER BY category_name ASC");
 }
 
-
-function getReviewTypes()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return [];
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT name FROM review_types ORDER BY name ASC");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_COLUMN);
-
-        error_log("Review Types: ". $stmt->fetchAll(PDO::FETCH_COLUMN));
-    } catch (PDOException $e) {
-        error_log("Error fetching Review Types: " . $e->getMessage());
-        return [];
-    }
+function getStudyStatus() {
+    return executeListQuery("SELECT status_name FROM study_status ORDER BY status_name ASC");
 }
 
-function getActiveCodes()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return [];
-    }
+function getReviewTypes() {
+    return executeListQuery("SELECT name FROM review_types ORDER BY name ASC");
+}
 
-    try {
-        $stmt = $conn->prepare("SELECT code_name FROM active_codes ORDER BY code_name ASC");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_COLUMN);
-
-        error_log("Active Codes: ". $stmt->fetchAll(PDO::FETCH_COLUMN));
-    } catch (PDOException $e) {
-        error_log("Error fetching Active Codes: " . $e->getMessage());
-        return [];
-    }
+function getActiveCodes() {
+    return executeListQuery("SELECT code_name FROM active_codes ORDER BY code_name ASC");
 }
 
 /**
  * Get the count of pending reviews (status = 'pending')
  * @return int
  */
-function getPendingReviewsCount()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return 0;
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM studies WHERE study_status = 'pending'");
-        $stmt->execute();
-        $result = $stmt->fetch();
-        return (int) $result['count'];
-    } catch (PDOException $e) {
-        error_log("Error fetching pending reviews count: " . $e->getMessage());
-        return 0;
-    }
+function getPendingReviewsCount() {
+    return executeCountQuery("SELECT COUNT(*) as count FROM studies WHERE study_status = 'pending'");
 }
 
 /**
  * Get the count of overdue actions (studies where expiration_date < current date and status = 'open')
  * @return int
  */
-function getOverdueActionsCount()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return 0;
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM studies WHERE study_status = 'open' AND expiration_date < CURDATE()");
-        $stmt->execute();
-        $result = $stmt->fetch();
-        return (int) $result['count'];
-    } catch (PDOException $e) {
-        error_log("Error fetching overdue actions count: " . $e->getMessage());
-        return 0;
-    }
+function getOverdueActionsCount() {
+    return executeCountQuery("SELECT COUNT(*) as count FROM studies WHERE study_status = 'open' AND expiration_date < CURDATE()");
 }
 
 /**
  * Get the count of new SAE reports (placeholder - assuming a separate table or field; for now, return 0 or implement based on schema)
  * @return int
  */
-function getNewSAEReportsCount()
-{
+function getNewSAEReportsCount() {
     // Placeholder: Assuming SAE reports are in a separate table. For now, return 0.
     // In a real implementation, query a sae_reports table or similar.
     return 0;
@@ -365,61 +168,21 @@ function getNewSAEReportsCount()
  * Get recent activities (last 5 studies with their status and last activity)
  * @return array
  */
-function getRecentActivities()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return [];
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT title, study_status, updated_at FROM studies ORDER BY updated_at DESC LIMIT 5");
-        $stmt->execute();
-        return $stmt->fetchAll();
-    } catch (PDOException $e) {
-        error_log("Error fetching recent activities: " . $e->getMessage());
-        return [];
-    }
+function getRecentActivities() {
+    return executeAssocQuery("SELECT title, study_status, pi, updated_at FROM studies ORDER BY updated_at DESC LIMIT 5");
 }
 
 
-function getMeetingDates()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return [];
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT meeting_date FROM irb_meetings ORDER BY meeting_date DESC");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_COLUMN);
-        error_log("MEETING DATES :" . $stmt->fetchAll(PDO::FETCH_COLUMN));
-    } catch (PDOException $e) {
-        error_log("Error fetching meeting dates: " . $e->getMessage());
-        return [];
-    }
+function getMeetingDates() {
+    return executeListQuery("SELECT meeting_date FROM irb_meetings ORDER BY meeting_date DESC");
 }
 
+function getConditions() {
+    return executeListQuery("SELECT condition_name FROM irb_condition ORDER BY condition_name ASC");
+}
 
-function getAgendaRecords()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return [];
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT irb_code, meeting_date, agenda_heading FROM agenda_records ORDER BY meeting_date DESC");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        error_log("Error fetching agenda records: " . $e->getMessage());
-        return [];
-    }
+function getAgendaRecords() {
+    return executeAssocQuery("SELECT irb_code, meeting_date, agenda_heading FROM agenda_records ORDER BY meeting_date DESC");
 }
 
 /**
@@ -659,24 +422,24 @@ function getFollowUps()
  * Get tasks
  * @return array
  */
-function getTasks()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return [];
-    }
+// function getTasks()
+// {
+//     $db = new Database();
+//     $conn = $db->connect();
+//     if (!$conn) {
+//         return [];
+//     }
 
-    try {
-        // Assuming a tasks table exists
-        $stmt = $conn->prepare("SELECT * FROM tasks ORDER BY priority DESC, due_date");
-        $stmt->execute();
-        return $stmt->fetchAll();
-    } catch (PDOException $e) {
-        error_log("Error fetching tasks: " . $e->getMessage());
-        return [];
-    }
-}
+//     try {
+//         // Assuming a tasks table exists
+//         $stmt = $conn->prepare("SELECT * FROM tasks ORDER BY priority DESC, due_date");
+//         $stmt->execute();
+//         return $stmt->fetchAll();
+//     } catch (PDOException $e) {
+//         error_log("Error fetching tasks: " . $e->getMessage());
+//         return [];
+//     }
+// }
 
 /**
  * Get drugs/devices
@@ -728,252 +491,88 @@ function getCorrespondence()
  * @param int $study_id
  * @return array
  */
-function getStudyReviewers($study_id)
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return [];
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT reviewer_name FROM reviewers WHERE study_id = ?");
-        $stmt->execute([$study_id]);
-        return $stmt->fetchAll(PDO::FETCH_COLUMN);
-    } catch (PDOException $e) {
-        error_log("Error fetching reviewers: " . $e->getMessage());
-        return [];
-    }
+function getStudyReviewers($study_id) {
+    return executeListQuery("SELECT reviewer_name FROM reviewers WHERE study_id = ?", [$study_id]);
 }
 
 /**
  * Get classifications for a specific study
- * @param int $study_id
  * @return array
  */
-function getStudyClassifications()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return [];
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT classification_type FROM classifications");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_COLUMN);
-    } catch (PDOException $e) {
-        error_log("Error fetching classifications: " . $e->getMessage());
-        return [];
-    }
+function getStudyClassifications() {
+    return executeListQuery("SELECT classification_type FROM classifications");
 }
 
 /**
  * Get sites for a specific study
- * @param int $study_id
  * @return array
  */
-function getStudySites()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return [];
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT site_name FROM sites");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_COLUMN);
-    } catch (PDOException $e) {
-        error_log("Error fetching sites: " . $e->getMessage());
-        return [];
-    }
+function getStudySites() {
+    return executeListQuery("SELECT site_name FROM sites");
 }
 
 /**
  * Get department groups for a specific study
- * @param int $study_id
  * @return array
  */
-function getStudyDeptGroups()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return [];
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT department_name FROM department_groups");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_COLUMN);
-    } catch (PDOException $e) {
-        error_log("Error fetching department groups: " . $e->getMessage());
-        return [];
-    }
+function getStudyDeptGroups() {
+    return executeListQuery("SELECT department_name FROM department_groups");
 }
 
 /**
  * Get vulnerable populations for a specific study
- * @param int $study_id
  * @return array
  */
-function getStudyVulPops()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return [];
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT population_type FROM vulnerable_populations ");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_COLUMN);
-    } catch (PDOException $e) {
-        error_log("Error fetching vulnerable populations: " . $e->getMessage());
-        return [];
-    }
+function getStudyVulPops() {
+    return executeListQuery("SELECT population_type FROM vulnerable_populations");
 }
 
 /**
  * Get children data for a specific study
- * @param int $study_id
  * @return array
  */
-function getStudyChildren()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return [];
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT age_range FROM children ");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_COLUMN);
-    } catch (PDOException $e) {
-        error_log("Error fetching children data: " . $e->getMessage());
-        return [];
-    }
+function getStudyChildren() {
+    return executeListQuery("SELECT age_range FROM children");
 }
 
 /**
  * Get drugs for a specific study
- * @param int $study_id
  * @return array
  */
-function getStudyDrugs()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return [];
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT drug_name FROM drugs ");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_COLUMN);
-    } catch (PDOException $e) {
-        error_log("Error fetching drugs: " . $e->getMessage());
-        return [];
-    }
+function getStudyDrugs() {
+    return executeListQuery("SELECT drug_name FROM drugs");
 }
 
 /**
  * Get risks for a specific study
- * @param int $study_id
  * @return array
  */
-function getStudyRisks()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return [];
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT category_name FROM risks_category ");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_COLUMN);
-    } catch (PDOException $e) {
-        error_log("Error fetching risks: " . $e->getMessage());
-        return [];
-    }
+function getStudyRisks() {
+    return executeListQuery("SELECT category_name FROM risks_category");
 }
 
 /**
  * Get benefits for a specific study
- * @param int $study_id
  * @return array
  */
-function getStudyBenefits()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return [];
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT benefit_type FROM benefits ");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_COLUMN);
-    } catch (PDOException $e) {
-        error_log("Error fetching benefits: " . $e->getMessage());
-        return [];
-    }
+function getStudyBenefits() {
+    return executeListQuery("SELECT benefit_type FROM benefits");
 }
 
 /**
  * Get divisions for a specific study
- * @param int $study_id
  * @return array
  */
-function getStudyDivisions()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return [];
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT division_name FROM divisions ");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_COLUMN);
-    } catch (PDOException $e) {
-        error_log("Error fetching divisions: " . $e->getMessage());
-        return [];
-    }
+function getStudyDivisions() {
+    return executeListQuery("SELECT division_name FROM divisions");
 }
 
 /**
  * Get grant projects for a specific study
- * @param int $study_id
  * @return array
  */
-function getStudyGrantProjects()
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return [];
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT grant_name FROM grant_projects ");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_COLUMN);
-    } catch (PDOException $e) {
-        error_log("Error fetching grant projects: " . $e->getMessage());
-        return [];
-    }
+function getStudyGrantProjects() {
+    return executeListQuery("SELECT grant_name FROM grant_projects");
 }
 
 /**
@@ -981,22 +580,8 @@ function getStudyGrantProjects()
  * @param int $study_id
  * @return array
  */
-function getStudyIndustries($study_id)
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return [];
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT industry_name FROM industries WHERE study_id = ?");
-        $stmt->execute([$study_id]);
-        return $stmt->fetchAll(PDO::FETCH_COLUMN);
-    } catch (PDOException $e) {
-        error_log("Error fetching industries: " . $e->getMessage());
-        return [];
-    }
+function getStudyIndustries($study_id) {
+    return executeListQuery("SELECT industry_name FROM industries WHERE study_id = ?", [$study_id]);
 }
 
 /**
@@ -1004,22 +589,8 @@ function getStudyIndustries($study_id)
  * @param int $study_id
  * @return array
  */
-function getStudyUnderGradGrad($study_id)
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return [];
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT level FROM undergrad_grad WHERE study_id = ?");
-        $stmt->execute([$study_id]);
-        return $stmt->fetchAll(PDO::FETCH_COLUMN);
-    } catch (PDOException $e) {
-        error_log("Error fetching undergrad/grad data: " . $e->getMessage());
-        return [];
-    }
+function getStudyUnderGradGrad($study_id) {
+    return executeListQuery("SELECT level FROM undergrad_grad WHERE study_id = ?", [$study_id]);
 }
 
 /**
@@ -1027,22 +598,8 @@ function getStudyUnderGradGrad($study_id)
  * @param int $study_id
  * @return array
  */
-function getStudyColumns($study_id)
-{
-    $db = new Database();
-    $conn = $db->connect();
-    if (!$conn) {
-        return [];
-    }
-
-    try {
-        $stmt = $conn->prepare("SELECT column_name, column_value FROM columns WHERE study_id = ?");
-        $stmt->execute([$study_id]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        error_log("Error fetching columns: " . $e->getMessage());
-        return [];
-    }
+function getStudyColumns($study_id) {
+    return executeAssocQuery("SELECT column_name, column_value FROM columns WHERE study_id = ?", [$study_id]);
 }
 
 /**
@@ -1050,20 +607,86 @@ function getStudyColumns($study_id)
  * @param int $study_id
  * @return array
  */
-function getStudyAdmins($study_id)
-{
+
+function getStaffTypes() {
+    return executeListQuery("SELECT type_name FROM staff_types ORDER BY type_name ASC");
+}
+
+function getSponsors() {
+    return executeListQuery("SELECT sponsor_name FROM sponsors ORDER BY sponsor_name ASC");
+}
+// function getStudyAdmins($study_id) {
+/**
+ * Get staff types list
+ * @return array
+ */
+
+
+/**
+ * Get sponsors list
+ * @return array
+ */
+
+
+/**
+ * Get review types list
+ * @return array
+ */
+function getReviewTypesList() {
+    return executeListQuery("SELECT type_name FROM review_types ORDER BY type_name ASC");
+}
+
+/**
+ * Get study statuses list
+ * @return array
+ */
+function getStudyStatusesList() {
+    return executeListQuery("SELECT status_name FROM study_status ORDER BY status_name ASC");
+}
+
+/**
+ * Get risk categories list
+ * @return array
+ */
+function getRiskCategoriesList() {
+    return executeListQuery("SELECT category_name FROM risks_category ORDER BY category_name ASC");
+}
+    // return executeListQuery("SELECT admin_name FROM admins WHERE study_id = ?", [$study_id]);
+// }
+
+/**
+ * Get the next upcoming IRB meeting date
+ * @return string|null Next meeting date in Y-m-d format or null if none
+ */
+function getNextMeetingDate() {
     $db = new Database();
     $conn = $db->connect();
-    if (!$conn) {
-        return [];
-    }
+    if (!$conn) return null;
 
     try {
-        $stmt = $conn->prepare("SELECT admin_name FROM admins WHERE study_id = ?");
-        $stmt->execute([$study_id]);
-        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+        $stmt = $conn->prepare("SELECT meeting_date FROM irb_meetings ORDER BY meeting_date ASC");
+        $stmt->execute();
+        $irbMeetings = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $today = new DateTime();
+
+        $nextMeeting = null;
+
+        foreach ($irbMeetings as $meeting) {
+            $date = new DateTime($meeting['meeting_date']);
+
+            // If date is in the future
+            if ($date > $today) {
+                // If not set yet or this date is earlier than the currently stored one
+                if ($nextMeeting === null || $date < $nextMeeting) {
+                    $nextMeeting = $date;
+                }
+            }
+        }
+
+        return $nextMeeting ? $nextMeeting->format('Y-m-d') : null;
     } catch (PDOException $e) {
-        error_log("Error fetching admins: " . $e->getMessage());
-        return [];
+        error_log("Error fetching next meeting date: " . $e->getMessage());
+        return null;
     }
 }

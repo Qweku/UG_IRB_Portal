@@ -1,7 +1,20 @@
 <?php
 require_once '../../includes/config/database.php';
+require_once '../../includes/functions/helpers.php';
 
 header('Content-Type: application/json');
+
+// Start session to get user role
+if (session_status() === PHP_SESSION_NONE) {
+    session_name('admin_session');
+    session_start();
+}
+
+// Check if user is logged in
+if (!isset($_SESSION['logged_in']) || !isset($_SESSION['role'])) {
+    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+    exit;
+}
 
 $data = json_decode(file_get_contents('php://input'), true);
 
@@ -12,6 +25,7 @@ if (!$data || !isset($data['irb_action'])) {
 
 $irb_action = trim($data['irb_action']);
 $study_status = trim($data['study_status']);
+$user_name = $_SESSION['role']; // Use logged-in user's role instead of data
 $sort_sequence = trim($data['sort_sequence']);
 
 if (empty($irb_action)) {
@@ -27,8 +41,8 @@ try {
         throw new Exception("Database connection failed");
     }
 
-    $stmt = $conn->prepare("INSERT INTO irb_action_codes (irb_action, study_status, sort_sequence) VALUES (?,?,?)");
-    $stmt->execute([$irb_action, $study_status, $sort_sequence]);
+    $stmt = $conn->prepare("INSERT INTO irb_action_codes (irb_action, study_status, user_name, sort_sequence) VALUES (?,?,?,?)");
+    $stmt->execute([$irb_action, $study_status, $user_name, $sort_sequence]);
 
     if ($stmt->rowCount() > 0) {
         echo json_encode(['success' => true]);

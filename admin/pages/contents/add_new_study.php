@@ -1,5 +1,4 @@
 <?php
-// session_start();
 
 $study_number = '';
 $ref_number = '';
@@ -31,56 +30,21 @@ $sponsors = [];
 $study_types = [];
 $study_statuses = [];
 $risk_categories = [];
-error_log("Starting staff types fetch");
+
 try {
     $db = new Database();
-    error_log("Database instance created");
     $conn = $db->connect();
-    error_log("Database connected: " . ($conn ? "success" : "failed"));
 
     if (!$conn) {
         throw new Exception("Database connection failed");
     }
 
-    // Fetch staff types
-    $stmt = $conn->prepare("SELECT type_name FROM staff_types ORDER BY type_name ASC");
-    error_log("Query prepared");
-    $stmt->execute();
-    error_log("Query executed");
-    $staffTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
-    error_log("Fetched " . count($staffTypes) . " staff types");
-
-    // Fetch sponsors
-    $stmt = $conn->prepare("SELECT sponsor_name FROM sponsors ORDER BY sponsor_name ASC");
-    $stmt->execute();
-    $sponsors = $stmt->fetchAll(PDO::FETCH_COLUMN);
-    error_log("Fetched " . count($sponsors) . " sponsors");
-
-    // Fetch study types
-    $stmt = $conn->prepare("SELECT type_name FROM review_types ORDER BY type_name ASC");
-    $stmt->execute();
-    $study_types = $stmt->fetchAll(PDO::FETCH_COLUMN);
-    error_log("Fetched " . count($study_types) . " study types");
-
-    // Fetch study statuses
-    $stmt = $conn->prepare("SELECT status_name FROM study_status ORDER BY status_name ASC");
-    $stmt->execute();
-    $study_statuses = $stmt->fetchAll(PDO::FETCH_COLUMN);
-    error_log("Fetched " . count($study_statuses) . " study statuses");
-
-    // Fetch risk categories
-    $stmt = $conn->prepare("SELECT category_name FROM risks_category ORDER BY category_name ASC");
-    $stmt->execute();
-    $risk_categories = $stmt->fetchAll(PDO::FETCH_COLUMN);
-    error_log("Fetched " . count($risk_categories) . " risk categories");
-
-
-    error_log("Staff types fetched: " . implode(", ", $staffTypes));
-    error_log("Sponsors fetched: " . implode(", ", $sponsors));
-    error_log("Study types fetched: " . implode(", ", $study_types));
-    error_log("Study statuses fetched: " . implode(", ", $study_statuses));
-    error_log("Risk categories fetched: " . implode(", ", $risk_categories));
-
+    // Fetch dropdown data using helpers
+    $staffTypes = getStaffTypes();
+    $sponsors = getSponsors();
+    $study_types = getReviewTypesList();
+    $study_statuses = getStudyStatusesList();
+    $risk_categories = getRiskCategoriesList();
     // Check for edit mode
     $is_edit = isset($_GET['edit']) && $_GET['edit'] == '1' && isset($_GET['id']) && is_numeric($_GET['id']);
     $study_id = null;
@@ -92,6 +56,8 @@ try {
         $stmt = $conn->prepare("SELECT * FROM studies WHERE id = ?");
         $stmt->execute([$study_id]);
         $study = $stmt->fetch(PDO::FETCH_ASSOC);
+
+
 
         if ($study) {
             $study_number = $study['protocol_number'];
@@ -124,6 +90,11 @@ try {
         $stmt = $conn->prepare("SELECT * FROM study_personnel WHERE study_id = ?");
         $stmt->execute([$study_id]);
         $personnel_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Fetch documents
+        $stmt = $conn->prepare("SELECT * FROM documents WHERE study_id = ?");
+        $stmt->execute([$study_id]);
+        $documents = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 } catch (PDOException $e) {
     error_log("Database error: " . $e->getMessage());
@@ -136,7 +107,7 @@ try {
 
 <!-- New Study Input Form Content -->
 <div id="addStudy" class="new-study-form p-5">
-    <form class="needs-validation" id="studyForm">
+    <form class="needs-validation" id="studyForm" enctype="multipart/form-data">
         <input type="hidden" name="study_id" value="<?php echo $is_edit ? $study_id : ''; ?>">
         <!-- Page Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -154,15 +125,17 @@ try {
 
         <!-- Main Form Content -->
         <div class="main-content">
-
+            <?php
+            $study_badge = $is_edit ? 'bg-warning' : 'bg-success';
+            ?>
             <!-- Study Header Section -->
             <div class="row mb-4">
-                <div class="col-12">
+                <div class="col-md-6">
                     <div class="card">
                         <div class="card-header bg-light">
                             <div class="d-flex justify-content-between align-items-center">
                                 <h6 class="mb-0 fw-bold">Study</h6>
-                                <span class="badge bg-warning text-dark"><?php echo $is_edit ? 'Edit Study' : 'New Study'; ?></span>
+                                <span class="badge <?= htmlspecialchars($study_badge); ?> text-white"><?php echo $is_edit ? 'Edit Study' : 'New Study'; ?></span>
                             </div>
                         </div>
                         <div class="card-body">
@@ -198,20 +171,18 @@ try {
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Current Study Personnel -->
-            <div class="row mb-4">
-                <div class="col-12">
+                <!-- Current Study Personnel -->
+                <div class="col-md-6">
                     <div class="card">
                         <div class="card-header bg-light d-flex justify-content-between align-items-center">
                             <h6 class="mb-0 fw-bold">Current Study Personnel</h6>
-                            <button class="btn btn-sm btn-primary" data-bs-target="#addPersonnel" data-bs-toggle="modal">
+                            <button type="button" class="btn btn-sm btn-primary" data-bs-target="#addPersonnel" data-bs-toggle="modal">
                                 <i class="fas fa-plus me-1"></i> Add Personnel<span class="text-danger">*</span>
                             </button>
                         </div>
                         <div class="card-body">
-                            <div class="table-responsive">
+                            <div class="table-responsive" style="height: 150px;">
                                 <table class="table table-hover">
                                     <thead>
                                         <tr>
@@ -225,28 +196,35 @@ try {
                                     <tbody id="personnel-table">
                                         <?php if ($is_edit && !empty($personnel_data)): ?>
                                             <?php foreach ($personnel_data as $person): ?>
-                                                <tr>
+                                                <tr data-personnel-id="<?php echo $person['id']; ?>">
                                                     <td><?php echo htmlspecialchars($person['name']); ?></td>
                                                     <td><?php echo htmlspecialchars($person['role']); ?></td>
                                                     <td><?php echo htmlspecialchars($person['title']); ?></td>
                                                     <td><?php echo htmlspecialchars($person['start_date']); ?></td>
                                                     <td>
-                                                        <button class="btn btn-sm btn-outline-primary">
+                                                        <button type="button" id="editPersonnel" class="btn btn-sm btn-outline-primary">
                                                             <i class="fas fa-edit"></i>
                                                         </button>
                                                     </td>
                                                 </tr>
-                                                <input type="hidden" name="personnel[]" value='<?php echo json_encode([
-                                                                                                    'name' => $person['name'],
-                                                                                                    'staffType' => $person['role'],
-                                                                                                    'title' => $person['title'],
-                                                                                                    'dateAdded' => $person['start_date'],
-                                                                                                    'companyName' => $person['company_name'],
-                                                                                                    'email' => $person['email'],
-                                                                                                    'mainPhone' => $person['phone'],
-                                                                                                    'comments' => $person['comments']
-                                                                                                ]); ?>'>
+                                                <input type="hidden" name="personnel[]" value='
+                                                <?php echo json_encode([
+                                                    'name' => $person['name'],
+                                                    'staffType' => $person['role'],
+                                                    'title' => $person['title'],
+                                                    'dateAdded' => $person['start_date'],
+                                                    'companyName' => $person['company_name'],
+                                                    'email' => $person['email'],
+                                                    'mainPhone' => $person['phone'],
+                                                    'comments' => $person['comments']
+                                                ]); ?>'>
                                             <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <tr>
+                                                <td colspan="5" class="text-center text-muted py-3">
+                                                    No personnel added yet
+                                                </td>
+                                            </tr>
                                         <?php endif; ?>
                                     </tbody>
                                 </table>
@@ -256,9 +234,12 @@ try {
                 </div>
             </div>
 
+
+
+
             <!-- Study Details Section -->
             <div class="row mb-4">
-                <div class="col-md-12">
+                <div class="col-md-6">
                     <div class="card">
                         <div class="card-header bg-light">
                             <h6 class="mb-0 fw-bold">Study Detials</h6>
@@ -268,16 +249,16 @@ try {
                             <div class="row mb-3">
                                 <div class="col-md-12">
                                     <label class="form-label fw-semibold">Sponsor<span class="text-danger">*</span></label>
-                                    <div class="row">
-                                        <div class="col-md-10">
+                                    <div>
+                                        <div class="mb-2">
                                             <select id="sponsor" name="sponsor" class="form-select" required>
                                                 <?php foreach ($sponsors as $s): ?>
                                                     <option value="<?= htmlspecialchars($s) ?>" <?= $s == $sponsor ? 'selected' : '' ?>><?= htmlspecialchars($s) ?></option>
                                                 <?php endforeach; ?>
                                             </select>
                                         </div>
-                                        <div class="col-md-2">
-                                            <button class="btn btn-md w-100 btn-primary">
+                                        <div>
+                                            <button type="button" class="btn btn-md w-100 btn-primary">
                                                 <i class="fas fa-plus me-1"></i>Add to List
                                             </button>
                                         </div>
@@ -362,12 +343,8 @@ try {
                     </div>
                 </div>
 
-
-            </div>
-
-            <!-- IRB Information Section -->
-            <div class="row mb-4">
-                <div class="col-md-12">
+                <!-- IRB Information Section -->
+                <div class="col-md-6">
                     <div class="card">
                         <div class="card-header bg-light">
                             <h6 class="mb-0 fw-bold">IRB Information</h6>
@@ -394,7 +371,7 @@ try {
 
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Date Received<span class="text-danger">*</span></label>
-                                    <input id="dateReceived" name="dateReceived" type="date" class="form-control" required>
+                                    <input id="date_received" name="date_received" type="date" class="form-control" value="<?= htmlspecialchars($date_received) ?>" required>
                                     <div class="valid-feedback">Valid.</div>
                                     <div class="invalid-feedback">Please fill out this field.</div>
                                 </div>
@@ -403,43 +380,43 @@ try {
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Firt IRB Review</label>
-                                    <input id="fir" name="fir" type="date" class="form-control">
+                                    <input id="first_irb_review" name="first_irb_review" type="date" class="form-control">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Original Approval</label>
-                                    <input id="origApp" name="origApp" type="date" class="form-control">
+                                    <input id="original_approval" name="original_approval" type="date" class="form-control" value="<?= htmlspecialchars($original_approval) ?>">
                                 </div>
                             </div>
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Last Seen By IRB</label>
-                                    <input id="lsbi" name="lsbi" type="date" class="form-control">
+                                    <input id="last_seen_by_irb" name="last_seen_by_irb" type="date" class="form-control" value="<?= htmlspecialchars($last_seen_by_irb) ?>">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Last IRB Renewal</label>
-                                    <input id="lir" name="lir" type="date" class="form-control">
+                                    <input id="last_irb_renewal" name="last_irb_renewal" type="date" class="form-control" value="<?= htmlspecialchars($last_irb_renewal) ?>">
                                 </div>
                             </div>
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Number of SAEs</label>
-                                    <div class="row">
-                                        <div class="col-md-9">
+                                    <div>
+                                        <div class="mb-2">
                                             <input id="nos" name="nos" type="text" class="form-control" value="<?= htmlspecialchars('0') ?>" disabled>
                                         </div>
-                                        <div class="col-md-3">
-                                            <button class="btn btn-primary btn-md">View/Add</button>
+                                        <div>
+                                            <button class="btn btn-primary btn-sm disabled">View/Add</button>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Number of CPAs</label>
-                                    <div class="row">
-                                        <div class="col-md-9">
+                                    <div>
+                                        <div class="mb-2">
                                             <input id="noc" name="noc" type="text" class="form-control" value="<?= htmlspecialchars('0') ?>" disabled>
                                         </div>
-                                        <div class="col-md-3">
-                                            <button class="btn btn-primary btn-md">View/Add</button>
+                                        <div>
+                                            <button class="btn btn-primary btn-sm disabled">View/Add</button>
                                         </div>
                                     </div>
                                 </div>
@@ -454,16 +431,17 @@ try {
                             <div class="row">
                                 <div class="col-md-12">
                                     <label class="form-label fw-semibold">Internal Notes</label>
-                                    <textarea id="internalNotes" name="internalNotes" type="text" class="form-control"><?php echo htmlspecialchars($internal_notes); ?></textarea>
+                                    <textarea id="internal_notes" name="internal_notes" type="text" class="form-control"><?php echo htmlspecialchars($internal_notes); ?></textarea>
                                 </div>
 
                             </div>
                         </div>
                     </div>
                 </div>
-
-
             </div>
+
+
+
 
             <!-- Signature Documents -->
             <div class="row">
@@ -477,9 +455,14 @@ try {
                             <div class="mb-4">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <h6 class="mb-0 text-primary">Initial Application*</h6>
-                                    <button class="btn btn-sm btn-success">
-                                        <i class="fas fa-upload me-1"></i> Upload File
-                                    </button>
+                                    <div>
+                                        <button type="button" id="uploadBtn" class="btn btn-sm btn-success" onclick="document.getElementById('fileInput').click();">
+                                            <i class="fas fa-upload me-1"></i> Upload File
+                                        </button>
+                                        <input type="hidden" name="MAX_FILE_SIZE" value="10485760">
+                                        <input type="file" id="fileInput" name="initialApplication[]" accept="application/pdf,.doc,.docx" multiple style="display: none;">
+                                        <span id="fileNameDisplay" class="ms-2 text-muted"></span>
+                                    </div>
                                 </div>
 
                                 <div class="table-responsive">
@@ -493,12 +476,30 @@ try {
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td colspan="5" class="text-center text-muted py-3">
-                                                    No documents uploaded yet
-                                                </td>
-                                            </tr>
+                                        <tbody id="documents-tbody">
+                                            <?php if ($is_edit && !empty($documents)): ?>
+                                                <?php foreach ($documents as $doc): ?>
+                                                    <tr>
+                                                        <td><?php echo htmlspecialchars($doc['file_name']); ?></td>
+                                                        <td><?php echo htmlspecialchars($doc['comments']); ?></td>
+                                                        <td><?php echo date('Y-m-d', strtotime($doc['uploaded_at'])); ?></td>
+                                                        <td>
+                                                            <input type="checkbox" class="form-check-input" name="exclude_from_agenda[<?php echo $doc['id']; ?>]" <?php echo $doc['exclude_from_agenda'] ? 'checked' : ''; ?>>
+                                                        </td>
+                                                        <td>
+                                                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteDocument(<?php echo $doc['id']; ?>)">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php else: ?>
+                                                <tr>
+                                                    <td colspan="5" class="text-center text-muted py-3">
+                                                        No documents uploaded yet
+                                                    </td>
+                                                </tr>
+                                            <?php endif; ?>
                                         </tbody>
                                     </table>
                                 </div>
@@ -541,12 +542,14 @@ try {
                         </div>
 
                     </form>
+                    
                     <button class="btn btn-primary" onclick="addMorePersonnel()">
                         <i class="fas fa-plus me-1"></i> Add Personnel
                     </button>
                     <div class="bg-light p-3 my-3">
                         <h4 class="text-md">Personnel Previously Associated with Study</h4>
                     </div>
+                    
                 </div>
             </div>
             <div class="modal-footer">
@@ -558,6 +561,9 @@ try {
     </div>
 </div>
 <script>
+    const isEdit = <?php echo $is_edit ? 'true' : 'false'; ?>;
+
+
     function showToast(type, message) {
         // Create toast container if not exists
         let toastContainer = document.getElementById('toast-container');
@@ -620,15 +626,196 @@ try {
                 window.location.reload();
             } else {
                 showToast('error', result.message);
+                 toggleLoader(false);
+                 window.location.reload();
             }
         } catch (error) {
-            // console.log('Error:', error);
             showToast('error', 'An unexpected error occurred.');
+             toggleLoader(false);
+             window.location.reload();
         } finally {
             // 🔹 Always hide loader after operations
             toggleLoader(false);
+            window.location.reload();
         }
     });
+
+    // Use event delegation for edit buttons
+    document.getElementById('personnel-table').addEventListener('click', async function(e) {
+        if (e.target.closest('.btn-outline-primary')) {
+            const row = e.target.closest('tr');
+            const personnel_id = row.getAttribute('data-personnel-id');
+            console.log('Edit personnel with ID:', personnel_id);
+
+            // Set modal title for editing
+            document.getElementById('addPersonnelLabel').textContent = 'Edit Study Personnel';
+
+            // Fetch personnel data
+            try {
+                const response = await fetch(`/admin/handlers/fetch_personnel.php?id=${personnel_id}`);
+                const data = await response.json();
+                if (data.status === 'success') {
+                    const person = data.personnel;
+
+                    // Clear previous content
+                    const form = document.getElementById('contentArea');
+                    form.innerHTML = '<div class="bg-light p-3 mb-3"><h4 class="text-md">Assigned Personnel</h4></div>';
+
+                    // Populate fields
+                    const newFields = `
+                        <div class="new-personnel-section">
+                            <input type="hidden" name="personnel_id" value="${person.id}">
+                            <hr>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Name</label>
+                                    <select name="contact" class="form-select">
+                                        <option value="${person.name}" selected>${person.name}</option>
+                                        <option>John Doe</option>
+                                        <option>Mary Adjei</option>
+                                        <option>Michael Fosu</option>
+                                        <option>Anna George</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Staff Type</label>
+                                    <select name="staffType" class="form-select">
+                                        ${<?php echo json_encode($staffTypes); ?>.map(type => `<option value="${type}" ${type === person.role ? 'selected' : ''}>${type}</option>`).join('')}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Title</label>
+                                    <input type="text" name="title" class="form-control" placeholder="Enter title" value="${person.title}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Start Date</label>
+                                    <input type="date" name="start_date" class="form-control" value="${person.start_date}">
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Company Name</label>
+                                    <input type="text" name="company_name" class="form-control" placeholder="Enter company name" value="${person.company_name}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Main Phone</label>
+                                    <input type="tel" name="phone" class="form-control" value="${person.phone}">
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Email</label>
+                                    <input type="email" name="email" class="form-control" placeholder="Enter email" value="${person.email}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Comments</label>
+                                    <input type="text" name="comments" class="form-control" placeholder="Enter comments" value="${person.comments}">
+                                </div>
+                            </div>
+                        </div>`;
+                    form.insertAdjacentHTML('beforeend', newFields);
+
+                    // Open modal
+                    const modal = new bootstrap.Modal(document.getElementById('addPersonnel'));
+                    modal.show();
+                } else {
+                    showToast('error', 'Failed to fetch personnel data.');
+                }
+            } catch (error) {
+                showToast('error', 'An error occurred while fetching personnel data.');
+            }
+        }
+    });
+
+    async function refreshPersonnelTable() {
+        if (!isEdit) return;
+        const studyId = document.querySelector('input[name="study_id"]').value;
+        try {
+            const response = await fetch(`/admin/handlers/fetch_personnel.php?study_id=${studyId}`);
+            const data = await response.json();
+            if (data.status === 'success') {
+                const tbody = document.getElementById('personnel-table');
+                tbody.innerHTML = '';
+                if (data.personnel.length > 0) {
+                    data.personnel.forEach(person => {
+                        const row = `
+                            <tr data-personnel-id="${person.id}">
+                                <td>${person.name}</td>
+                                <td>${person.role}</td>
+                                <td>${person.title}</td>
+                                <td>${person.start_date}</td>
+                                <td>
+                                    <button type="button" id="editPersonnel" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                        tbody.insertAdjacentHTML('beforeend', row);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">No personnel added yet</td></tr>';
+                }
+            }
+        } catch (error) {
+            console.error('Error refreshing personnel table:', error);
+        }
+    }
+
+    async function refreshDocumentsTable() {
+        if (!isEdit) return;
+        const studyId = document.querySelector('input[name="study_id"]').value;
+        try {
+            const response = await fetch(`/admin/handlers/fetch_documents.php?study_id=${studyId}`);
+            const data = await response.json();
+            if (data.status === 'success') {
+                const tbody = document.getElementById('documents-tbody');
+                tbody.innerHTML = '';
+                if (data.documents.length > 0) {
+                    data.documents.forEach(doc => {
+                        const row = `
+                            <tr>
+                                <td>${doc.file_name}</td>
+                                <td>${doc.comments}</td>
+                                <td>${new Date(doc.uploaded_at).toLocaleDateString()}</td>
+                                <td><input type="checkbox" class="form-check-input" name="exclude_from_agenda[${doc.id}]" ${doc.exclude_from_agenda ? 'checked' : ''}></td>
+                                <td><button type="button" class="btn btn-sm btn-danger" onclick="deleteDocument(${doc.id})"><i class="fas fa-trash"></i></button></td>
+                            </tr>
+                        `;
+                        tbody.insertAdjacentHTML('beforeend', row);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">No documents uploaded yet</td></tr>';
+                }
+            }
+        } catch (error) {
+            console.error('Error refreshing documents table:', error);
+        }
+    }
+
+    function deleteDocument(id) {
+        if (confirm('Are you sure you want to delete this document?')) {
+            fetch('/admin/handlers/delete_document.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('success', 'Document deleted successfully');
+                    refreshDocumentsTable();
+                } else {
+                    showToast('error', data.message || 'Failed to delete document');
+                }
+            })
+            .catch(error => {
+                showToast('error', 'An error occurred while deleting the document');
+            });
+        }
+    }
 
     function addMorePersonnel() {
         // Function to add more personnel fields dynamically
@@ -646,7 +833,7 @@ try {
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Name</label>
                                    <select name="contact" class="form-select">
-                                        <option >Johne Doe</option>
+                                        <option >John Doe</option>
                                         <option >Mary Adjei</option>
                                         <option >Michael Fosu</option>
                                         <option >Anna George</option>
@@ -698,28 +885,26 @@ try {
         form.insertAdjacentHTML('beforeend', newFields);
     }
 
-    function savePersonnel() {
+    async function savePersonnel() {
         const button = document.querySelector('#addPersonnel .modal-footer .btn-success');
         button.disabled = true;
         button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
 
-        setTimeout(() => {
-            // Function to save personnel data
-            const personnelSections = document.querySelectorAll('.new-personnel-section');
-            const personnelTable = document.getElementById('personnel-table');
-            const studyForm = document.getElementById('studyForm');
-
-            personnelSections.forEach(section => {
+        try {
+            if (isEdit) {
+                // Edit mode: send AJAX
+                const section = document.querySelector('.new-personnel-section');
+                const personnelId = section.querySelector('input[name="personnel_id"]')?.value;
                 const name = section.querySelector('select[name="contact"]').value;
                 const staffType = section.querySelector('select[name="staffType"]').value;
-                const title = section.querySelector('input[placeholder="Enter title"]').value;
-                const dateAdded = section.querySelector('input[type="date"]').value;
-                const companyName = section.querySelector('input[placeholder="Enter company name"]').value;
-                const email = section.querySelector('input[type="email"]').value;
-                const mainPhone = section.querySelector('input[type="phone"]').value;
-                const comments = section.querySelector('input[placeholder="Enter comments"]').value; //
+                const title = section.querySelector('input[name="title"]').value;
+                const dateAdded = section.querySelector('input[name="start_date"]').value;
+                const companyName = section.querySelector('input[name="company_name"]').value;
+                const email = section.querySelector('input[name="email"]').value;
+                const mainPhone = section.querySelector('input[name="phone"]').value;
+                const comments = section.querySelector('input[name="comments"]').value;
 
-                const personnelData = {
+                const data = {
                     name: name,
                     staffType: staffType,
                     title: title,
@@ -730,41 +915,93 @@ try {
                     comments: comments
                 };
 
-                // Add to table
-                const newRow = `
-                    <tr>
-                        <td>${name}</td>
-                        <td>${staffType}</td>
-                        <td>${title}</td>
-                        <td>${dateAdded}</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                        </td>
-                    </tr>
+                if (personnelId) {
+                    data.personnel_id = personnelId;
+                } else {
+                    data.study_id = document.querySelector('input[name="study_id"]').value;
+                }
+
+                const url = personnelId ? '/admin/handlers/update_personnel.php' : '/admin/handlers/add_personnel.php';
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    showToast('success', result.message);
+                    await refreshPersonnelTable();
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addPersonnel'));
+                    modal.hide();
+                } else {
+                    showToast('error', result.message);
+                }
+            } else {
+                // New study mode: old behavior
+                const personnelSections = document.querySelectorAll('.new-personnel-section');
+                const personnelTable = document.getElementById('personnel-table');
+                const studyForm = document.getElementById('studyForm');
+
+                personnelSections.forEach(section => {
+                    const name = section.querySelector('select[name="contact"]').value;
+                    const staffType = section.querySelector('select[name="staffType"]').value;
+                    const title = section.querySelector('input[placeholder="Enter title"]').value;
+                    const dateAdded = section.querySelector('input[type="date"]').value;
+                    const companyName = section.querySelector('input[placeholder="Enter company name"]').value;
+                    const email = section.querySelector('input[type="email"]').value;
+                    const mainPhone = section.querySelector('input[type="phone"]').value;
+                    const comments = section.querySelector('input[placeholder="Enter comments"]').value;
+
+                    const personnelData = {
+                        name: name,
+                        staffType: staffType,
+                        title: title,
+                        dateAdded: dateAdded,
+                        companyName: companyName,
+                        email: email,
+                        mainPhone: mainPhone,
+                        comments: comments
+                    };
+
+                    // Add to table
+                    const newRow = `
+                        <tr>
+                            <td>${name}</td>
+                            <td>${staffType}</td>
+                            <td>${title}</td>
+                            <td>${dateAdded}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    personnelTable.insertAdjacentHTML('beforeend', newRow);
+
+                    // Add hidden input to form
+                    const hiddenInput = `<input type="hidden" name="personnel[]" value='${JSON.stringify(personnelData)}'>`;
+                    studyForm.insertAdjacentHTML('beforeend', hiddenInput);
+                });
+
+                // Close the modal after saving
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addPersonnel'));
+                modal.hide();
+
+                // Clear the form for next use
+                document.getElementById('contentArea').innerHTML = `
+                    <div class="bg-light p-3 mb-3">
+                        <h4 class="text-md">Assigned Personnel</h4>
+                    </div>
                 `;
-                personnelTable.insertAdjacentHTML('beforeend', newRow);
-
-                // Add hidden input to form
-                const hiddenInput = `<input type="hidden" name="personnel[]" value='${JSON.stringify(personnelData)}'>`;
-                studyForm.insertAdjacentHTML('beforeend', hiddenInput);
-            });
-
-            // Close the modal after saving
-            const modal = bootstrap.Modal.getInstance(document.getElementById('addPersonnel'));
-            modal.hide();
-
-            // Clear the form for next use
-            document.getElementById('contentArea').innerHTML = `
-                <div class="bg-light p-3 mb-3">
-                    <h4 class="text-md">Assigned Personnel</h4>
-                </div>
-            `;
-
+            }
+        } catch (error) {
+            showToast('error', 'An unexpected error occurred.');
+        } finally {
             button.disabled = false;
             button.innerHTML = 'Save Personnel';
-        }, 500);
+        }
     }
 
     function toggleLoader(show = true) {
@@ -804,4 +1041,32 @@ try {
         // Toggle visibility
         loader.style.display = show ? 'flex' : 'none';
     }
+
+    // Handle file selection for initial application upload
+    document.getElementById('fileInput').addEventListener('change', function(event) {
+        const files = event.target.files;
+        const tbody = document.getElementById('documents-tbody');
+        document.getElementById('fileNameDisplay').textContent = files.length > 0 ? `Selected: ${files.length} file(s)` : '';
+        if (files.length === 0) {
+            // If no files selected and no existing rows, show no documents
+            if (tbody.querySelectorAll('tr').length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">No documents uploaded yet</td></tr>';
+            }
+            return;
+        }
+        // Remove the no documents row if present
+        const noDocsRow = tbody.querySelector('tr td[colspan="5"]');
+        if (noDocsRow) noDocsRow.closest('tr').remove();
+        Array.from(files).forEach(file => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${file.name} (${file.type || 'Unknown'})</td>
+                <td><input type="text" class="form-control" name="file_comments[]" placeholder="Comments"></td>
+                <td>${new Date().toLocaleDateString()}</td>
+                <td><input type="checkbox" name="dont_include[]"></td>
+                <td><button type="button" class="btn btn-sm btn-danger" onclick="this.closest('tr').remove()">Remove</button></td>
+            `;
+            tbody.appendChild(row);
+        });
+    });
 </script>

@@ -1,10 +1,4 @@
 <?php
-// require_once __DIR__ . '/../database/db_functions.php';
-
-// echo '<pre> Admin Header Included </pre>';
-// echo "\n";
-// echo '<pre> User Logged In: ' . (is_admin_logged_in() ? 'Yes' : 'No') . ' </pre>';
-
 ?>
 
 <!DOCTYPE html>

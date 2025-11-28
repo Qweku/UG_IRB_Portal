@@ -78,7 +78,6 @@ $agendaCategoriesList = getAgendaCategoriesList();
                 </thead>
                 <tbody>
                     <?php
-                    // require_once '../database/db_functions.php';
                     $meetings = getMeetings();
                     if (empty($meetings)) {
                         // Fallback to static data
@@ -159,7 +158,7 @@ $agendaCategoriesList = getAgendaCategoriesList();
                 <button class="btn btn-outline-primary me-2" data-bs-target="#assignMeetingModal" data-bs-toggle="modal">
                     <i class="fas fa-calendar-plus me-1"></i> Assign All To New Meeting
                 </button>
-                <button class="btn btn-outline-danger">
+                <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
                     <i class="fas fa-trash me-1"></i> Delete Selected Agenda Item(s)
                 </button>
             </div>
@@ -208,6 +207,25 @@ $agendaCategoriesList = getAgendaCategoriesList();
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" id="assignOkBtn" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmDeleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this agenda item(s)? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
             </div>
         </div>
     </div>
@@ -270,20 +288,6 @@ $agendaCategoriesList = getAgendaCategoriesList();
             toast.remove();
         });
     }
-    // document.getElementById("meetingFilter").addEventListener("change", function() {
-    //     const selectedDate = this.value.trim();
-    //     const rows = document.querySelectorAll("#agendaTable tbody tr");
-
-    //     rows.forEach(row => {
-    //         const meetingDateCell = row.cells[13]?.innerText.trim(); // Meeting Date column
-
-    //         if (meetingDateCell === selectedDate || selectedDate === "") {
-    //             row.style.display = "";
-    //         } else {
-    //             row.style.display = "none";
-    //         }
-    //     });
-    // });
 
     // Select all rows in the table
     const rows = document.querySelectorAll("#agendaTable tbody tr");
@@ -348,30 +352,49 @@ $agendaCategoriesList = getAgendaCategoriesList();
             });
     });
 
+    // Handle confirmation button click
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+        // Hide modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal'));
+        modal.hide();
 
-    // function saveMeetingDate(rowId, newDate) {
-    //     fetch("/admin/handlers/update_agenda_meeting_date.php", {
-    //             method: "POST",
-    //             headers: {
-    //                 "Content-Type": "application/json",
-    //             },
-    //             body: JSON.stringify({
-    //                 id: rowId,
-    //                 meetingDate: newDate
-    //             }),
-    //         })
-    //         .then(response => response.json())
-    //         .then(data => {
-    //             if (data.success) {
-    //                 showToast('success', "Meeting date updated successfully");
-    //                 console.log("Meeting date updated successfully");
-    //                 window.location.reload();
-    //             } else {
-    //                 showToast('error', "Failed to update meeting date");
-    //             }
-    //         })
-    //         .catch(error => {
-    //             console.error("Error:", error);
-    //         });
-    // }
+        // Call deleteAgenda
+       const selectedRows = document.querySelectorAll("#agendaTable tbody tr.table-active");
+
+        if (selectedRows.length === 0) {
+            alert("Please select at least one row.");
+            return;
+        }
+        // Collect all delete promises
+        const deletePromises = Array.from(selectedRows).map(row => {
+            const rowId = row.dataset.id;
+
+            return fetch("/admin/handlers/delete_agenda_item.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        id: rowId
+                    }),
+                })
+                .then(response => response.json());
+        });
+        // Wait for all deletions to finish
+        Promise.all(deletePromises)
+            .then(results => {
+                const allSuccess = results.every(r => r.success);
+                if (allSuccess) {
+                    showToast('success', "Agenda item(s) deleted successfully");
+                } else {
+                    showToast('error', "Some items failed to delete");
+                }
+                // Reload page after deletions
+                window.location.reload();
+            })
+            .catch(error => {
+                console.error(error);
+                showToast('error', "Error deleting agenda items");
+            });
+    });
 </script>

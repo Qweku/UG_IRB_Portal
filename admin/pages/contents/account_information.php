@@ -27,7 +27,7 @@
                         <div class="col-md-6">
                             <div class="account-detail-item">
                                 <label class="detail-label">Owner</label>
-                                <div class="detail-value">Dorcas Osel-Boakye</div>
+                                <div class="detail-value">Dorcas Osei-Boakye</div>
                             </div>
                             <div class="account-detail-item">
                                 <label class="detail-label">Organization</label>
@@ -43,7 +43,7 @@
                                 <label class="detail-label">Email</label>
                                 <div class="detail-value">
                                     <i class="fas fa-envelope me-2 text-muted"></i>
-                                    dosel-boakye@noguchi.ug.edu.gh
+                                    dosei-boakye@noguchi.ug.edu.gh
                                 </div>
                             </div>
                             <div class="account-detail-item">

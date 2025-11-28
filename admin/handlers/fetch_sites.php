@@ -1,24 +1,10 @@
-<?php 
+<?php
+require_once '../../includes/functions/helpers.php';
 
-require_once '../../includes/config/database.php';
 $sites = [];
 
-try {
-    $db = new Database();
-    $conn = $db->connect();
-
-    if (!$conn) {
-        throw new Exception("Database connection failed");
-    }
-
-    // Fetch site options
-    $stmt = $conn->prepare("SELECT id, site_name FROM sites ORDER BY id ASC");
-    $stmt->execute();
-    $sites = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-} catch (Exception $e) {
-    error_log("Error fetching sites: " . $e->getMessage());
-}
+// Fetch all sites
+$sites = executeAssocQuery("SELECT id, site_name FROM sites ORDER BY id ASC");
 echo '<div class="table-responsive" style="height:300px;"><table class="table table-striped">';
 echo '<thead><tr><th>Name</th><th>Actions</th></tr></thead><tbody>';
 foreach ( $sites as $row) {

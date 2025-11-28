@@ -1,24 +1,10 @@
-<?php 
-require_once '../../includes/config/database.php';
+<?php
+require_once '../../includes/functions/helpers.php';
 
 $investigators = [];
 
-try {
-    $db = new Database();
-    $conn = $db->connect();
-
-    if (!$conn) {
-        throw new Exception("Database connection failed");
-    }
-
-    // Fetch benefit options
-    $stmt = $conn->prepare("SELECT id, specialty_name FROM investigator ORDER BY id ASC");
-    $stmt->execute();
-    $investigators = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-} catch (Exception $e) {
-    error_log("Error fetching investigators: " . $e->getMessage());
-}
+// Fetch all investigators
+$investigators = executeAssocQuery("SELECT id, specialty_name FROM investigator ORDER BY id ASC");
 echo '<div class="table-responsive" style="height:300px;"><table class="table table-striped">';
 echo '<thead>
         <tr>

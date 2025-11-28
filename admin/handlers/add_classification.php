@@ -1,20 +1,17 @@
 <?php
 require_once '../../includes/functions/helpers.php';
-
 header('Content-Type: application/json');
-
 $data = json_decode(file_get_contents('php://input'), true);
 
-if (!$data || !isset($data['id']) || !isset($data['drug_name'])) {
+if (!$data || !isset($data['classification_type'])) {
     echo json_encode(['success' => false, 'message' => 'Invalid data']);
     exit;
 }
 
-$id = $data['id'];
-$drug_name = trim($data['drug_name']);
+$classification_type = trim($data['classification_type']);
 
-if (empty($drug_name)) {
-    echo json_encode(['success' => false, 'message' => 'Drug name cannot be empty']);
+if (empty($classification_type)) {
+    echo json_encode(['success' => false, 'message' => 'Classification cannot be empty']);
     exit;
 }
 
@@ -26,12 +23,12 @@ if (!$conn) {
     exit;
 }
 
-$stmt = $conn->prepare("UPDATE drugs SET drug_name = ? WHERE id = ?");
-$stmt->execute([$drug_name, $id]);
+$stmt = $conn->prepare("INSERT INTO classifications (classification_type) VALUES (?)");
+$stmt->execute([$classification_type]);
 
 if ($stmt->rowCount() > 0) {
     echo json_encode(['success' => true]);
 } else {
-    echo json_encode(['success' => false, 'message' => 'No changes made or record not found']);
+    echo json_encode(['success' => false, 'message' => 'Failed to add classification']);
 }
 ?>
