@@ -1,7 +1,7 @@
 <?php
 
-    
-    $conditions = getConditions();
+
+$conditions = getConditions();
 
 ?>
 
@@ -11,9 +11,38 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="mb-0">Agenda Details</h2>
         <div>
-            <button class="btn btn-success me-2">
-                <i class="fas fa-save me-1"></i> Save
-            </button>
+            <!-- Quick Actions -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <!-- <div>
+                                <h6 class="mb-0 fw-bold">Quick Actions</h6>
+                            </div> -->
+                                <div>
+                                    <button id="recordBtn" class="btn btn-outline-primary me-2" onclick="showHideRecordtable()">
+                                        <i class="fas fa-file-alt me-1"></i> Hide Record Table
+                                    </button>
+                                    <button id="studyBtn" class="btn btn-outline-primary me-2" onclick="showHideStudyDetials()">
+                                        <i class="fas fa-question-circle me-1"></i> Hide Study Details
+                                    </button>
+                                    <a href="/minutes" class="btn btn-outline-primary me-2">
+                                        <i class="fas fa-clipboard me-1"></i> Meeting Minutes
+                                    </a>
+                                    <a href="/generate-letter" class="btn btn-outline-primary me-2">
+                                        <i class="fas fa-envelope me-1"></i> Send Correspondence
+                                    </a>
+                                    <button class="btn btn-success me-2">
+                                        <i class="fas fa-save me-1"></i> Save
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
 
         </div>
     </div>
@@ -39,7 +68,7 @@
                                 </tr>
                             </thead>
                             <tbody id="postMeetingRow">
-                                
+
                             </tbody>
                         </table>
                     </div>
@@ -48,8 +77,8 @@
         </div>
 
         <div id="studyContent">
-           
-        
+
+
         </div>
 
         <!-- Agenda Information -->
@@ -179,34 +208,7 @@ The plan assumes a parallel and logical approach on August 4th, 2023. The follow
             </div>
         </div>
 
-        <!-- Quick Actions -->
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-0 fw-bold">Quick Actions</h6>
-                            </div>
-                            <div>
-                                <button id="recordBtn" class="btn btn-outline-primary me-2" onclick="showHideRecordtable()">
-                                    <i class="fas fa-file-alt me-1"></i> Hide Record Table
-                                </button>
-                                <button id="studyBtn" class="btn btn-outline-primary me-2" onclick="showHideStudyDetials()">
-                                    <i class="fas fa-question-circle me-1"></i> Hide Study Details
-                                </button>
-                                <a href="/minutes" class="btn btn-outline-primary me-2">
-                                    <i class="fas fa-clipboard me-1"></i> Meeting Minutes
-                                </a>
-                                <a href="/generate-letter" class="btn btn-outline-primary">
-                                    <i class="fas fa-envelope me-1"></i> Send Correspondence
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+
     </div>
 </div>
 
@@ -257,10 +259,4 @@ The plan assumes a parallel and logical approach on August 4th, 2023. The follow
             studyButton.innerHTML = '<i class="fas fa-question-circle me-1"></i> Show Study Details';
         }
     }
-
-
-
-
-
-
 </script>

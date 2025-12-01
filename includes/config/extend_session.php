@@ -1,5 +1,5 @@
 <?php
-// session_start();
+session_start();
 
 // Refresh expiration time
 $_SESSION['session_expire_time'] = time() + ini_get('session.gc_maxlifetime');

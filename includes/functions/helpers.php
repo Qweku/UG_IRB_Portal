@@ -278,7 +278,7 @@ function getRecentReports()
 
     try {
         // Assuming a reports table exists with columns: report_name, generated_date, filters_applied, format
-        $stmt = $conn->prepare("SELECT report_name, generated_date, filters_applied, doc_format FROM reports ORDER BY generated_date DESC LIMIT 5");
+        $stmt = $conn->prepare("SELECT id, report_name, generated_date, filters_applied, doc_format FROM reports ORDER BY generated_date DESC LIMIT 5");
         $stmt->execute();
         return $stmt->fetchAll();
     } catch (PDOException $e) {

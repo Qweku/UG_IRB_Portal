@@ -202,8 +202,11 @@ try {
                                                     <td><?php echo htmlspecialchars($person['title']); ?></td>
                                                     <td><?php echo htmlspecialchars($person['start_date']); ?></td>
                                                     <td>
-                                                        <button type="button" id="editPersonnel" class="btn btn-sm btn-outline-primary">
+                                                        <button type="button" class="btn btn-sm btn-outline-primary">
                                                             <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger">
+                                                            <i class="fas fa-trash"></i>
                                                         </button>
                                                     </td>
                                                 </tr>
@@ -640,7 +643,7 @@ try {
         }
     });
 
-    // Use event delegation for edit buttons
+    // Use event delegation for edit and delete buttons
     document.getElementById('personnel-table').addEventListener('click', async function(e) {
         if (e.target.closest('.btn-outline-primary')) {
             const row = e.target.closest('tr');
@@ -701,7 +704,7 @@ try {
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Main Phone</label>
-                                    <input type="tel" name="phone" class="form-control" value="${person.phone}">
+                                    <input type="phone" name="phone" class="form-control" value="${person.phone}">
                                 </div>
                             </div>
                             <div class="row mb-3">
@@ -726,6 +729,30 @@ try {
             } catch (error) {
                 showToast('error', 'An error occurred while fetching personnel data.');
             }
+        } else if (e.target.closest('.btn-outline-danger')) {
+            const row = e.target.closest('tr');
+            const personnel_id = row.getAttribute('data-personnel-id');
+
+            // Remove the row from table
+            row.remove();
+
+            // If editing and has personnel_id, remove the corresponding hidden input
+            if (isEdit && personnel_id) {
+                const studyForm = document.getElementById('studyForm');
+                const hiddenInputs = studyForm.querySelectorAll('input[name="personnel[]"]');
+                hiddenInputs.forEach(input => {
+                    try {
+                        const data = JSON.parse(input.value);
+                        if (data.id == personnel_id) {
+                            input.remove();
+                        }
+                    } catch (e) {
+                        // Ignore invalid JSON
+                    }
+                });
+            }
+
+            showToast('success', 'Personnel removed from table.');
         }
     });
 
@@ -747,8 +774,11 @@ try {
                                 <td>${person.title}</td>
                                 <td>${person.start_date}</td>
                                 <td>
-                                    <button type="button" id="editPersonnel" class="btn btn-sm btn-outline-primary">
+                                    <button type="button" class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
                                     </button>
                                 </td>
                             </tr>
@@ -885,26 +915,28 @@ try {
         form.insertAdjacentHTML('beforeend', newFields);
     }
 
-    async function savePersonnel() {
+     function savePersonnel() {
         const button = document.querySelector('#addPersonnel .modal-footer .btn-success');
         button.disabled = true;
         button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
 
-        try {
-            if (isEdit) {
-                // Edit mode: send AJAX
-                const section = document.querySelector('.new-personnel-section');
-                const personnelId = section.querySelector('input[name="personnel_id"]')?.value;
+        setTimeout(() => {
+            // Function to save personnel data
+            const personnelSections = document.querySelectorAll('.new-personnel-section');
+            const personnelTable = document.getElementById('personnel-table');
+            const studyForm = document.getElementById('studyForm');
+
+            personnelSections.forEach(section => {
                 const name = section.querySelector('select[name="contact"]').value;
                 const staffType = section.querySelector('select[name="staffType"]').value;
-                const title = section.querySelector('input[name="title"]').value;
-                const dateAdded = section.querySelector('input[name="start_date"]').value;
-                const companyName = section.querySelector('input[name="company_name"]').value;
-                const email = section.querySelector('input[name="email"]').value;
-                const mainPhone = section.querySelector('input[name="phone"]').value;
-                const comments = section.querySelector('input[name="comments"]').value;
+                const title = section.querySelector('input[placeholder="Enter title"]').value;
+                const dateAdded = section.querySelector('input[type="date"]').value;
+                const companyName = section.querySelector('input[placeholder="Enter company name"]').value;
+                const email = section.querySelector('input[type="email"]').value;
+                const mainPhone = section.querySelector('input[type="phone"]').value;
+                const comments = section.querySelector('input[placeholder="Enter comments"]').value; //
 
-                const data = {
+                const personnelData = {
                     name: name,
                     staffType: staffType,
                     title: title,
@@ -915,93 +947,41 @@ try {
                     comments: comments
                 };
 
-                if (personnelId) {
-                    data.personnel_id = personnelId;
-                } else {
-                    data.study_id = document.querySelector('input[name="study_id"]').value;
-                }
-
-                const url = personnelId ? '/admin/handlers/update_personnel.php' : '/admin/handlers/add_personnel.php';
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const result = await response.json();
-
-                if (result.status === 'success') {
-                    showToast('success', result.message);
-                    await refreshPersonnelTable();
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('addPersonnel'));
-                    modal.hide();
-                } else {
-                    showToast('error', result.message);
-                }
-            } else {
-                // New study mode: old behavior
-                const personnelSections = document.querySelectorAll('.new-personnel-section');
-                const personnelTable = document.getElementById('personnel-table');
-                const studyForm = document.getElementById('studyForm');
-
-                personnelSections.forEach(section => {
-                    const name = section.querySelector('select[name="contact"]').value;
-                    const staffType = section.querySelector('select[name="staffType"]').value;
-                    const title = section.querySelector('input[placeholder="Enter title"]').value;
-                    const dateAdded = section.querySelector('input[type="date"]').value;
-                    const companyName = section.querySelector('input[placeholder="Enter company name"]').value;
-                    const email = section.querySelector('input[type="email"]').value;
-                    const mainPhone = section.querySelector('input[type="phone"]').value;
-                    const comments = section.querySelector('input[placeholder="Enter comments"]').value;
-
-                    const personnelData = {
-                        name: name,
-                        staffType: staffType,
-                        title: title,
-                        dateAdded: dateAdded,
-                        companyName: companyName,
-                        email: email,
-                        mainPhone: mainPhone,
-                        comments: comments
-                    };
-
-                    // Add to table
-                    const newRow = `
-                        <tr>
-                            <td>${name}</td>
-                            <td>${staffType}</td>
-                            <td>${title}</td>
-                            <td>${dateAdded}</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                    personnelTable.insertAdjacentHTML('beforeend', newRow);
-
-                    // Add hidden input to form
-                    const hiddenInput = `<input type="hidden" name="personnel[]" value='${JSON.stringify(personnelData)}'>`;
-                    studyForm.insertAdjacentHTML('beforeend', hiddenInput);
-                });
-
-                // Close the modal after saving
-                const modal = bootstrap.Modal.getInstance(document.getElementById('addPersonnel'));
-                modal.hide();
-
-                // Clear the form for next use
-                document.getElementById('contentArea').innerHTML = `
-                    <div class="bg-light p-3 mb-3">
-                        <h4 class="text-md">Assigned Personnel</h4>
-                    </div>
+                // Add to table
+                const newRow = `
+                    <tr>
+                        <td>${name}</td>
+                        <td>${staffType}</td>
+                        <td>${title}</td>
+                        <td>${dateAdded}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
                 `;
-            }
-        } catch (error) {
-            showToast('error', 'An unexpected error occurred.');
-        } finally {
+                personnelTable.insertAdjacentHTML('beforeend', newRow);
+
+                // Add hidden input to form
+                const hiddenInput = `<input type="hidden" name="personnel[]" value='${JSON.stringify(personnelData)}'>`;
+                studyForm.insertAdjacentHTML('beforeend', hiddenInput);
+            });
+
+            // Close the modal after saving
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addPersonnel'));
+            modal.hide();
+
+            // Clear the form for next use
+            document.getElementById('contentArea').innerHTML = `
+                <div class="bg-light p-3 mb-3">
+                    <h4 class="text-md">Assigned Personnel</h4>
+                </div>
+            `;
+
             button.disabled = false;
             button.innerHTML = 'Save Personnel';
-        }
+        }, 500);
     }
 
     function toggleLoader(show = true) {
