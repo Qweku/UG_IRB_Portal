@@ -28,6 +28,8 @@ $study_id = null;
 $staffTypes = [];
 $sponsors = [];
 $study_types = [];
+$sae_types = [];
+$locations = [];
 $study_statuses = [];
 $risk_categories = [];
 
@@ -45,6 +47,8 @@ try {
     $study_types = getReviewTypesList();
     $study_statuses = getStudyStatusesList();
     $risk_categories = getRiskCategoriesList();
+    $sae_types = getSAETypesList();
+    $locations = getStudyLocationsList();
     // Check for edit mode
     $is_edit = isset($_GET['edit']) && $_GET['edit'] == '1' && isset($_GET['id']) && is_numeric($_GET['id']);
     $study_id = null;
@@ -104,6 +108,73 @@ try {
 
 ?>
 
+<style>
+    .modal-sae {
+        max-width: 900px;
+    }
+
+    .sae-header {
+        background: linear-gradient(135deg, var(--royal-blue), var(--royal-blue-light));
+        color: white;
+    }
+
+    .study-info-card {
+        border-left: 4px solid #0d6efd;
+        background-color: #f8f9fa;
+    }
+
+    .status-badge {
+        font-size: 0.8rem;
+        padding: 0.35rem 0.75rem;
+    }
+
+    .section-divider {
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem;
+        color: #2c3e50;
+        font-weight: 600;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #495057;
+        margin-bottom: 0.4rem;
+    }
+
+    .required-field::after {
+        content: " *";
+        color: #dc3545;
+    }
+
+    .radio-group-horizontal .form-check {
+        margin-right: 1.5rem;
+        margin-bottom: 0;
+    }
+
+    .date-input-group {
+        position: relative;
+    }
+
+    .date-input-group .bi {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        pointer-events: none;
+    }
+
+    @media (max-width: 768px) {
+        .modal-sae {
+            margin: 0.5rem;
+        }
+
+        .radio-group-horizontal .form-check {
+            margin-right: 1rem;
+        }
+    }
+</style>
 
 <!-- New Study Input Form Content -->
 <div id="addStudy" class="new-study-form p-5">
@@ -400,6 +471,9 @@ try {
                                     <input id="last_irb_renewal" name="last_irb_renewal" type="date" class="form-control" value="<?= htmlspecialchars($last_irb_renewal) ?>">
                                 </div>
                             </div>
+                            <?php
+                            $show_add_button = $is_edit ? '' : 'disabled';
+                            ?>
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Number of SAEs</label>
@@ -408,7 +482,7 @@ try {
                                             <input id="nos" name="nos" type="text" class="form-control" value="<?= htmlspecialchars('0') ?>" disabled>
                                         </div>
                                         <div>
-                                            <button class="btn btn-primary btn-sm disabled">View/Add</button>
+                                            <button type="button" class="btn btn-primary btn-sm <?= htmlspecialchars($show_add_button) ?>" data-bs-target="#addSAE" data-bs-toggle="modal">View/Add</button>
                                         </div>
                                     </div>
                                 </div>
@@ -419,7 +493,7 @@ try {
                                             <input id="noc" name="noc" type="text" class="form-control" value="<?= htmlspecialchars('0') ?>" disabled>
                                         </div>
                                         <div>
-                                            <button class="btn btn-primary btn-sm disabled">View/Add</button>
+                                            <button type="button" class="btn btn-primary btn-sm <?= htmlspecialchars($show_add_button) ?>" data-bs-target="#addCPA" data-bs-toggle="modal">View/Add</button>
                                         </div>
                                     </div>
                                 </div>
@@ -545,14 +619,14 @@ try {
                         </div>
 
                     </form>
-                    
+
                     <button class="btn btn-primary" onclick="addMorePersonnel()">
                         <i class="fas fa-plus me-1"></i> Add Personnel
                     </button>
                     <div class="bg-light p-3 my-3">
                         <h4 class="text-md">Personnel Previously Associated with Study</h4>
                     </div>
-                    
+
                 </div>
             </div>
             <div class="modal-footer">
@@ -563,6 +637,329 @@ try {
 
     </div>
 </div>
+
+<!-- Add SAE Modal -->
+<div id="addSAE" class="modal fade" tabindex="-1" aria-labelledby="addSAELabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-sae">
+        <div class="modal-content">
+            <!-- Modal Header -->
+            <div class="modal-header sae-header">
+                <h5 class="modal-title" id="saeModalLabel">
+                    <i class="bi bi-clipboard-plus me-2"></i>Add New SAE Report
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Study Information Card -->
+            <div class="card study-info-card border-0 rounded-0">
+                <div class="card-body py-3">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <small class="text-muted d-block">Study #</small>
+                            <strong><?= htmlspecialchars($study_number) ?></strong>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted d-block">Study Status</small>
+                            <span class="badge bg-warning status-badge"><?= htmlspecialchars($status) ?></span>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted d-block">Active</small>
+                            <span class="badge bg-success status-badge"><?= htmlspecialchars($active) ?></span>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted d-block">Expiration Date</small>
+                            <strong><?= htmlspecialchars($exp_date) ?></strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="modal-body">
+                <form id="saeForm">
+                    <input type="hidden" name="action" value="add_sae">
+                    <input type="hidden" name="protocol_id" value="<?php echo $study_id; ?>">
+                    <!-- Event Details Section -->
+                    <div class="mb-4">
+                        <h6 class="section-divider">Event Details</h6>
+                        <div class="mb-3">
+                            <label for="description" class="form-label required-field">Description of Event</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" placeholder="Enter detailed description of the adverse event" required></textarea>
+                            <div class="form-text">Provide a comprehensive description of the event, including symptoms, timing, and severity.</div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="eventType" class="form-label">Type of Event</label>
+                                <select class="form-select" id="eventType" name="type_of_event" required>
+                                    <?php foreach ($sae_types as $sae): ?>
+                                        <option value="<?= htmlspecialchars($sae) ?>"><?= htmlspecialchars($sae) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label required-field">Follow-up Report?</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <input type="checkbox" class="form-check-input mt-0" id="followUpCheckbox"
+                                            onchange="toggleFollowUpReport()">
+                                    </span>
+                                    <select class="form-select" id="followUpReport" name="follow_up_report" disabled>
+                                        <option value=""></option>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="other">other</option>
+                                    </select>
+
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <!-- Report Numbers -->
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-4">
+                                <label class="form-label"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <input type="checkbox" class="form-check" id="secondarySaeCheckbox" name="secondary_sae" value="1"
+                                            onchange="toggleSecondarySAE()">
+                                    </span>
+                                    <span class="input-group-text">
+                                        <label class="form-label">Secondary SAE?</label>
+                                    </span>
+                                </div>
+
+                            </div>
+                            <div class="col-md-4">
+                                <label for="originalSae" class="form-label">Original SAE #</label>
+                                <input type="text" class="form-control" id="originalSae" name="original_sae_number" placeholder="Enter original SAE number">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="noReport" class="form-label">IND Report #</label>
+                                <input type="text" class="form-control" id="noReport" name="ind_report_number" placeholder="Enter report number">
+                            </div>
+                        </div>
+
+                        <!-- MedWatch Section -->
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-4">
+                                <label class="form-label"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <input type="checkbox" class="form-check" id="medWatchCheckbox" name="medwatch_report_filed" value="1"
+                                            onchange="toggleMedWatchReport()">
+                                    </span>
+                                    <span class="input-group-text">
+                                        <label class="form-label">MedWatch Report Filed?</label>
+                                    </span>
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="medwatchNumber" class="form-label">MedWatch #</label>
+                                <input type="text" class="form-control" id="medwatchNumber" name="medwatch_number" placeholder="Enter MedWatch number">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="internalSae" class="form-label">Internal SAE #</label>
+                                <input type="text" class="form-control" id="internalSae" name="internal_sae_number" placeholder="0" disabled>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Patient Information Section -->
+                    <div class="mb-4">
+                        <h6 class="section-divider">Patient Information</h6>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="age" class="form-label">Age</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="age" name="age" min="0" max="120" placeholder="Age">
+                                    <span class="input-group-text">years</span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="sex" class="form-label required-field">Sex</label>
+                                <select class="form-select" id="sex" name="sex" required>
+                                    <option value="">Select sex</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="other">Other</option>
+
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="patientId" class="form-label required-field">Patient Identifier</label>
+                                <input type="text" class="form-control" id="patientId" name="patient_identifier" placeholder="Patient ID" required>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-6">
+                                <label class="form-label"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <input type="checkbox" class="form-check-input mt-0" id="localEventCheckbox" name="local_event" value="1"
+                                            onchange="toggleLocalEvent()">
+                                    </span>
+                                    <span class="input-group-text">
+                                        <label class="form-label required-field">Local Event?</label>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="location" class="form-label">Location</label>
+                                <select type="text" class="form-control" id="location" name="location">
+                                    <?php foreach ($locations as $site): ?>
+                                        <option value="<?= htmlspecialchars($site) ?>"><?= htmlspecialchars($site) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+
+
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-6">
+                                <label class="form-label"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <input type="checkbox" class="form-check-input mt-0" id="studyRelatedCheckbox" name="study_related" value="1"
+                                            onchange="toggleStudyRelated()">
+                                    </span>
+                                    <span class="input-group-text">
+                                        <label class="form-label">Study Related?</label>
+                                    </span>
+                                </div>
+
+
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="patientStatus" class="form-label required-field">Patient Status</label>
+                                <select class="form-select" id="patientStatus" name="patient_status" required>
+                                    <option value="">Select status</option>
+                                    <option value="recovered">Recovered/Resolved</option>
+                                    <option value="recovering">Recovering/Resolving</option>
+                                    <option value="not-recovered">Not Recovered/Not Resolved</option>
+                                    <option value="fatal">Fatal</option>
+                                    <option value="unknown">Unknown</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Timeline Section -->
+                    <div class="mb-4">
+                        <h6 class="section-divider">Timeline</h6>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="eventDate" class="form-label required-field">Date of Event</label>
+
+                                <input type="date" class="form-control" id="eventDate" name="date_of_event" required>
+
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="receivedDate" class="form-label required-field">Date Received</label>
+
+                                <input type="date" class="form-control" id="receivedDate" name="date_received" value="2025-12-02" required>
+
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="piAwareDate" class="form-label">Date PI Aware</label>
+
+                                <input type="date" class="form-control" id="piAwareDate" name="date_pi_aware">
+
+                            </div>
+                        </div>
+
+                        <!-- Additional Date Fields -->
+                        <div class="row g-3 mt-3">
+                            <div class="col-md-6">
+                                <label for="signedDate" class="form-label">Date Signed by PI</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <input type="checkbox" class="form-check-input mt-0" id="signedByPI" name="signed_by_pi" value="1"
+                                            onchange="toggleSignedByPI()">
+                                    </span>
+                                    <input type="date" class="form-control" id="signedDate" name="date_signed" disabled>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Details Section -->
+                    <div class="mb-4">
+                        <h6 class="section-divider">Additional Details</h6>
+
+                        <!-- Radio Options Row 1 -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <input type="checkbox" class="form-check-input mt-0" id="risksAlteredCheckbox" name="risks_altered" value="1"
+                                            onchange="toggleRisksAltered()">
+                                    </span>
+                                    <span class="input-group-text">
+                                        <label class="form-label">Risks Altered?</label>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <input type="checkbox" class="form-check-input mt-0" id="consentModifiedCheckbox" name="new_consent_required" value="1"
+                                            onchange="toggleConsentModified()">
+                                    </span>
+                                    <span class="input-group-text">
+                                        <label class="form-label">New Consent Required?</label>
+                                    </span>
+
+                                </div>
+
+
+                            </div>
+
+
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between align-items-center border-top pt-3">
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>Fields marked with * are required
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                    <i class="bi bi-x-circle me-1"></i>Cancel
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save me-1"></i>Save Data
+                                </button>
+                            </div>
+                        </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
 <script>
     const isEdit = <?php echo $is_edit ? 'true' : 'false'; ?>;
 
@@ -629,13 +1026,13 @@ try {
                 window.location.reload();
             } else {
                 showToast('error', result.message);
-                 toggleLoader(false);
-                 window.location.reload();
+                toggleLoader(false);
+                window.location.reload();
             }
         } catch (error) {
             showToast('error', 'An unexpected error occurred.');
-             toggleLoader(false);
-             window.location.reload();
+            toggleLoader(false);
+            window.location.reload();
         } finally {
             // 🔹 Always hide loader after operations
             toggleLoader(false);
@@ -828,22 +1225,26 @@ try {
     function deleteDocument(id) {
         if (confirm('Are you sure you want to delete this document?')) {
             fetch('/admin/handlers/delete_document.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: id })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showToast('success', 'Document deleted successfully');
-                    refreshDocumentsTable();
-                } else {
-                    showToast('error', data.message || 'Failed to delete document');
-                }
-            })
-            .catch(error => {
-                showToast('error', 'An error occurred while deleting the document');
-            });
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id: id
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('success', 'Document deleted successfully');
+                        refreshDocumentsTable();
+                    } else {
+                        showToast('error', data.message || 'Failed to delete document');
+                    }
+                })
+                .catch(error => {
+                    showToast('error', 'An error occurred while deleting the document');
+                });
         }
     }
 
@@ -915,7 +1316,7 @@ try {
         form.insertAdjacentHTML('beforeend', newFields);
     }
 
-     function savePersonnel() {
+    function savePersonnel() {
         const button = document.querySelector('#addPersonnel .modal-footer .btn-success');
         button.disabled = true;
         button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
@@ -1049,4 +1450,56 @@ try {
             tbody.appendChild(row);
         });
     });
+
+    // Handle SAE form submission
+    document.getElementById('saeForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // Basic validation
+        const required = ['description', 'eventType', 'sex', 'patientId', 'eventDate', 'receivedDate', 'patientStatus'];
+        let valid = true;
+        required.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el.value.trim()) {
+                el.classList.add('is-invalid');
+                valid = false;
+            } else {
+                el.classList.remove('is-invalid');
+            }
+        });
+        if (!valid) {
+            showToast('error', 'Please fill in all required fields.');
+            return;
+        }
+
+        const formData = new FormData(this);
+        try {
+            const response = await fetch('/admin/handlers/add_study_handler.php', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                showToast('success', result.message);
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addSAE'));
+                modal.hide();
+            } else {
+                showToast('error', result.message);
+            }
+        } catch (error) {
+            showToast('error', 'An unexpected error occurred.');
+        }
+    });
+
+
+    function toggleFollowUpReport() {
+        const followUpCheckbox = document.getElementById('followUpReportCheckbox');
+        const followUpReportSelection = document.getElementById('followUpReport');
+
+        // Change the disabled select input to enabled/disabled based on checkbox
+       
+
+
+    }
 </script>

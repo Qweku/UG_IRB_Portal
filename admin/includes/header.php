@@ -23,9 +23,9 @@
             <button class="btn btn-outline-light me-2 d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar">
                 <i class="fas fa-bars"></i>
             </button>
-            <a class="navbar-brand" href="/">
-                <img src="/admin/assets/images/ug-nmimr-logo.jpg" alt="Noguchi Logo" height="50" class="d-inline-block align-text-top me-2">
-                UG HARES Software
+            <a class="navbar-brand d-flex" href="/">
+                <img src="/admin/assets/images/ug_logo_white.png" alt="Noguchi Logo" height="70" class="d-inline-block align-text-top me-2">
+               <h2 class="m-auto"><strong>UG HARES Software</strong></h2>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>

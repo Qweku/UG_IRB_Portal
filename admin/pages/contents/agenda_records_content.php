@@ -10,7 +10,7 @@ $db = new Database();
 $conn = $db->connect();
 
 if ($conn) {
-    $query = "SELECT a.agenda_group, a.pi, a.title, a.reference_number, s.protocol_number
+    $query = "SELECT a.agenda_group, a.study_id, a.pi, a.title, a.reference_number, s.protocol_number
                         AS study_number FROM agenda_items a LEFT JOIN studies s
                         ON a.reference_number = s.ref_num WHERE a.meeting_date = ?";
     $stmt = $conn->prepare($query);
@@ -154,74 +154,74 @@ if ($conn) {
     </div> -->
 
     <!-- Submissions Section -->
-     <?php if (!empty($agendaRecords)): ?>
-    <div class="card main-content-card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <div>
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-file-medical me-2"></i>
-                    Submissions for Selected Meeting
-                </h5>
-                <small>3 submissions requiring review</small>
+    <?php if (!empty($agendaRecords)): ?>
+        <div class="card main-content-card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-file-medical me-2"></i>
+                        Submissions for Selected Meeting
+                    </h5>
+                    <small>3 submissions requiring review</small>
+                </div>
+                <div class="header-badges">
+                    <span class="badge bg-primary">Expedited: 3</span>
+                    <span class="badge bg-secondary">CPA: 3</span>
+                </div>
             </div>
-            <div class="header-badges">
-                <span class="badge bg-primary">Expedited: 3</span>
-                <span class="badge bg-secondary">CPA: 3</span>
-            </div>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th width="120px">Agenda Group</th>
-                            <th width="100px">Study Number</th>
-                            <th width="80px">Type</th>
-                            <th>PI</th>
-                            <th>Study Title</th>
-                            <th width="120px">Reference Number</th>
-                            <th width="100px">Creators RefNum</th>
-                            <th width="120px">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (!empty($filteredMeeting)): ?>
-                            <?php foreach ($filteredMeeting as $agendaItem): ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($agendaItem['agenda_group'] ?? "") ?></td>
-                                    <td><?php echo htmlspecialchars($agendaItem['study_number'] ?? "") ?></td>
-                                    <td><?php echo htmlspecialchars($agendaItem['agenda_type'] ?? "") ?></td>
-                                    <td><?php echo htmlspecialchars($agendaItem['pi'] ?? "") ?></td>
-                                    <td><?php echo htmlspecialchars($agendaItem['title'] ?? "") ?></td>
-                                    <td><?php echo htmlspecialchars($agendaItem['reference_number'] ?? "") ?></td>
-                                    <td><?php echo htmlspecialchars($agendaItem['c_ref_num'] ?? "") ?></td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <button class="btn btn-sm btn-outline-primary" title="View Details">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
                             <tr>
-                                <td colspan="8" class="text-center">No submissions found for the selected meeting.</td>
+                                <th width="120px">Agenda Group</th>
+                                <th width="100px">Study Number</th>
+                                <th width="80px">Type</th>
+                                <th>PI</th>
+                                <th>Study Title</th>
+                                <th width="120px">Reference Number</th>
+                                <th width="100px">Creators RefNum</th>
+                                <th width="120px">Actions</th>
                             </tr>
-                        <?php endif; ?>
+                        </thead>
+                        <tbody>
+                            <?php if (!empty($filteredMeeting)): ?>
+                                <?php foreach ($filteredMeeting as $agendaItem): ?>
+                                    <tr class="studyRow" data-study-id="<?php echo htmlspecialchars($agendaItem['study_id'] ?? "") ?>">
+                                        <td><?php echo htmlspecialchars($agendaItem['agenda_group'] ?? "") ?></td>
+                                        <td><?php echo htmlspecialchars($agendaItem['study_number'] ?? "") ?></td>
+                                        <td><?php echo htmlspecialchars($agendaItem['agenda_type'] ?? "") ?></td>
+                                        <td><?php echo htmlspecialchars($agendaItem['pi'] ?? "") ?></td>
+                                        <td><?php echo htmlspecialchars($agendaItem['title'] ?? "") ?></td>
+                                        <td><?php echo htmlspecialchars($agendaItem['reference_number'] ?? "") ?></td>
+                                        <td><?php echo htmlspecialchars($agendaItem['c_ref_num'] ?? "") ?></td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button class="btn btn-sm btn-outline-primary" title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="8" class="text-center">No submissions found for the selected meeting.</td>
+                                </tr>
+                            <?php endif; ?>
 
 
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    </div>
     <?php endif; ?>
 
     <!-- Supporting Documents Section -->
-     <?php if (!empty($agendaRecords)): ?>
-    <div class="row">
+
+    <div id="studyDocSection" class="row" style="display:none;">
         <div class="col-md-8">
             <div class="card documents-card">
                 <div class="card-header">
@@ -265,14 +265,14 @@ if ($conn) {
                         </div>
                     </div>
                 </div>
-                <div class="card-footer">
+                <!-- <div class="card-footer">
                     <button class="btn btn-outline-primary btn-sm">
                         <i class="fas fa-upload me-1"></i> Upload New Document
                     </button>
-                </div>
+                </div> -->
             </div>
         </div>
-        <div class="col-md-4">
+        <!-- <div class="col-md-4">
             <div class="card stats-card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
@@ -306,7 +306,93 @@ if ($conn) {
                     </div>
                 </div>
             </div>
-        </div>
+        </div> -->
     </div>
-    <?php endif; ?>
+
 </div>
+
+<script>
+    document.querySelectorAll('.studyRow').forEach(row => {
+
+        row.addEventListener('click', function() {
+            const studyId = this.getAttribute('data-study-id');
+
+            // Remove highlight from all rows
+            document.querySelectorAll('.studyRow').forEach(r => {
+                r.classList.remove('table-primary');
+            });
+
+            // Highlight the clicked row
+            this.classList.add('table-primary');
+
+            if (!studyId) {
+                console.error('Invalid study ID');
+                return;
+            }
+
+            // Fetch study documents
+            fetch(`/admin/handlers/get_study_documents.php?study_id=${studyId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const documentsCard = document.querySelector('.documents-card .card-body');
+                    documentsCard.innerHTML = '';
+
+                    if (data.length === 0) {
+                        document.getElementById('studyDocSection').style.display = 'block';
+                        documentsCard.innerHTML = '<p class="text-muted">No documents found for this study.</p>';
+                    } else {
+                        data.forEach(doc => {
+
+                            const docItem = document.createElement('div');
+                            docItem.classList.add('document-item');
+
+                            if(!doc.file_name || doc.file_name.trim() === '' || doc.file_name === null) {
+                                document.getElementById('studyDocSection').style.display = 'block';
+                                docItem.innerHTML = '<p class="text-muted">No documents found for this study.</p>';
+                                documentsCard.appendChild(docItem);
+                                return;
+                            }
+
+                            docItem.innerHTML = `
+                        <div class="document-icon">
+                            <i class="fas fa-file-pdf text-danger fa-2x"></i>
+                        </div>
+                        <div class="document-details">
+                            <div class="document-name">${doc.file_name}</div>
+                            <div class="document-meta">
+                                <span class="meta-item">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    Uploaded: ${doc.uploaded_at}
+                                </span>
+                                <span class="meta-item">
+                                    <i class="fas fa-file me-1"></i>
+                                    ${doc.document_type}
+                                </span>
+                            </div>
+                            <div class="document-comments">
+                                <i class="fas fa-comment me-1 text-muted"></i>
+                                ${doc.comments}
+                            </div>
+                        </div>
+                        <div class="document-actions">
+                            <button class="btn btn-sm btn-outline-primary me-1">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary me-1">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                            documentsCard.appendChild(docItem);
+                            document.getElementById('studyDocSection').style.display = 'block';
+                        });
+                    }
+                })
+                .catch(error => console.error('Error fetching documents:', error));
+        });
+
+    });
+</script>

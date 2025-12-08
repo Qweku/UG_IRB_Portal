@@ -54,7 +54,7 @@ if (is_admin_logged_in()) {
     <div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center">
         <div class="login-card">
             <div class="login-header">
-                <img src="/admin/assets/images/ug-nmimr-logo.jpg" alt="Noguchi Logo" height="50" class="d-inline-block align-text-top me-2">
+                <img src="/admin/assets/images/ug_logo_white.png" alt="Noguchi Logo" height="70" class="d-inline-block align-text-top me-2">
                 <h4>UG HARES Software</h4>
                 <p>Please sign in to continue</p>
             </div>

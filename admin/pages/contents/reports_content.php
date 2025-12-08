@@ -264,13 +264,13 @@ $cpaSearchColumns = [
                                 </tr>';
                         } else {
                             foreach ($recentReports as $report) {
-                                echo '<tr data-report-id="' . htmlspecialchars($report['id']) . '">
+                                echo '<tr >
                                     <td>' . htmlspecialchars($report['report_name']) . '</td>
                                     <td>' . htmlspecialchars($report['generated_date']) . '</td>
                                     <td>' . htmlspecialchars($report['filters_applied']) . '</td>
                                     <td>' . htmlspecialchars($report['doc_format']) . '</td>
                                     <td>
-                                        <button id="downloadReport" class="btn btn-sm btn-outline-primary">
+                                        <button data-report-id="' . htmlspecialchars($report['id']) . '" id="downloadReport" class="btn btn-sm btn-outline-primary">
                                             <i class="fas fa-download me-1"></i> Download
                                         </button>
                                     </td>
@@ -301,7 +301,7 @@ $cpaSearchColumns = [
 
         // Reset dropdown
         filterSection.innerHTML = '<option value="">Select column</option>';
-        
+
 
         let columns = {};
 

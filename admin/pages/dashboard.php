@@ -454,51 +454,68 @@ $meetingDates = getMeetingDates();
 </script>
 
 <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const sessionDuration = window.sessionTimeout * 1000; // Convert to ms
-            const warningBefore = 60 * 1000; // Show modal 2 minutes before expiry
+       document.addEventListener('DOMContentLoaded', () => {
 
-            // Show modal 2 mins before session ends
-            const warningTimer = setTimeout(() => {
-                const modal = new bootstrap.Modal(document.getElementById('sessionTimeoutModal'));
-                modal.show();
+    let warningTimer;
+    let countdownInterval;
 
-                let remaining = 60; // countdown seconds
-                const countdown = document.getElementById('countdown');
-                const interval = setInterval(() => {
-                    remaining--;
-                    countdown.textContent = remaining;
-                    if (remaining <= 0) {
-                        clearInterval(interval);
-                        window.location.href = '/logout'; // auto logout
-                    }
-                }, 1000);
+    function startWarningTimer() {
+        const sessionDuration = window.sessionTimeout * 1000; 
+        const warningBefore = 60 * 1000; 
 
-                // Stay Logged In button
-                document.getElementById('stayLoggedIn').addEventListener('click', () => {
-                    clearInterval(interval);
-                    modal.hide();
-                    extendSession(); // refresh the session
-                });
+        warningTimer = setTimeout(showWarningModal, sessionDuration - warningBefore);
+    }
 
-                // Logout button
-                document.getElementById('logoutNow').addEventListener('click', () => {
-                    window.location.href = '/logout';
-                });
+    function showWarningModal() {
+        const modal = new bootstrap.Modal(document.getElementById('sessionTimeoutModal'));
+        modal.show();
 
-            }, sessionDuration - warningBefore);
+        let remaining = 60;
+        const countdown = document.getElementById('countdown');
+        countdown.textContent = remaining;
 
-            // Extend session via AJAX
-            function extendSession() {
-                fetch('/includes/config/extend_session.php')
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'ok') {
-                            console.log('Session extended');
-                            location.reload(); // reload to reset timer
-                        }
-                    })
-                    .catch(err => console.error('Error extending session:', err));
+        countdownInterval = setInterval(() => {
+            remaining--;
+            countdown.textContent = remaining;
+
+            if (remaining <= 0) {
+                clearInterval(countdownInterval);
+                window.location.href = '/logout';
             }
-        });
+        }, 1000);
+    }
+
+    // ✔ Only attach these listeners ONCE
+    document.getElementById('stayLoggedIn').addEventListener('click', () => {
+        clearInterval(countdownInterval);
+        const modal = bootstrap.Modal.getInstance(document.getElementById('sessionTimeoutModal'));
+        modal.hide();
+        extendSession();
+    });
+
+    document.getElementById('logoutNow').addEventListener('click', () => {
+        window.location.href = '/logout';
+    });
+
+    function extendSession() {
+        fetch('/includes/config/extend_session.php')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    console.log("Session extended");
+
+                    // ❗ Reset timers
+                    clearTimeout(warningTimer);
+                    clearInterval(countdownInterval);
+
+                    startWarningTimer();
+                }
+            })
+            .catch(err => console.error('Error extending session:', err));
+    }
+
+    // Start initial timer
+    startWarningTimer();
+});
+
     </script>

@@ -150,19 +150,31 @@ $logStmt->execute([
     ':file_path'      => $filePath
 ]);
 
-
+$reportId = $conn->lastInsertId();
 
 // ---------------------------------------------
 // 3. EXPORT LOGIC
 // ---------------------------------------------
 
+$generatedFilePath = '';
 if ($format === 'csv') {
-    exportCSV($headers, $dataRows);
+    $generatedFilePath = exportCSV($headers, $dataRows);
 } elseif ($format === 'excel') {
-    exportExcel($headers, $dataRows);
+    $generatedFilePath = exportExcel($headers, $dataRows);
 } elseif ($format === 'pdf') {
-    exportPDF($headers, $dataRows);
+    $generatedFilePath = exportPDF($headers, $dataRows);
 }
+
+// Update the file_path in the database
+if ($generatedFilePath) {
+    $updateSQL = "UPDATE reports SET file_path = :file_path WHERE id = :id";
+    $updateStmt = $conn->prepare($updateSQL);
+    $updateStmt->execute([
+        ':file_path' => $generatedFilePath,
+        ':id' => $reportId
+    ]);
+}
+
 exit;
 
 

@@ -287,6 +287,30 @@ function getRecentReports()
     }
 }
 
+
+/**
+ * Get continue review studies
+ * @return array
+ */
+function getContinueReviewStudies()
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) {
+        return [];
+    }
+
+    try {
+        // Assuming a reports table exists with columns: report_name, generated_date, filters_applied, format
+        $stmt = $conn->prepare("SELECT * FROM studies WHERE expiration_date <= NOW()");
+        $stmt->execute();
+        return $stmt->fetchAll();
+    } catch (PDOException $e) {
+        error_log("Error fetching continue review studies: " . $e->getMessage());
+        return [];
+    }
+}
+
 /**
  * Get administration stats
  * @return array
@@ -460,6 +484,58 @@ function getDrugsDevices()
         return $stmt->fetchAll();
     } catch (PDOException $e) {
         error_log("Error fetching drugs/devices: " . $e->getMessage());
+        return [];
+    }
+}
+
+
+/**
+ * Get sae types
+ * @return array
+ */
+function getSAETypesList()
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) {
+        return [];
+    }
+
+    try {
+        // Assuming a drugs_devices table exists
+        $stmt = $conn->prepare("SELECT event_type FROM sae_event_types");
+        $stmt->execute();
+        // error_log("Fetching SAE Types: " . print_r($stmt->fetchAll(), true));
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    } catch (PDOException $e) {
+        error_log("Error fetching sae types: " . $e->getMessage());
+        return [];
+    }
+}
+
+
+/**
+ * Get sites
+ * @return array
+ */
+function getStudyLocationsList()
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) {
+        return [];
+    }
+
+    try {
+        // Assuming a drugs_devices table exists
+        $stmt = $conn->prepare("SELECT site_name FROM sites");
+        $stmt->execute();
+        // error_log("Fetching SAE Types: " . print_r($stmt->fetchAll(), true));
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    } catch (PDOException $e) {
+        error_log("Error fetching sites: " . $e->getMessage());
         return [];
     }
 }

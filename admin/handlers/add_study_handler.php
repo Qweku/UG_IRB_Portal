@@ -42,6 +42,72 @@ $comments = '';
 $irb_meetings = [];
 
 /**
+ * Process SAE form submission
+ * Handles validation, database insertion, and JSON response
+ */
+function processSAESubmission()
+{
+    // Required fields for SAE
+    $required_fields = ['protocol_id', 'description', 'type_of_event'];
+
+    $data = [];
+    foreach ($required_fields as $field) {
+        $data[$field] = trim($_POST[$field] ?? '');
+        if (empty($data[$field])) {
+            echo json_encode(['status' => 'error', 'message' => 'Please fill in all required fields: ' . implode(', ', $required_fields)]);
+            return;
+        }
+    }
+
+    // Optional fields
+    $optional_fields = [
+        'follow_up_report', 'original_sae_number', 'secondary_sae', 'internal_sae_number',
+        'ind_report_number', 'medwatch_report_filed', 'medwatch_number', 'local_event',
+        'location', 'study_related', 'patient_status', 'age', 'sex', 'patient_identifier',
+        'date_of_event', 'date_received', 'date_pi_aware', 'signed_by_pi', 'date_signed',
+        'risks_altered', 'new_consent_required'
+    ];
+
+    foreach ($optional_fields as $field) {
+        $data[$field] = trim($_POST[$field] ?? '');
+    }
+
+    // Database operation
+    try {
+        $db = new Database();
+        $conn = $db->connect();
+
+        if (!$conn) {
+            throw new Exception("Database connection failed");
+        }
+
+        // Prepare insert statement
+        $columns = array_keys($data);
+        $placeholders = array_fill(0, count($columns), '?');
+        $columns_str = implode(', ', $columns);
+        $placeholders_str = implode(', ', $placeholders);
+
+        $stmt = $conn->prepare("INSERT INTO saes ($columns_str, created_at, updated_at) VALUES ($placeholders_str, NOW(), NOW())");
+
+        $values = array_values($data);
+        $stmt->execute($values);
+
+        if ($stmt->rowCount() > 0) {
+            echo json_encode(['status' => 'success', 'message' => 'SAE report submitted successfully']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to submit SAE report']);
+        }
+
+    } catch (PDOException $e) {
+        error_log("Database error: " . $e->getMessage());
+        echo json_encode(['status' => 'error', 'message' => 'Failed to submit SAE report. Please try again.']);
+    } catch (Exception $e) {
+        error_log("General error: " . $e->getMessage());
+        echo json_encode(['status' => 'error', 'message' => 'An error occurred. Please try again.']);
+    }
+}
+
+/**
  * Process form submission for adding a new study and personnel
  * Handles validation, database insertion in a transaction, and user feedback
  */
@@ -447,5 +513,10 @@ function processFormSubmission()
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    processFormSubmission();
+    // Check if this is an SAE submission
+    if (isset($_POST['action']) && $_POST['action'] === 'add_sae') {
+        processSAESubmission();
+    } else {
+        processFormSubmission();
+    }
 }

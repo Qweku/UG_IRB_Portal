@@ -39,19 +39,19 @@
         </div>
         <div class="mt-4">
             <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="studiesOnAgenda" checked>
+                <input class="form-check-input" type="checkbox" id="studiesOnAgenda">
                 <label class="form-check-label small" for="studiesOnAgenda">
                     Show only those studies not already on Agenda for this date
                 </label>
             </div>
             <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="crRequired" checked>
+                <input class="form-check-input" type="checkbox" id="crRequired">
                 <label class="form-check-label small" for="crRequired">
                     Show only those studies where CR is required
                 </label>
             </div>
             <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="exemptStudies" checked>
+                <input class="form-check-input" type="checkbox" id="exemptStudies">
                 <label class="form-check-label small" for="exemptStudies">
                     Include Exempt Studies
                 </label>
@@ -101,7 +101,7 @@
                 <tbody>
                     <?php
                     // require_once '../database/db_functions.php';
-                    $studies = getStudies();
+                    $studies = getContinueReviewStudies();
                     if (empty($studies)) {
                         // Fallback to static data
                         echo '<tr>
@@ -143,13 +143,13 @@
                                  <td>' . htmlspecialchars($study['protocol_number'] ?? '') . '</td>
                                 <td>' . htmlspecialchars($study['expiration_date'] ?? '') . '</td>
                                 <td>' . htmlspecialchars($study['agenda'] ?? '') . '</td>
-                                <td><input type="checkbox"></td>
+                                <td><input type="checkbox" disabled></td>
                                 <td>' . htmlspecialchars($study['expedite_cite'] ?? '') . '</td>
                                 <td>' . htmlspecialchars($study['sent_flag'] ?? '0') . '</td>
                                 <td>' . htmlspecialchars($study['date_sent'] ?? '') . '</td>
                                 <td>' . htmlspecialchars($study['final_flag_sent'] ?? '') . '</td> 
                                 <td>' . htmlspecialchars($study['progress_flag_new'] ?? '') . '</td>
-                                <td>' . htmlspecialchars($study['data_received'] ?? '') . '</td>
+                                <td>' . htmlspecialchars($study['date_received'] ?? '') . '</td>
                                 <td>' . htmlspecialchars($study['last_renewal_date'] ?? '') . '</td>
                                 <td>' . htmlspecialchars($study['renewal_cycle'] ?? '') . '</td>
                                 <td>' . htmlspecialchars($study['pi'] ?? '2025-10-01') . '</td>
