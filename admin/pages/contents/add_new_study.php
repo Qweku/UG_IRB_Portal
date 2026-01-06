@@ -1,5 +1,10 @@
 <?php
 
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+    header('Location: login');
+    exit;
+}
+
 $study_number = '';
 $ref_number = '';
 $exp_date = '';
@@ -602,6 +607,8 @@ try {
 
 </div>
 
+
+<!-- Add Personnel Modal -->
 <div id="addPersonnel" class="modal fade" tabindex="-1" aria-labelledby="addPersonnelLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -710,9 +717,10 @@ try {
                                         <option value="2">2</option>
                                         <option value="3">3</option>
                                         <option value="4">4</option>
-                                        <option value="other">other</option>
+                                        <option value="other">Other</option>
+                                        <option value="final">Final</option>
+                                        <option value="none">None</option>
                                     </select>
-
                                 </div>
                             </div>
                         </div>
@@ -1494,12 +1502,28 @@ try {
 
 
     function toggleFollowUpReport() {
-        const followUpCheckbox = document.getElementById('followUpReportCheckbox');
-        const followUpReportSelection = document.getElementById('followUpReport');
+        const checkbox = document.getElementById('followUpCheckbox');
+        const select = document.getElementById('followUpReport');
 
-        // Change the disabled select input to enabled/disabled based on checkbox
-       
+        if (checkbox.checked) {
+            select.disabled = false;
+            select.focus();
+        } else {
+            select.disabled = true;
+            select.value = ""; // reset selection when disabled
+        }
+    }
 
+    function toggleSignedByPI(){
+        const piCheckbox = document.getElementById('signedByPI');
+        const piInput = document.getElementById('signedDate');
 
+         if (piCheckbox.checked) {
+            piInput.disabled = false;
+            piInput.focus();
+        } else {
+            piInput.disabled = true;
+            piInput.value = ""; // reset selection when disabled
+        }
     }
 </script>

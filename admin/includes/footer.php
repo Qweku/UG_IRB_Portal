@@ -184,10 +184,42 @@
 
       }
 
+      // Session Timer Function
+      function updateSessionTimer() {
+          if (!loginTime) return;
+
+          const now = Math.floor(Date.now() / 1000);
+          const elapsed = now - loginTime;
+          const remaining = sessionDuration - elapsed;
+
+          if (remaining <= 0) {
+              document.getElementById('timer-display').textContent = '00:00';
+              document.getElementById('session-timer').classList.add('text-danger');
+              // Optional: auto logout or show warning
+              if (remaining < -60) { // 1 minute grace
+                  window.location.href = '/logout';
+              }
+              return;
+          }
+
+          const minutes = Math.floor(remaining / 60);
+          const seconds = remaining % 60;
+          const display = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+          document.getElementById('timer-display').textContent = display;
+
+          // Change color when less than 5 minutes
+          if (remaining <= 300) {
+              document.getElementById('session-timer').classList.add('text-warning');
+          }
+      }
+
       // Initialize the menu system when DOM is loaded
       document.addEventListener('DOMContentLoaded', function() {
           try {
               window.menuSystem = new MenuSystem();
+              // Start session timer
+              updateSessionTimer();
+              setInterval(updateSessionTimer, 1000);
           } catch (error) {
               console.error('Error initializing MenuSystem:', error);
           }

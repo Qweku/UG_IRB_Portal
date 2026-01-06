@@ -13,7 +13,8 @@ require_once __DIR__ . '/../config/database.php';
  * @param array $params
  * @return int
  */
-function executeCountQuery($query, $params = []) {
+function executeCountQuery($query, $params = [])
+{
     $db = new Database();
     $conn = $db->connect();
     if (!$conn) return 0;
@@ -34,7 +35,8 @@ function executeCountQuery($query, $params = []) {
  * @param array $params
  * @return array
  */
-function executeListQuery($query, $params = []) {
+function executeListQuery($query, $params = [])
+{
     $db = new Database();
     $conn = $db->connect();
     if (!$conn) return [];
@@ -54,7 +56,8 @@ function executeListQuery($query, $params = []) {
  * @param array $params
  * @return array
  */
-function executeAssocQuery($query, $params = []) {
+function executeAssocQuery($query, $params = [])
+{
     $db = new Database();
     $conn = $db->connect();
     if (!$conn) return [];
@@ -72,7 +75,8 @@ function executeAssocQuery($query, $params = []) {
  * Check if admin is logged in
  * @return bool
  */
-function is_admin_logged_in() {
+function is_admin_logged_in()
+{
     if (session_status() === PHP_SESSION_NONE) {
         session_name('admin_session');
         session_start();
@@ -82,59 +86,73 @@ function is_admin_logged_in() {
 
 
 
-function getActiveStudiesCount() {
+function getActiveStudiesCount()
+{
     return executeCountQuery("SELECT COUNT(*) as count FROM studies WHERE study_status = 'open'");
 }
 
-function getCPATypesCount() {
+function getCPATypesCount()
+{
     return executeCountQuery("SELECT COUNT(*) as count FROM cpa_types");
 }
 
-function getInvestigatorCount() {
+function getInvestigatorCount()
+{
     return executeCountQuery("SELECT COUNT(*) as count FROM investigator");
 }
 
-function getIRBMeetingsCount() {
+function getIRBMeetingsCount()
+{
     return executeCountQuery("SELECT COUNT(*) as count FROM irb_meetings");
 }
 
-function getIRBActionsCount() {
+function getIRBActionsCount()
+{
     return executeCountQuery("SELECT COUNT(*) as count FROM irb_action_codes");
 }
 
-function getSAETypesCount() {
+function getSAETypesCount()
+{
     return executeCountQuery("SELECT COUNT(*) as count FROM sae_event_types");
 }
 
-function getCPAActionCount() {
+function getCPAActionCount()
+{
     return executeCountQuery("SELECT COUNT(*) as count FROM cpa_action_codes");
 }
 
-function getStudyCodesCount() {
+function getStudyCodesCount()
+{
     return executeCountQuery("SELECT COUNT(*) as count FROM study_status_codes");
 }
 
-function getAgendaCategoriesCount() {
+function getAgendaCategoriesCount()
+{
     return executeCountQuery("SELECT COUNT(*) as count FROM agenda_category");
 }
 
-function getIRBConditionCount() {
+function getIRBConditionCount()
+{
     return executeCountQuery("SELECT COUNT(*) as count FROM irb_condition");
 }
 
-function getAgendaCategoriesList() {
+function getAgendaCategoriesList()
+{
     return executeListQuery("SELECT category_name FROM agenda_category ORDER BY category_name ASC");
 }
 
-function getStudyStatus() {
+function getStudyStatus()
+{
     return executeListQuery("SELECT status_name FROM study_status ORDER BY status_name ASC");
 }
 
-function getReviewTypes() {
+function getReviewTypes()
+{
     return executeListQuery("SELECT name FROM review_types ORDER BY name ASC");
 }
 
-function getActiveCodes() {
+function getActiveCodes()
+{
     return executeListQuery("SELECT code_name FROM active_codes ORDER BY code_name ASC");
 }
 
@@ -142,7 +160,8 @@ function getActiveCodes() {
  * Get the count of pending reviews (status = 'pending')
  * @return int
  */
-function getPendingReviewsCount() {
+function getPendingReviewsCount()
+{
     return executeCountQuery("SELECT COUNT(*) as count FROM studies WHERE study_status = 'pending'");
 }
 
@@ -150,7 +169,8 @@ function getPendingReviewsCount() {
  * Get the count of overdue actions (studies where expiration_date < current date and status = 'open')
  * @return int
  */
-function getOverdueActionsCount() {
+function getOverdueActionsCount()
+{
     return executeCountQuery("SELECT COUNT(*) as count FROM studies WHERE study_status = 'open' AND expiration_date < CURDATE()");
 }
 
@@ -158,7 +178,8 @@ function getOverdueActionsCount() {
  * Get the count of new SAE reports (placeholder - assuming a separate table or field; for now, return 0 or implement based on schema)
  * @return int
  */
-function getNewSAEReportsCount() {
+function getNewSAEReportsCount()
+{
     // Placeholder: Assuming SAE reports are in a separate table. For now, return 0.
     // In a real implementation, query a sae_reports table or similar.
     return 0;
@@ -168,20 +189,24 @@ function getNewSAEReportsCount() {
  * Get recent activities (last 5 studies with their status and last activity)
  * @return array
  */
-function getRecentActivities() {
+function getRecentActivities()
+{
     return executeAssocQuery("SELECT title, study_status, pi, updated_at FROM studies ORDER BY updated_at DESC LIMIT 5");
 }
 
 
-function getMeetingDates() {
+function getMeetingDates()
+{
     return executeListQuery("SELECT meeting_date FROM irb_meetings ORDER BY meeting_date DESC");
 }
 
-function getConditions() {
+function getConditions()
+{
     return executeListQuery("SELECT condition_name FROM irb_condition ORDER BY condition_name ASC");
 }
 
-function getAgendaRecords() {
+function getAgendaRecords()
+{
     return executeAssocQuery("SELECT irb_code, meeting_date, agenda_heading FROM agenda_records ORDER BY meeting_date DESC");
 }
 
@@ -283,6 +308,30 @@ function getRecentReports()
         return $stmt->fetchAll();
     } catch (PDOException $e) {
         error_log("Error fetching recent reports: " . $e->getMessage());
+        return [];
+    }
+}
+
+
+/**
+ * Get Contact documents
+ * @return array
+ */
+function getContactDocs($contact_id = null)
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) {
+        return [];
+    }
+
+    try {
+        // Assuming a reports table exists with columns: report_name, generated_date, filters_applied, format
+        $stmt = $conn->prepare("SELECT id, contact_id, file_name, file_path, file_size, comments, uploaded_at FROM contact_documents WHERE contact_id = :contact_id ORDER BY uploaded_at DESC LIMIT 5");
+        $stmt->execute(['contact_id' => $contact_id]);
+        return $stmt->fetchAll();
+    } catch (PDOException $e) {
+        error_log("Error fetching contact documents: " . $e->getMessage());
         return [];
     }
 }
@@ -507,7 +556,6 @@ function getSAETypesList()
         $stmt->execute();
         // error_log("Fetching SAE Types: " . print_r($stmt->fetchAll(), true));
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
-
     } catch (PDOException $e) {
         error_log("Error fetching sae types: " . $e->getMessage());
         return [];
@@ -533,9 +581,65 @@ function getStudyLocationsList()
         $stmt->execute();
         // error_log("Fetching SAE Types: " . print_r($stmt->fetchAll(), true));
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
-
     } catch (PDOException $e) {
         error_log("Error fetching sites: " . $e->getMessage());
+        return [];
+    }
+}
+
+
+/**
+ * Get specialty
+ * @return array
+ */
+function getSpecialties()
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) {
+        return [];
+    }
+
+    try {
+        // Assuming a drugs_devices table exists
+        $stmt = $conn->prepare("SELECT specialty_name FROM specialty");
+        $stmt->execute();
+        // error_log("Fetching SAE Types: " . print_r($stmt->fetchAll(), true));
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    } catch (PDOException $e) {
+        error_log("Error fetching specialty: " . $e->getMessage());
+        return [];
+    }
+}
+
+/**
+ * Get Contacts
+ * @return array
+ */
+function getAllContacts()
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) {
+        return [];
+    }
+
+    try {
+        // Assuming a contacts table exists
+        $stmt = $conn->prepare("SELECT id, title, first_name, middle_name, last_name, suffix,
+            contact_type, company_dept_name, active,
+            specialty_1, specialty_2, research_education,
+            street_address_1, street_address_2, city, state, zip,
+            main_phone, ext, alt_phone, fax, alt_fax,
+            cell_phone, pager, email,
+            created_at, updated_at FROM contacts");
+        $stmt->execute();
+        $contacts = $stmt->fetchAll();
+        error_log("Fetched " . count($contacts) . " contacts from database");
+        // error_log("Fetching SAE Types: " . print_r($stmt->fetchAll(), true));
+        return $contacts;
+    } catch (PDOException $e) {
+        error_log("Error fetching contacts: " . $e->getMessage());
         return [];
     }
 }
@@ -567,7 +671,8 @@ function getCorrespondence()
  * @param int $study_id
  * @return array
  */
-function getStudyReviewers($study_id) {
+function getStudyReviewers($study_id)
+{
     return executeListQuery("SELECT reviewer_name FROM reviewers WHERE study_id = ?", [$study_id]);
 }
 
@@ -575,7 +680,8 @@ function getStudyReviewers($study_id) {
  * Get classifications for a specific study
  * @return array
  */
-function getStudyClassifications() {
+function getStudyClassifications()
+{
     return executeListQuery("SELECT classification_type FROM classifications");
 }
 
@@ -583,7 +689,8 @@ function getStudyClassifications() {
  * Get sites for a specific study
  * @return array
  */
-function getStudySites() {
+function getStudySites()
+{
     return executeListQuery("SELECT site_name FROM sites");
 }
 
@@ -591,7 +698,8 @@ function getStudySites() {
  * Get department groups for a specific study
  * @return array
  */
-function getStudyDeptGroups() {
+function getStudyDeptGroups()
+{
     return executeListQuery("SELECT department_name FROM department_groups");
 }
 
@@ -599,7 +707,8 @@ function getStudyDeptGroups() {
  * Get vulnerable populations for a specific study
  * @return array
  */
-function getStudyVulPops() {
+function getStudyVulPops()
+{
     return executeListQuery("SELECT population_type FROM vulnerable_populations");
 }
 
@@ -607,7 +716,8 @@ function getStudyVulPops() {
  * Get children data for a specific study
  * @return array
  */
-function getStudyChildren() {
+function getStudyChildren()
+{
     return executeListQuery("SELECT age_range FROM children");
 }
 
@@ -615,7 +725,8 @@ function getStudyChildren() {
  * Get drugs for a specific study
  * @return array
  */
-function getStudyDrugs() {
+function getStudyDrugs()
+{
     return executeListQuery("SELECT drug_name FROM drugs");
 }
 
@@ -623,7 +734,8 @@ function getStudyDrugs() {
  * Get risks for a specific study
  * @return array
  */
-function getStudyRisks() {
+function getStudyRisks()
+{
     return executeListQuery("SELECT category_name FROM risks_category");
 }
 
@@ -631,7 +743,8 @@ function getStudyRisks() {
  * Get benefits for a specific study
  * @return array
  */
-function getStudyBenefits() {
+function getStudyBenefits()
+{
     return executeListQuery("SELECT benefit_type FROM benefits");
 }
 
@@ -639,7 +752,8 @@ function getStudyBenefits() {
  * Get divisions for a specific study
  * @return array
  */
-function getStudyDivisions() {
+function getStudyDivisions()
+{
     return executeListQuery("SELECT division_name FROM divisions");
 }
 
@@ -647,7 +761,8 @@ function getStudyDivisions() {
  * Get grant projects for a specific study
  * @return array
  */
-function getStudyGrantProjects() {
+function getStudyGrantProjects()
+{
     return executeListQuery("SELECT grant_name FROM grant_projects");
 }
 
@@ -656,7 +771,8 @@ function getStudyGrantProjects() {
  * @param int $study_id
  * @return array
  */
-function getStudyIndustries($study_id) {
+function getStudyIndustries($study_id)
+{
     return executeListQuery("SELECT industry_name FROM industries WHERE study_id = ?", [$study_id]);
 }
 
@@ -665,7 +781,8 @@ function getStudyIndustries($study_id) {
  * @param int $study_id
  * @return array
  */
-function getStudyUnderGradGrad($study_id) {
+function getStudyUnderGradGrad($study_id)
+{
     return executeListQuery("SELECT level FROM undergrad_grad WHERE study_id = ?", [$study_id]);
 }
 
@@ -674,7 +791,8 @@ function getStudyUnderGradGrad($study_id) {
  * @param int $study_id
  * @return array
  */
-function getStudyColumns($study_id) {
+function getStudyColumns($study_id)
+{
     return executeAssocQuery("SELECT column_name, column_value FROM columns WHERE study_id = ?", [$study_id]);
 }
 
@@ -684,11 +802,13 @@ function getStudyColumns($study_id) {
  * @return array
  */
 
-function getStaffTypes() {
+function getStaffTypes()
+{
     return executeListQuery("SELECT type_name FROM staff_types ORDER BY type_name ASC");
 }
 
-function getSponsors() {
+function getSponsors()
+{
     return executeListQuery("SELECT sponsor_name FROM sponsors ORDER BY sponsor_name ASC");
 }
 // function getStudyAdmins($study_id) {
@@ -708,7 +828,8 @@ function getSponsors() {
  * Get review types list
  * @return array
  */
-function getReviewTypesList() {
+function getReviewTypesList()
+{
     return executeListQuery("SELECT type_name FROM review_types ORDER BY type_name ASC");
 }
 
@@ -716,7 +837,8 @@ function getReviewTypesList() {
  * Get study statuses list
  * @return array
  */
-function getStudyStatusesList() {
+function getStudyStatusesList()
+{
     return executeListQuery("SELECT status_name FROM study_status ORDER BY status_name ASC");
 }
 
@@ -724,7 +846,8 @@ function getStudyStatusesList() {
  * Get risk categories list
  * @return array
  */
-function getRiskCategoriesList() {
+function getRiskCategoriesList()
+{
     return executeListQuery("SELECT category_name FROM risks_category ORDER BY category_name ASC");
 }
     // return executeListQuery("SELECT admin_name FROM admins WHERE study_id = ?", [$study_id]);
@@ -734,7 +857,8 @@ function getRiskCategoriesList() {
  * Get the next upcoming IRB meeting date
  * @return string|null Next meeting date in Y-m-d format or null if none
  */
-function getNextMeetingDate() {
+function getNextMeetingDate()
+{
     $db = new Database();
     $conn = $db->connect();
     if (!$conn) return null;

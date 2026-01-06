@@ -16,6 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['logged_in'] = true;
         $_SESSION['role'] = 'admin';
         $_SESSION['user_email'] = $email;
+        $_SESSION['login_time'] = time();
 
         if (is_admin_logged_in()) {
             header('Location: /dashboard');
