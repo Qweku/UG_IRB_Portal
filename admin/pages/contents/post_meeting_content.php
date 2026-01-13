@@ -2,7 +2,9 @@
 
 
 $conditions = getConditions();
+$study_id = isset($_GET['study_id']) ? (int) $_GET['study_id'] : null;
 
+$irb_actions = getIRBActions();
 ?>
 
 <!-- Agenda Details Content -->
@@ -30,10 +32,10 @@ $conditions = getConditions();
                                     <a href="/minutes" class="btn btn-outline-primary me-2">
                                         <i class="fas fa-clipboard me-1"></i> Meeting Minutes
                                     </a>
-                                    <a href="/generate-letter" class="btn btn-outline-primary me-2">
+                                    <a href="/generate-letter" id="sendCorrespondenceLink" class="btn btn-outline-primary me-2">
                                         <i class="fas fa-envelope me-1"></i> Send Correspondence
                                     </a>
-                                    <button class="btn btn-success me-2">
+                                    <button id="saveBtn" class="btn btn-success me-2" onclick="saveAgendaItem()">
                                         <i class="fas fa-save me-1"></i> Save
                                     </button>
                                 </div>
@@ -68,6 +70,8 @@ $conditions = getConditions();
                                 </tr>
                             </thead>
                             <tbody id="postMeetingRow">
+                                <input type="text" name="study_id" id="studyIdInput" value="<?php echo $study_id; ?>" hidden>
+                                <input type="text" name="agenda_id" id="agendaItemIdInput" value="" hidden>
 
                             </tbody>
                         </table>
@@ -137,10 +141,13 @@ $conditions = getConditions();
                     <div class="card-body">
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Action Taken</label>
-                            <select class="form-select">
-                                <option>Select One</option>
-                                <option>Review Committee</option>
-                                <option>PI Response Required</option>
+                            <select name="action_taken" id="actionTakenSelect" class="form-select">
+                                <option disabled selected value="">Select One</option>
+                                <?php foreach($irb_actions as $action): ?>
+                                <option value="<?php echo htmlspecialchars($action) ?>">
+                                    <?php echo htmlspecialchars($action) ?>
+                                </option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="mb-3">
@@ -179,7 +186,7 @@ $conditions = getConditions();
                     </div>
                     <div class="card-body">
                         <label class="form-label fw-semibold">Additional info</label>
-                        <textarea class="form-control" rows="4">
+                        <textarea class="form-control" rows="4" readonly>
 The plan assumes a parallel and logical approach on August 4th, 2023. The following resources were submitted on September 04, 2023. It has been identified as a future focus member for each year, which reflects the potential to be granted through the data analysis section (as been reviewed by class). A 1% decrease for assessing the documentation has occurred included from 2 weeks to 1 hour, 5. On the previous basis, the following comments have been addressed. The data provided include:
                         </textarea>
                     </div>
@@ -193,7 +200,7 @@ The plan assumes a parallel and logical approach on August 4th, 2023. The follow
                     <div class="card-body">
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Action Explanation</label>
-                            <input type="text" class="form-control" value="">
+                            <textarea type="text" name="action_explanation" class="form-control" value=""></textarea>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Discussion</label>
@@ -233,6 +240,10 @@ The plan assumes a parallel and logical approach on August 4th, 2023. The follow
     .agenda-details .text-muted {
         font-size: 0.875rem;
     }
+
+    .highlight {
+        background-color: #e3f2fd;
+    }
 </style>
 
 <script>
@@ -259,4 +270,111 @@ The plan assumes a parallel and logical approach on August 4th, 2023. The follow
             studyButton.innerHTML = '<i class="fas fa-question-circle me-1"></i> Show Study Details';
         }
     }
+</script>
+
+<script>
+    document.getElementById('postMeetingRow').addEventListener('click', function(e) {
+        const clickedRow = e.target.closest('tr');
+        if (clickedRow) {
+            // Remove highlight from all rows
+            const rows = this.querySelectorAll('tr');
+            rows.forEach(row => row.classList.remove('table-primary'));
+            // Add highlight to clicked row
+            clickedRow.classList.add('table-primary');
+
+            // Update study ID and correspondence link
+            const studyId = clickedRow.dataset.studyId;
+            document.getElementById('studyIdInput').value = studyId;
+            // Update agenda item ID
+            const agendaId = clickedRow.dataset.id;
+            document.getElementById('agendaItemIdInput').value = agendaId;
+
+            console.log("Selected Agenda ID: "+ agendaId);
+            updateCorrespondenceLink();
+
+            // Fetch and populate agenda item details
+            fetch('/admin/handlers/fetch_agenda_details.php?id=' + agendaId)
+            .then(response => response.json())
+            .then(data => {
+                if (data) {
+                    document.getElementById('actionTakenSelect').value = data.action_taken || '';
+                    document.querySelector('select[name="condition_1"]').value = data.condition_1 || '';
+                    document.querySelector('select[name="condition_2"]').value = data.condition_2 || '';
+                    document.querySelector('textarea[name="action_explanation"]').value = data.action_explanation || '';
+                }
+            })
+            .catch(error => console.error('Error fetching agenda details:', error));
+        }
+    });
+</script>
+
+<script>
+    function updateCorrespondenceLink() {
+        const studyId = document.getElementById('studyIdInput').value;
+        const link = document.getElementById('sendCorrespondenceLink');
+
+        console.log("Updating correspondence link with study ID:", studyId);
+        if (studyId) {
+            link.href = '/generate-letter?study_id=' + encodeURIComponent(studyId);
+        } else {
+            link.href = '/generate-letter';
+        }
+    }
+
+    function saveAgendaItem() {
+        const agendaItemId = document.getElementById('agendaItemIdInput').value;
+        const actionTaken = document.getElementById('actionTakenSelect').value;
+        const condition1 = document.querySelector('select[name="condition_1"]').value;
+        const condition2 = document.querySelector('select[name="condition_2"]').value;
+        const actionExplanation = document.querySelector('textarea[name="action_explanation"]').value;
+        const saveBtn = document.getElementById('saveBtn');
+
+        if (!agendaItemId) {
+            alert('Please select an agenda item to update.');
+            return;
+        }
+
+        if (!actionTaken) {
+            alert('Please select an action taken.');
+            return;
+        }
+
+        console.log("Agenda ID: " + agendaItemId);
+
+        // Show loading spinner
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving...';
+
+        fetch('/admin/handlers/update_agenda_item.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                id: agendaItemId,
+                action_taken: actionTaken,
+                condition_1: condition1,
+                condition_2: condition2,
+                action_explanation: actionExplanation
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Agenda item updated successfully.');
+            } else {
+                alert('Error updating agenda item: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while updating the agenda item.');
+        })
+        .finally(() => {
+            // Hide loading spinner
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fas fa-save me-1"></i> Save';
+        });
+    }
+
 </script>

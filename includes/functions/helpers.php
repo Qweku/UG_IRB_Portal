@@ -197,17 +197,38 @@ function getRecentActivities()
 
 function getMeetingDates()
 {
-    return executeListQuery("SELECT meeting_date FROM irb_meetings ORDER BY meeting_date DESC");
+    return executeListQuery("SELECT meeting_date FROM irb_meetings WHERE meeting_date <= LAST_DAY(DATE_ADD(CURDATE(), INTERVAL 1 MONTH)) ORDER BY meeting_date DESC");
 }
 
 function getConditions()
 {
     return executeListQuery("SELECT condition_name FROM irb_condition ORDER BY condition_name ASC");
+} 
+
+function getIRBActions()
+{
+    return executeListQuery("SELECT irb_action FROM irb_action_codes ORDER BY irb_action ASC");
 }
+
+function getLetterTypes()
+{
+    return executeListQuery("SELECT type_name FROM letter_types ORDER BY type_name ASC");
+}
+
+function getActionLetters()
+{
+    return executeAssocQuery("SELECT letter_name, file_path, closing, signatory FROM irb_templates WHERE letter_type = 'IRBAction' ORDER BY letter_name ASC");
+}
+
 
 function getAgendaRecords()
 {
     return executeAssocQuery("SELECT irb_code, meeting_date, agenda_heading FROM agenda_records ORDER BY meeting_date DESC");
+}
+
+function getLetterTemplates()
+{
+    return executeAssocQuery("SELECT * FROM irb_templates ORDER BY letter_type ASC");
 }
 
 /**
@@ -626,7 +647,7 @@ function getAllContacts()
 
     try {
         // Assuming a contacts table exists
-        $stmt = $conn->prepare("SELECT id, title, first_name, middle_name, last_name, suffix,
+        $stmt = $conn->prepare("SELECT id, title, first_name, middle_name, last_name, logon_name, suffix,
             contact_type, company_dept_name, active,
             specialty_1, specialty_2, research_education,
             street_address_1, street_address_2, city, state, zip,
@@ -854,7 +875,55 @@ function getRiskCategoriesList()
 // }
 
 /**
+ * Get personnel emails for a study
+ * @param int $study_id
+ * @return array List of unique emails
+ */
+function getPersonnelEmails($study_id)
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) return [];
+    try {
+        // Get study personnel
+        $stmt = $conn->prepare("SELECT name FROM study_personnel WHERE study_id = ?");
+        $stmt->execute([$study_id]);
+        $personnel = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        $personnelNames = [];
+        foreach ($personnel as $name) {
+            $names = explode(',', $name);
+            foreach ($names as $n) {
+                $personnelNames[] = trim($n);
+            }
+        }
+        // Remove duplicates
+        $personnelNames = array_unique($personnelNames);
+        // Get contacts
+        $contacts = getAllContacts();
+        $emails = [];
+        foreach ($personnelNames as $name) {
+            // Match by full name: first_name + middle_name + last_name
+            foreach ($contacts as $contact) {
+                $fullName = trim($contact['last_name'] . ' ' . ($contact['first_name'] ?? ''));
+                error_log("Comparing personnel '$name' with contact full name '$fullName'");
+                if (strtolower($fullName) === strtolower($name) && !empty($contact['email'])) {
+                    $emails[] = $contact['email'];
+                    error_log("Matched personnel '$name' to email: " . $contact['email']);
+                    break; // Found match, no need to check further
+                }
+            }
+        }
+        return array_unique($emails);
+    } catch (PDOException $e) {
+        error_log("Error fetching personnel emails: " . $e->getMessage());
+        return [];
+    }
+}
+
+/**
  * Get the next upcoming IRB meeting date
+ * Generates all first Fridays for the upcoming 12 months and updates the irb_meetings table.
+ * Handles new year transitions by generating dates for the next year when approaching year-end.
  * @return string|null Next meeting date in Y-m-d format or null if none
  */
 function getNextMeetingDate()
@@ -864,29 +933,119 @@ function getNextMeetingDate()
     if (!$conn) return null;
 
     try {
-        $stmt = $conn->prepare("SELECT meeting_date FROM irb_meetings ORDER BY meeting_date ASC");
-        $stmt->execute();
-        $irbMeetings = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
         $today = new DateTime();
 
-        $nextMeeting = null;
+        // Find the next first Friday
+        $startYear = (int)$today->format('Y');
+        $startMonth = (int)$today->format('m');
+        $firstFriday = getFirstFridayOfMonth($startYear, $startMonth);
 
-        foreach ($irbMeetings as $meeting) {
-            $date = new DateTime($meeting['meeting_date']);
+        if ($firstFriday <= $today) {
+            $firstFriday->modify('+1 month');
+            $firstFriday = getFirstFridayOfMonth((int)$firstFriday->format('Y'), (int)$firstFriday->format('m'));
+        }
 
-            // If date is in the future
-            if ($date > $today) {
-                // If not set yet or this date is earlier than the currently stored one
-                if ($nextMeeting === null || $date < $nextMeeting) {
-                    $nextMeeting = $date;
-                }
+        // Check existing future meeting dates
+        $stmt = $conn->prepare("SELECT meeting_date FROM irb_meetings WHERE meeting_date > CURDATE()");
+        $stmt->execute();
+        $existingDates = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        $existingCount = count($existingDates);
+
+        if ($existingCount >= 12) {
+            // Enough future dates, return the next one
+            return $firstFriday->format('Y-m-d');
+        }
+
+        // Generate 12 future first Fridays
+        $datesToInsert = [];
+        $current = clone $firstFriday;
+        for ($i = 0; $i < 12; $i++) {
+            $datesToInsert[] = $current->format('Y-m-d');
+            $current->modify('+1 month');
+            $current = getFirstFridayOfMonth((int)$current->format('Y'), (int)$current->format('m'));
+        }
+
+        // Filter to only new dates not already existing
+        $datesToInsert = array_filter($datesToInsert, function ($date) use ($existingDates) {
+            return !in_array($date, $existingDates);
+        });
+
+        // Insert them
+        foreach ($datesToInsert as $date) {
+            $stmt = $conn->prepare("INSERT INTO irb_meetings (meeting_date) VALUES (?)");
+            $stmt->execute([$date]);
+        }
+
+        // Return the next meeting date
+        return $firstFriday->format('Y-m-d');
+    } catch (PDOException $e) {
+        error_log("Error in getNextMeetingDate: " . $e->getMessage());
+        return null;
+    }
+}
+
+/**
+ * Update study personnel fields in studies table based on current personnel
+ * @param int $study_id
+ * @return bool
+ */
+function updateStudyPersonnel($study_id)
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) return false;
+    try {
+        // Fetch personnel
+        $stmt = $conn->prepare("SELECT name, role FROM study_personnel WHERE study_id = ?");
+        $stmt->execute([$study_id]);
+        $personnel = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $new_pi = '';
+        $reviewer_names = '';
+        $admin_names = '';
+        $col_names = '';
+
+        foreach ($personnel as $p) {
+            $role = trim($p['role']);
+            $name = trim($p['name']);
+            if ($role === 'PI') {
+                $new_pi = $name;
+            } elseif ($role === 'Reviewer') {
+                $reviewer_names .= $name . ', ';
+            } elseif ($role === 'Admin') {
+                $admin_names .= $name . ', ';
+            } elseif ($role === 'Co-PI') {
+                $col_names .= $name . ', ';
             }
         }
 
-        return $nextMeeting ? $nextMeeting->format('Y-m-d') : null;
+        // Trim trailing commas
+        $reviewer_names = rtrim($reviewer_names, ', ');
+        $admin_names = rtrim($admin_names, ', ');
+        $col_names = rtrim($col_names, ', ');
+
+        // Update studies
+        $stmt = $conn->prepare("UPDATE studies SET pi = ?, reviewers = ?, admins = ?, cols = ?, updated_at = NOW() WHERE id = ?");
+        $stmt->execute([$new_pi, $reviewer_names, $admin_names, $col_names, $study_id]);
+
+        return true;
     } catch (PDOException $e) {
-        error_log("Error fetching next meeting date: " . $e->getMessage());
-        return null;
+        error_log("Error updating study personnel: " . $e->getMessage());
+        return false;
     }
+}
+
+/**
+ * Get the first Friday of a given month and year
+ * @param int $year
+ * @param int $month
+ * @return DateTime
+ */
+function getFirstFridayOfMonth($year, $month)
+{
+    $date = new DateTime("$year-$month-01");
+    $dayOfWeek = (int)$date->format('N'); // 1=Monday, 7=Sunday
+    $daysToAdd = (5 - $dayOfWeek + 7) % 7;
+    $date->modify("+$daysToAdd days");
+    return $date;
 }

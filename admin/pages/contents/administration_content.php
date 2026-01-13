@@ -15,6 +15,9 @@ $studyStatus = getStudyStatus();
 $studyTypes = getReviewTypes();
 $activeCodes = getActiveCodes();
 
+$letterTypes = getLetterTypes();
+$letterTemplates = getLetterTemplates();
+
 
 ?>
 <style>
@@ -174,6 +177,158 @@ $activeCodes = getActiveCodes();
 
     .code-tables::-webkit-scrollbar-thumb:hover {
         background: #a8a8a8;
+    }
+
+    /* Template Modal Enhancements */
+    #templateModal .modal-content {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+    }
+
+    #templateModal .modal-header {
+        background: linear-gradient(135deg, var(--royal-blue) 0%, #0056b3 100%);
+        border-bottom: none;
+        padding: 1.5rem 2rem;
+    }
+
+    #templateModal .modal-title {
+        font-weight: 600;
+        font-size: 1.25rem;
+    }
+
+    #templateModal .modal-body {
+        padding: 2rem;
+    }
+
+    #templateModal .table-responsive {
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
+    }
+
+    #templateModal .table {
+        margin-bottom: 0;
+        border-radius: 8px;
+        overflow: hidden;
+        table-layout: fixed;
+    }
+
+    #templateModal .table thead th {
+        background-color: var(--royal-blue);
+        color: white;
+        border: none;
+        font-weight: 600;
+        padding: 1rem;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+    }
+
+    #templateModal .table tbody tr {
+        transition: all 0.2s ease;
+    }
+
+    #templateModal .table tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    #templateModal .table tbody td {
+        padding: 0.75rem 1rem;
+        border: none;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 0; /* Allow flex shrinking */
+    }
+
+    #templateModal .actions-panel {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+        height: fit-content;
+    }
+
+    #templateModal .action-btn {
+        margin-bottom: 0.75rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    #templateModal .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    #templateModal .action-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    #templateModal .action-btn:not(:disabled) {
+        background: linear-gradient(135deg, var(--royal-blue) 0%, #0056b3 100%);
+        border: none;
+    }
+
+    #templateModal .action-btn:not(:disabled):hover {
+        background: linear-gradient(135deg, #0056b3 0%, var(--royal-blue) 100%);
+    }
+
+    #templateModal #addNewBtn {
+        background: linear-gradient(135deg, var(--bs-success) 0%, #28a745 100%);
+        border: none;
+        font-weight: 600;
+    }
+
+    #templateModal #addNewBtn:hover {
+        background: linear-gradient(135deg, #28a745 0%, var(--bs-success) 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    #templateModal #deleteBtn:not(:disabled) {
+        background: linear-gradient(135deg, var(--bs-danger) 0%, #dc3545 100%);
+        border: none;
+    }
+
+    #templateModal #deleteBtn:not(:disabled):hover {
+        background: linear-gradient(135deg, #dc3545 0%, var(--bs-danger) 100%);
+    }
+
+    #templateModal .form-control {
+        border-radius: 8px;
+        border: 1px solid #ced4da;
+        padding: 0.75rem 1rem;
+        transition: all 0.2s ease;
+    }
+
+    #templateModal .form-control:focus {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    #templateModal hr {
+        border: none;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #dee2e6, transparent);
+        margin: 1rem 0;
+    }
+
+    #replaceTemplateModal {
+        z-index: 1060;
+    }
+
+    #replaceTemplateModal .modal-backdrop {
+        z-index: 1055;
     }
 </style>
 <!-- Administration Content -->
@@ -346,7 +501,8 @@ $activeCodes = getActiveCodes();
                                 <h6 class="mb-1">Templates Weekly Upload</h6>
                                 <p class="text-muted mb-0">Manage weekly template uploads and schedules</p>
                             </div>
-                            <button class="btn btn-sm btn-outline-primary">Manage</button>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                                data-bs-target="#templateModal">Manage</button>
                         </div>
                     </div>
                 </div>
@@ -596,6 +752,72 @@ $activeCodes = getActiveCodes();
     </div>
 </div>
 
+<!-- Replace Template Modal -->
+<div class="modal fade" id="replaceTemplateModal" tabindex="-1" aria-labelledby="replaceTemplateModalLabel" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="replaceTemplateModalLabel">
+                    <i class="fas fa-exchange-alt me-2"></i>Replace Template
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="replaceTemplateForm" enctype="multipart/form-data">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="replaceLetterType" class="form-label fw-semibold">Letter Type <span class="text-danger">*</span></label>
+                                <select class="form-select" id="replaceLetterType" name="letter_type" required>
+                                    <option value="" disabled>Select Letter Type</option>
+                                    <?php foreach ($letterTypes as $type): ?>
+                                        <option value="<?php echo htmlspecialchars($type); ?>">
+                                            <?php echo htmlspecialchars($type); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="replaceClosing" class="form-label fw-semibold">Closing</label>
+                                <input type="text" class="form-control" id="replaceClosing" name="closing" >
+                            </div>
+                            <div class="mb-3">
+                                <label for="replaceSignatory" class="form-label fw-semibold">Signatory</label>
+                                <input type="text" class="form-control" id="replaceSignatory" name="signatory" placeholder="e.g., Prof. A. Mensah">
+                            </div>
+                            <div class="mb-3">
+                                <label for="replaceTitle" class="form-label fw-semibold">Title</label>
+                                <input type="text" class="form-control" id="replaceTitle" name="title" placeholder="e.g., IRB Chair">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="replaceDocumentUpload" class="form-label fw-semibold">New Document Upload</label>
+                                <input type="file" class="form-control" id="replaceDocumentUpload" name="document" accept=".doc,.docx,.pdf">
+                                <div class="form-text">Accepted formats: .doc, .docx, .pdf (leave empty to keep current file)</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="replaceEmailSubject" class="form-label fw-semibold">Default Email Subject</label>
+                                <input type="text" class="form-control" id="replaceEmailSubject" name="email_subject" placeholder="e.g., SAE Notification">
+                            </div>
+                            <div class="mb-3">
+                                <label for="replaceEmailMessage" class="form-label fw-semibold">Email Message</label>
+                                <textarea class="form-control" id="replaceEmailMessage" name="email_body" rows="4" placeholder="Please find attached..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="replaceTemplateBtn">
+                    <i class="fas fa-exchange-alt me-1"></i>Replace Template
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="adminModal" class="modal fade" tabindex="-1" aria-labelledby="adminModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -662,407 +884,963 @@ $activeCodes = getActiveCodes();
 </div>
 
 
+<!-- Template Modal -->
+<div class="modal fade" id="templateModal" tabindex="-1" aria-labelledby="templateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+
+            <!-- Header -->
+            <div class="modal-header">
+                <h5 class="modal-title text-white" id="templateModalLabel">
+                    <i class="fas fa-file-upload me-2"></i>
+                    Upload / Modify Template – NOGUCHI MEMORIAL INSTITUTE FOR MEDICAL RESEARCH – IRB
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body">
+                <div class="row">
+
+                    <!-- LEFT: TABLE -->
+                    <div class="col-md-9">
+
+                        <div class="form-group mb-3">
+                            <input type="text" id="templateSearch" class="form-control"
+                                placeholder="Search templates...">
+                        </div>
+
+                        <div class="table-responsive" style="max-height: 400px; overflow-y:auto;">
+                            <table class="table table-hover table-striped" id="templateTable">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th width="300px">IRB Code</th>
+                                        <th width="200px">Letter Type</th>
+                                        <th width="250px">Letter Name</th>
+                                        <th width="250px">Closing</th>
+                                        <th width="250px">Signatory</th>
+                                        <th width="200px">Title</th>
+                                        <th width="250px">Default Email Subject</th>
+                                        <th width="250px">Default Email Body</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if (empty($letterTemplates)): ?>
+                                        <tr>
+                                            <td colspan="8" class="text-center text-muted">
+                                                No templates found. Please add a new template.
+                                            </td>
+                                        </tr>
+                                    <?php endif; ?>
+                                    <?php foreach ($letterTemplates as $template): ?>
+                                        <tr id="templateRowId" data-id="<?php echo htmlspecialchars($template['id']); ?>">
+                                            <td><?php echo htmlspecialchars($template['irb_code']); ?></td>
+                                            <td><?php echo htmlspecialchars($template['letter_type']); ?></td>
+                                            <td><?php echo htmlspecialchars($template['letter_name']); ?></td>
+                                            <td><?php echo htmlspecialchars($template['closing']); ?></td>
+                                            <td><?php echo htmlspecialchars($template['signatory']); ?></td>
+                                            <td><?php echo htmlspecialchars($template['title']); ?></td>
+                                            <td><?php echo htmlspecialchars($template['email_subject']); ?></td>
+                                            <td><?php echo htmlspecialchars($template['email_message']); ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                    <!-- Repeat dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+
+                    <!-- RIGHT: ACTIONS -->
+                    <div class="col-md-3">
+                        <div class="actions-panel">
+                            <h6 class="mb-3 text-center fw-bold text-primary">
+                                <i class="fas fa-cogs me-1"></i>Actions
+                            </h6>
+                            <button class="btn w-100 mb-2 action-btn" disabled id="downloadBtn">
+                                <i class="fas fa-download me-1"></i>Download
+                            </button>
+                            <button class="btn w-100 mb-2 action-btn" disabled id="updateBtn">
+                                <i class="fas fa-edit me-1"></i>Update Defaults
+                            </button>
+                            <button class="btn w-100 mb-2 action-btn" disabled id="replaceBtn">
+                                <i class="fas fa-exchange-alt me-1"></i>Replace Template
+                            </button>
+                            <button class="btn w-100 mb-2 action-btn" disabled id="deleteBtn">
+                                <i class="fas fa-trash me-1"></i>Delete
+                            </button>
+                            <hr>
+                            <button class="btn w-100 text-white" id="addNewBtn">
+                                <i class="fas fa-plus me-1 "></i>Add New Template
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Add New Template Modal -->
+<div class="modal fade" id="addTemplateModal" tabindex="-1" aria-labelledby="addTemplateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addTemplateModalLabel">
+                    <i class="fas fa-plus me-2"></i>Add New Template
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addTemplateForm" enctype="multipart/form-data">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="letterType" class="form-label fw-semibold">Letter Type <span class="text-danger">*</span></label>
+                                <select class="form-select" id="letterType" name="letter_type" required>
+                                    <option value="" disabled selected>Select Letter Type</option>
+                                    <?php foreach ($letterTypes as $type): ?>
+                                        <option value="<?php echo htmlspecialchars($type); ?>">
+                                            <?php echo htmlspecialchars($type); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="closing" class="form-label fw-semibold">Closing</label>
+                                <input type="text" class="form-control" id="closing" name="closing" placeholder="e.g., Yours Sincerely">
+                            </div>
+                            <div class="mb-3">
+                                <label for="signatory" class="form-label fw-semibold">Signatory</label>
+                                <input type="text" class="form-control" id="signatory" name="signatory" placeholder="e.g., Prof. A. Mensah">
+                            </div>
+                            <div class="mb-3">
+                                <label for="title" class="form-label fw-semibold">Title</label>
+                                <input type="text" class="form-control" id="title" name="title" placeholder="e.g., IRB Chair">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="documentUpload" class="form-label fw-semibold">Document Upload <span class="text-danger">*</span></label>
+                                <input type="file" class="form-control" id="documentUpload" name="document" accept=".doc,.docx,.pdf" required>
+                                <div class="form-text">Accepted formats: .doc, .docx, .pdf</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="emailSubject" class="form-label fw-semibold">Default Email Subject</label>
+                                <input type="text" class="form-control" id="emailSubject" name="email_subject" placeholder="e.g., SAE Notification">
+                            </div>
+                            <div class="mb-3">
+                                <label for="emailMessage" class="form-label fw-semibold">Email Message</label>
+                                <textarea class="form-control" id="emailMessage" name="email_body" rows="4" placeholder="Please find attached..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="saveTemplateBtn">
+                    <i class="fas fa-save me-1"></i>Save Template
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-// Configuration for different form types
-const formConfigs = {
-    // Simple single-field forms
-    simple: {
-        classification: { field: 'classification_type', label: 'Classification Type' },
-        division: { field: 'division_name', label: 'Division Name' },
-        site: { field: 'site_name', label: 'Site Name' },
-        grant: { field: 'grant_name', label: 'Grant Name' },
-        device: { field: 'device_name', label: 'Device Name' },
-        risk: { field: 'category_name', label: 'Category Name' },
-        child: { field: 'age_range', label: 'Age Range' },
-        vulnerable: { field: 'population_type', label: 'Population Type' },
-        benefit: { field: 'benefit_type', label: 'Benefit Type' },
-        drug: { field: 'drug_name', label: 'Drug Name' },
-        investigator:{field: 'specialty_name', label: 'Investigator Specialties'},
-        irb_condition:{field: 'condition_name', label: 'IRB Conditions'}
-    },
-    
-    // Complex multi-field forms
-    complex: {
-        department: {
-            title: 'Department/Groups',
-            fields: [
-                { id: 'department_name', label: 'Department Name', type: 'text', required: true },
-                { id: 'address_line_1', label: 'Address Line 1', type: 'text' },
-                { id: 'address_line_2', label: 'Address Line 2', type: 'text' },
-                { id: 'site', label: 'Site', type: 'text' },
-                { id: 'department_id', label: 'Department ID', type: 'text' },
-                { id: 'city', label: 'City', type: 'text' },
-                { id: 'state', label: 'State', type: 'text' },
-                { id: 'zip', label: 'Zip', type: 'text' }
-            ]
+    // Configuration for different form types
+    const formConfigs = {
+        // Simple single-field forms
+        simple: {
+            classification: {
+                field: 'classification_type',
+                label: 'Classification Type'
+            },
+            division: {
+                field: 'division_name',
+                label: 'Division Name'
+            },
+            site: {
+                field: 'site_name',
+                label: 'Site Name'
+            },
+            grant: {
+                field: 'grant_name',
+                label: 'Grant Name'
+            },
+            device: {
+                field: 'device_name',
+                label: 'Device Name'
+            },
+            risk: {
+                field: 'category_name',
+                label: 'Category Name'
+            },
+            child: {
+                field: 'age_range',
+                label: 'Age Range'
+            },
+            vulnerable: {
+                field: 'population_type',
+                label: 'Population Type'
+            },
+            benefit: {
+                field: 'benefit_type',
+                label: 'Benefit Type'
+            },
+            drug: {
+                field: 'drug_name',
+                label: 'Drug Name'
+            },
+            investigator: {
+                field: 'specialty_name',
+                label: 'Investigator Specialties'
+            },
+            irb_condition: {
+                field: 'condition_name',
+                label: 'IRB Conditions'
+            }
         },
-        exempt: {
-            title: 'Exempt Codes',
-            fields: [
-                { id: 'exempt_cite', label: 'Exempt Cite', type: 'text', required: true },
-                { id: 'exempt_description', label: 'Exempt Description', type: 'text' }
-            ]
-        },
-        expedited: {
-            title: 'Expedited Codes',
-            fields: [
-                { id: 'expedite_cite', label: 'Expedited Cite', type: 'text', required: true },
-                { id: 'expedite_description', label: 'Expedited Description', type: 'text' }
-            ]
-        },
-        cpa_type: {
-            title: 'CPA Types',
-            fields: [
-                { id: 'type_name', label: 'CPA Type', type: 'text', required: true },
-                { id: 'category', label: 'Category', type: 'select', options: <?php echo json_encode($agendaCategoriesList); ?> },
-                { id: 'agenda', label: 'Agenda?', type: 'select', options: ['Yes', 'No'] }
-            ]
-        },
-        irb_meeting: {
-            title: 'IRB Meeting Date',
-            fields: [
-                { id: 'meeting_date', label: 'Meeting Date', type: 'date', required: true },
-                { id: 'irb_code', label: 'IRB Code', type: 'text', value:"NOGUCHI MEMORIAL INSTITUTE FOR MEDICAL RESEARCH-IRB" }
-            ]
-        },
-        irb_action: {
-            title: 'IRB Action Codes',
-            fields: [
-                { id: 'irb_action', label: 'IRB Action', type: 'text', required: true },
-                { id: 'study_status', label: 'Study Status', type: 'select', options: <?php echo json_encode($studyStatus); ?> },
-                { id: 'sort_sequence', label: 'SortSeq', type: 'text' }
-            ]
-        },
-        sae_type: {
-            title: 'SAE Event Types',
-            fields: [
-                { id: 'event_type', label: 'Event Type', type: 'text', required: true },
-                { id: 'notify_irb', label: 'Notify IRB', type: 'select', options: ['Yes', 'No'] }
-            ]
-        },
-        cpa_action: {
-            title: 'CPA Action Codes',
-            fields: [
-                { id: 'cpa_action', label: 'CPA Action', type: 'text', required: true },
-                { id: 'study_status', label: 'Study Status', type: 'select', options: <?php echo json_encode($studyStatus); ?> },
-                { id: 'sort_sequence', label: 'SortSeq', type: 'text' }
-            ]
-        },
-        study_codes: {
-            title: 'Study Status Codes',
-            fields: [
-                { id: 'type', label: 'Type', type: 'select', options: <?php echo json_encode($studyTypes); ?> },
-                { id: 'study_status', label: 'Study Status', type: 'text', required: true },
-                { id: 'study_active_code', label: 'Study Active Code', type: 'select', options: <?php echo json_encode($activeCodes); ?> },
-                { id: 'seq', label: 'Seq', type: 'text' }
-            ]
-        },
-        agenda_category: {
-            title: 'Agenda Categories',
-            fields: [
-                { id: 'category_name', label: 'Agenda Category', type: 'text', required: true },
-                { id: 'agenda_class_code', label: 'Class Code', type: 'text' },
-                { id: 'agenda_print', label: 'Print on Agenda and Minutes As', type: 'text' }
-            ]
-        }
-    }
-};
 
-// Get field configuration for a type
-function getFieldConfig(type) {
-    if (formConfigs.simple[type]) {
-        return {
-            title: type.charAt(0).toUpperCase() + type.slice(1),
-            fields: [{
-                id: formConfigs.simple[type].field,
-                label: formConfigs.simple[type].label,
-                type: 'text',
-                required: true
-            }]
-        };
-    }
-    return formConfigs.complex[type];
-}
-
-// Generate form HTML based on configuration
-function generateFormHTML(config, data = {}) {
-    let html = '';
-    
-    config.fields.forEach(field => {
-        const value = data[field.id] || (field.id === 'irb_code' ? 'NOGUCHI MEMORIAL INSTITUTE FOR MEDICAL RESEARCH-IRB' : '');
-        const requiredAttr = field.required ? 'required' : '';
-        
-        html += `<div class="row mb-3">`;
-        html += `<div class="col-md-12">`;
-        html += `<label class="form-label fw-semibold">${field.label}</label>`;
-        
-        if (field.type === 'select') {
-            html += `<select id="${field.id}" class="form-select" ${requiredAttr}>`;
-            field.options.forEach(option => {
-                const selected = value === option ? 'selected' : '';
-                html += `<option value="${option}" ${selected}>${option}</option>`;
-            });
-            html += `</select>`;
-        } else {
-            html += `<input type="${field.type}" id="${field.id}" class="form-control" value="${value}" ${requiredAttr}>`;
-        }
-        
-        html += `</div></div>`;
-    });
-    
-    return html;
-}
-
-// Main edit function
-async function editItem(id, currentValue) {
-    window.currentEditId = id;
-    window.isEdit = true;
-    
-    const type = window.currentType;
-    const config = getFieldConfig(type);
-    
-    if (!config) {
-        console.error('No configuration found for type:', type);
-        return;
-    }
-    
-    // Set modal title
-    document.getElementById('editItemModalLabel').textContent = `Edit ${config.title}`;
-    
-    // Fetch existing data for complex forms
-    let data = {};
-    const multiFieldTypes = Object.keys(formConfigs.complex);
-    if (multiFieldTypes.includes(type)) {
-        try {
-            const res = await fetch(window.currentEndpoint + '?id=' + id);
-            data = await res.json();
-            console.log(data);
-        } catch (err) {
-            console.error('Error fetching item data:', err);
-        }
-    } else {
-        // For simple forms, use the current value
-        const fieldName = formConfigs.simple[type].field;
-        data[fieldName] = currentValue;
-    }
-    
-    // Generate and set form HTML
-    const dynamicInput = document.getElementById('dynamicInput');
-    dynamicInput.innerHTML = generateFormHTML(config, data);
-    
-    // Show modal
-    const editModal = new bootstrap.Modal(document.getElementById('editItemModal'));
-    editModal.show();
-}
-
-// Main add function
-function addItem() {
-    window.isEdit = false;
-    
-    const type = window.currentType;
-    const config = getFieldConfig(type);
-    
-    if (!config) {
-        console.error('No configuration found for type:', type);
-        return;
-    }
-    
-    // Set modal title
-    document.getElementById('editItemModalLabel').textContent = `Add ${config.title}`;
-    
-    // Generate and set form HTML
-    const dynamicInput = document.getElementById('dynamicInput');
-    dynamicInput.innerHTML = generateFormHTML(config);
-    
-    // Show modal
-    const editModal = new bootstrap.Modal(document.getElementById('editItemModal'));
-    editModal.show();
-}
-
-// Delete function remains the same
-function deleteItem(id) {
-    window.currentDeleteId = id;
-    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
-    deleteModal.show();
-}
-
-// Enhanced save functionality
-document.getElementById('saveEditBtn').addEventListener('click', function() {
-    const type = window.currentType;
-    const config = getFieldConfig(type);
-    const endpoint = window.isEdit
-        ? `/admin/handlers/update_${type}.php`
-        : `/admin/handlers/add_${type}.php`;
-
-    if (!config) {
-        alert('Invalid form configuration');
-        return;
-    }
-
-    // Collect form data
-    const formData = {};
-    let isValid = true;
-
-    config.fields.forEach(field => {
-        const element = document.getElementById(field.id);
-        if (element) {
-            const value = element.value.trim();
-
-            // Validation
-            if (field.required && !value) {
-                isValid = false;
-                element.classList.add('is-invalid');
-                alert(`Please fill in the ${field.label} field.`);
-            } else {
-                element.classList.remove('is-invalid');
-                formData[field.id] = value;
+        // Complex multi-field forms
+        complex: {
+            department: {
+                title: 'Department/Groups',
+                fields: [{
+                        id: 'department_name',
+                        label: 'Department Name',
+                        type: 'text',
+                        required: true
+                    },
+                    {
+                        id: 'address_line_1',
+                        label: 'Address Line 1',
+                        type: 'text'
+                    },
+                    {
+                        id: 'address_line_2',
+                        label: 'Address Line 2',
+                        type: 'text'
+                    },
+                    {
+                        id: 'site',
+                        label: 'Site',
+                        type: 'text'
+                    },
+                    {
+                        id: 'department_id',
+                        label: 'Department ID',
+                        type: 'text'
+                    },
+                    {
+                        id: 'city',
+                        label: 'City',
+                        type: 'text'
+                    },
+                    {
+                        id: 'state',
+                        label: 'State',
+                        type: 'text'
+                    },
+                    {
+                        id: 'zip',
+                        label: 'Zip',
+                        type: 'text'
+                    }
+                ]
+            },
+            exempt: {
+                title: 'Exempt Codes',
+                fields: [{
+                        id: 'exempt_cite',
+                        label: 'Exempt Cite',
+                        type: 'text',
+                        required: true
+                    },
+                    {
+                        id: 'exempt_description',
+                        label: 'Exempt Description',
+                        type: 'text'
+                    }
+                ]
+            },
+            expedited: {
+                title: 'Expedited Codes',
+                fields: [{
+                        id: 'expedite_cite',
+                        label: 'Expedited Cite',
+                        type: 'text',
+                        required: true
+                    },
+                    {
+                        id: 'expedite_description',
+                        label: 'Expedited Description',
+                        type: 'text'
+                    }
+                ]
+            },
+            cpa_type: {
+                title: 'CPA Types',
+                fields: [{
+                        id: 'type_name',
+                        label: 'CPA Type',
+                        type: 'text',
+                        required: true
+                    },
+                    {
+                        id: 'category',
+                        label: 'Category',
+                        type: 'select',
+                        options: <?php echo json_encode($agendaCategoriesList); ?>
+                    },
+                    {
+                        id: 'agenda',
+                        label: 'Agenda?',
+                        type: 'select',
+                        options: ['Yes', 'No']
+                    }
+                ]
+            },
+            irb_meeting: {
+                title: 'IRB Meeting Date',
+                fields: [{
+                        id: 'meeting_date',
+                        label: 'Meeting Date',
+                        type: 'date',
+                        required: true
+                    },
+                    {
+                        id: 'irb_code',
+                        label: 'IRB Code',
+                        type: 'text',
+                        value: "NOGUCHI MEMORIAL INSTITUTE FOR MEDICAL RESEARCH-IRB"
+                    }
+                ]
+            },
+            irb_action: {
+                title: 'IRB Action Codes',
+                fields: [{
+                        id: 'irb_action',
+                        label: 'IRB Action',
+                        type: 'text',
+                        required: true
+                    },
+                    {
+                        id: 'study_status',
+                        label: 'Study Status',
+                        type: 'select',
+                        options: <?php echo json_encode($studyStatus); ?>
+                    },
+                    {
+                        id: 'sort_sequence',
+                        label: 'SortSeq',
+                        type: 'text'
+                    }
+                ]
+            },
+            sae_type: {
+                title: 'SAE Event Types',
+                fields: [{
+                        id: 'event_type',
+                        label: 'Event Type',
+                        type: 'text',
+                        required: true
+                    },
+                    {
+                        id: 'notify_irb',
+                        label: 'Notify IRB',
+                        type: 'select',
+                        options: ['Yes', 'No']
+                    }
+                ]
+            },
+            cpa_action: {
+                title: 'CPA Action Codes',
+                fields: [{
+                        id: 'cpa_action',
+                        label: 'CPA Action',
+                        type: 'text',
+                        required: true
+                    },
+                    {
+                        id: 'study_status',
+                        label: 'Study Status',
+                        type: 'select',
+                        options: <?php echo json_encode($studyStatus); ?>
+                    },
+                    {
+                        id: 'sort_sequence',
+                        label: 'SortSeq',
+                        type: 'text'
+                    }
+                ]
+            },
+            study_codes: {
+                title: 'Study Status Codes',
+                fields: [{
+                        id: 'type',
+                        label: 'Type',
+                        type: 'select',
+                        options: <?php echo json_encode($studyTypes); ?>
+                    },
+                    {
+                        id: 'study_status',
+                        label: 'Study Status',
+                        type: 'text',
+                        required: true
+                    },
+                    {
+                        id: 'study_active_code',
+                        label: 'Study Active Code',
+                        type: 'select',
+                        options: <?php echo json_encode($activeCodes); ?>
+                    },
+                    {
+                        id: 'seq',
+                        label: 'Seq',
+                        type: 'text'
+                    }
+                ]
+            },
+            agenda_category: {
+                title: 'Agenda Categories',
+                fields: [{
+                        id: 'category_name',
+                        label: 'Agenda Category',
+                        type: 'text',
+                        required: true
+                    },
+                    {
+                        id: 'agenda_class_code',
+                        label: 'Class Code',
+                        type: 'text'
+                    },
+                    {
+                        id: 'agenda_print',
+                        label: 'Print on Agenda and Minutes As',
+                        type: 'text'
+                    }
+                ]
             }
         }
-    });
+    };
 
-    if (!isValid) return;
-
-    // Add ID for edit operations
-    if (window.isEdit) {
-        formData.id = window.currentEditId;
+    // Get field configuration for a type
+    function getFieldConfig(type) {
+        if (formConfigs.simple[type]) {
+            return {
+                title: type.charAt(0).toUpperCase() + type.slice(1),
+                fields: [{
+                    id: formConfigs.simple[type].field,
+                    label: formConfigs.simple[type].label,
+                    type: 'text',
+                    required: true
+                }]
+            };
+        }
+        return formConfigs.complex[type];
     }
 
-    // Show loading state on button
-    const saveBtn = document.getElementById('saveEditBtn');
-    saveBtn.disabled = true;
-    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+    // Generate form HTML based on configuration
+    function generateFormHTML(config, data = {}) {
+        let html = '';
 
-    // Send request
-    fetch(endpoint, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify(formData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        // Reset button state
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = 'Save';
+        config.fields.forEach(field => {
+            const value = data[field.id] || (field.id === 'irb_code' ? 'NOGUCHI MEMORIAL INSTITUTE FOR MEDICAL RESEARCH-IRB' : '');
+            const requiredAttr = field.required ? 'required' : '';
 
-        if (data.success) {
-            // Refresh the table
-            refreshTable();
-            // Close modal
-            bootstrap.Modal.getInstance(document.getElementById('editItemModal')).hide();
-            // Show success message
-            showToast('Operation completed successfully!', 'success');
-        } else {
-            alert('Error: ' + (data.message || 'Unknown error'));
+            html += `<div class="row mb-3">`;
+            html += `<div class="col-md-12">`;
+            html += `<label class="form-label fw-semibold">${field.label}</label>`;
+
+            if (field.type === 'select') {
+                html += `<select id="${field.id}" class="form-select" ${requiredAttr}>`;
+                field.options.forEach(option => {
+                    const selected = value === option ? 'selected' : '';
+                    html += `<option value="${option}" ${selected}>${option}</option>`;
+                });
+                html += `</select>`;
+            } else {
+                html += `<input type="${field.type}" id="${field.id}" class="form-control" value="${value}" ${requiredAttr}>`;
+            }
+
+            html += `</div></div>`;
+        });
+
+        return html;
+    }
+
+    // Main edit function
+    async function editItem(id, currentValue) {
+        window.currentEditId = id;
+        window.isEdit = true;
+
+        const type = window.currentType;
+        const config = getFieldConfig(type);
+
+        if (!config) {
+            console.error('No configuration found for type:', type);
+            return;
         }
-    })
-    .catch(error => {
-        // Reset button state
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = 'Save';
 
-        console.error('Error:', error);
-        alert('An error occurred while saving.');
-    });
-});
+        // Set modal title
+        document.getElementById('editItemModalLabel').textContent = `Edit ${config.title}`;
 
-// Enhanced delete functionality
-document.getElementById('deleteBtn').addEventListener('click', function() {
-    const endpoint = `/admin/handlers/delete_${window.currentType}.php`;
-    
-    fetch(endpoint, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ id: window.currentDeleteId })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Refresh the table
-            refreshTable();
-            // Close modal
-            bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
-            // Show success message
-            showToast('Item deleted successfully!', 'success');
+        // Fetch existing data for complex forms
+        let data = {};
+        const multiFieldTypes = Object.keys(formConfigs.complex);
+        if (multiFieldTypes.includes(type)) {
+            try {
+                const res = await fetch(window.currentEndpoint + '?id=' + id);
+                data = await res.json();
+                console.log(data);
+            } catch (err) {
+                console.error('Error fetching item data:', err);
+            }
         } else {
-            alert('Error deleting item: ' + (data.message || 'Unknown error'));
+            // For simple forms, use the current value
+            const fieldName = formConfigs.simple[type].field;
+            data[fieldName] = currentValue;
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred while deleting.');
+
+        // Generate and set form HTML
+        const dynamicInput = document.getElementById('dynamicInput');
+        dynamicInput.innerHTML = generateFormHTML(config, data);
+
+        // Show modal
+        const editModal = new bootstrap.Modal(document.getElementById('editItemModal'));
+        editModal.show();
+    }
+
+    // Main add function
+    function addItem() {
+        window.isEdit = false;
+
+        const type = window.currentType;
+        const config = getFieldConfig(type);
+
+        if (!config) {
+            console.error('No configuration found for type:', type);
+            return;
+        }
+
+        // Set modal title
+        document.getElementById('editItemModalLabel').textContent = `Add ${config.title}`;
+
+        // Generate and set form HTML
+        const dynamicInput = document.getElementById('dynamicInput');
+        dynamicInput.innerHTML = generateFormHTML(config);
+
+        // Show modal
+        const editModal = new bootstrap.Modal(document.getElementById('editItemModal'));
+        editModal.show();
+    }
+
+    // Delete function remains the same
+    function deleteItem(id) {
+        window.currentDeleteId = id;
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        deleteModal.show();
+    }
+
+    // Enhanced save functionality
+    document.getElementById('saveEditBtn').addEventListener('click', function() {
+        const type = window.currentType;
+        const config = getFieldConfig(type);
+        const endpoint = window.isEdit ?
+            `/admin/handlers/update_${type}.php` :
+            `/admin/handlers/add_${type}.php`;
+
+        if (!config) {
+            alert('Invalid form configuration');
+            return;
+        }
+
+        // Collect form data
+        const formData = {};
+        let isValid = true;
+
+        config.fields.forEach(field => {
+            const element = document.getElementById(field.id);
+            if (element) {
+                const value = element.value.trim();
+
+                // Validation
+                if (field.required && !value) {
+                    isValid = false;
+                    element.classList.add('is-invalid');
+                    alert(`Please fill in the ${field.label} field.`);
+                } else {
+                    element.classList.remove('is-invalid');
+                    formData[field.id] = value;
+                }
+            }
+        });
+
+        if (!isValid) return;
+
+        // Add ID for edit operations
+        if (window.isEdit) {
+            formData.id = window.currentEditId;
+        }
+
+        // Show loading state on button
+        const saveBtn = document.getElementById('saveEditBtn');
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+
+        // Send request
+        fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Reset button state
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = 'Save';
+
+                if (data.success) {
+                    // Refresh the table
+                    refreshTable();
+                    // Close modal
+                    bootstrap.Modal.getInstance(document.getElementById('editItemModal')).hide();
+                    // Show success message
+                    showToast('Operation completed successfully!', 'success');
+                } else {
+                    alert('Error: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                // Reset button state
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = 'Save';
+
+                console.error('Error:', error);
+                alert('An error occurred while saving.');
+            });
     });
-});
 
-// Utility functions
-function refreshTable() {
-    fetch(window.currentEndpoint)
-        .then(response => response.text())
-        .then(html => {
-            document.getElementById('contentArea').innerHTML = html;
-        })
-        .catch(error => console.error('Error refreshing table:', error));
-}
+    // Enhanced delete functionality
+    document.getElementById('deleteBtn').addEventListener('click', function() {
+        const endpoint = `/admin/handlers/delete_${window.currentType}.php`;
 
-function showToast(message, type = 'info') {
-    // Simple toast implementation - you can replace with a proper toast library
-    const toast = document.createElement('div');
-    toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999;';
-    toast.innerHTML = `
+        fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    id: window.currentDeleteId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Refresh the table
+                    refreshTable();
+                    // Close modal
+                    bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+                    // Show success message
+                    showToast('Item deleted successfully!', 'success');
+                } else {
+                    alert('Error deleting item: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while deleting.');
+            });
+    });
+
+    // Utility functions
+    function refreshTable() {
+        fetch(window.currentEndpoint)
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('contentArea').innerHTML = html;
+            })
+            .catch(error => console.error('Error refreshing table:', error));
+    }
+
+    function showToast(message, type = 'success') {
+        // Simple toast implementation - you can replace with a proper toast library
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999;';
+        toast.innerHTML = `
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
-    document.body.appendChild(toast);
-    
-    // Auto remove after 3 seconds
-    setTimeout(() => {
-        if (toast.parentNode) {
-            toast.parentNode.removeChild(toast);
+        document.body.appendChild(toast);
+
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 3000);
+    }
+
+    // Initialize modal functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        // const modal = new bootstrap.Modal(document.getElementById('adminModal'));
+        const title = document.getElementById('adminModalLabel');
+        const content = document.getElementById('contentArea');
+
+        document.querySelectorAll('.open-modal').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const modalTitle = this.getAttribute('data-title');
+                const endpoint = this.getAttribute('data-endpoint');
+                const type = this.getAttribute('data-type');
+
+                // Store current type and endpoint
+                window.currentType = type;
+                window.currentEndpoint = endpoint;
+
+                // Update modal title
+                title.textContent = modalTitle;
+
+                // Show loading state
+                content.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading...</p></div>';
+
+                // Fetch data
+                fetch(endpoint)
+                    .then(response => response.text())
+                    .then(data => {
+                        content.innerHTML = data;
+                    })
+                    .catch(error => {
+                        console.error('Error loading data:', error);
+                        content.innerHTML = '<div class="alert alert-danger text-center">Failed to load data.</div>';
+                    });
+
+                modal.show();
+            });
+        });
+});
+
+// Handle Replace Template button
+document.getElementById('replaceBtn').addEventListener('click', function() {
+    if (!selectedTemplateId) {
+        alert('Please select a template to replace.');
+        return;
+    }
+
+    // Fetch current template data to pre-fill the form
+    fetch('/admin/handlers/fetch_template.php?id=' + selectedTemplateId)
+        .then(response => response.json())
+        .then(data => {
+            if (data) {
+                document.getElementById('replaceLetterType').value = data.letter_type || '';
+                document.getElementById('replaceClosing').value = data.closing || '';
+                document.getElementById('replaceSignatory').value = data.signatory || '';
+                document.getElementById('replaceTitle').value = data.title || '';
+                document.getElementById('replaceEmailSubject').value = data.email_subject || '';
+                document.getElementById('replaceEmailMessage').value = data.email_message || '';
+            }
+            const replaceModal = new bootstrap.Modal(document.getElementById('replaceTemplateModal'));
+            replaceModal.show();
+        })
+        .catch(error => {
+            console.error('Error fetching template data:', error);
+            alert('Failed to load template data.');
+        });
+});
+
+// Handle Replace Template Save
+document.getElementById('replaceTemplateBtn').addEventListener('click', function() {
+    const form = document.getElementById('replaceTemplateForm');
+    const formData = new FormData(form);
+
+    // Basic validation
+    const letterType = formData.get('letter_type');
+    const documentFile = formData.get('document');
+
+    if (!letterType) {
+        alert('Please select a letter type.');
+        return;
+    }
+
+    // Note: File is optional for replace, but if provided, validate
+    if (documentFile && documentFile.size > 0) {
+        const allowedTypes = ['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/pdf'];
+        if (!allowedTypes.includes(documentFile.type)) {
+            alert('Invalid file type. Only .doc, .docx, and .pdf files are allowed.');
+            return;
         }
-    }, 3000);
+        if (documentFile.size > 10 * 1024 * 1024) {
+            alert('File size too large. Maximum size is 10MB.');
+            return;
+        }
+    }
+
+    // Show loading state
+    const replaceBtn = document.getElementById('replaceTemplateBtn');
+    replaceBtn.disabled = true;
+    replaceBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Replacing...';
+
+    // Add template ID
+    formData.append('id', selectedTemplateId);
+
+    // Send request
+    fetch('/admin/handlers/update_template.php', {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Reset button state
+            replaceBtn.disabled = false;
+            replaceBtn.innerHTML = '<i class="fas fa-exchange-alt me-1"></i>Replace Template';
+
+            if (data.success) {
+                // Close modal
+                bootstrap.Modal.getInstance(document.getElementById('replaceTemplateModal')).hide();
+                // Reset form
+                form.reset();
+                // Refresh template table (assuming there's a refresh function)
+                if (typeof refreshTemplateTable === 'function') {
+                    refreshTemplateTable();
+                }
+                // Show success message
+                showToast('Template replaced successfully!', 'success');
+            } else {
+                alert('Error: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            // Reset button state
+            replaceBtn.disabled = false;
+            replaceBtn.innerHTML = '<i class="fas fa-exchange-alt me-1"></i>Replace Template';
+
+            console.error('Error:', error);
+            alert('An error occurred while replacing the template.');
+        });
+});
+
+// Function to refresh template table
+function refreshTemplateTable() {
+    // Assuming the table is loaded via PHP, we can reload the page or fetch new data
+    // For simplicity, reload the page
+    location.reload();
 }
+</script>
 
-// Initialize modal functionality
-document.addEventListener('DOMContentLoaded', function() {
-    const modal = new bootstrap.Modal(document.getElementById('adminModal'));
-    const title = document.getElementById('adminModalLabel');
-    const content = document.getElementById('contentArea');
 
-    document.querySelectorAll('.open-modal').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const modalTitle = this.getAttribute('data-title');
-            const endpoint = this.getAttribute('data-endpoint');
-            const type = this.getAttribute('data-type');
+<script>
+    let selectedTemplateId = null;
 
-            // Store current type and endpoint
-            window.currentType = type;
-            window.currentEndpoint = endpoint;
+    document.querySelectorAll('#templateTable tbody tr').forEach(row => {
+        row.addEventListener('click', function() {
 
-            // Update modal title
-            title.textContent = modalTitle;
+            // Clear previous selection
+            document.querySelectorAll('#templateTable tr')
+                .forEach(r => r.classList.remove('table-active'));
 
-            // Show loading state
-            content.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading...</p></div>';
+            // Set new selection
+            this.classList.add('table-active');
+            selectedTemplateId = this.dataset.id;
 
-            // Fetch data
-            fetch(endpoint)
-                .then(response => response.text())
-                .then(data => {
-                    content.innerHTML = data;
-                })
-                .catch(error => {
-                    console.error('Error loading data:', error);
-                    content.innerHTML = '<div class="alert alert-danger text-center">Failed to load data.</div>';
-                });
+            console.log("Selected template id: "+ selectedTemplateId);
 
-            modal.show();
+            // Enable action buttons
+            document.querySelectorAll('.action-btn').forEach(btn => {
+                btn.disabled = false;
+                btn.classList.remove('btn-secondary');
+                btn.classList.add(btn.id === 'deleteBtn' ? 'btn-danger' : 'btn-primary');
+            });
         });
     });
-});
+</script>
+
+<script>
+    document.getElementById('templateSearch').addEventListener('keyup', function() {
+        const value = this.value.toLowerCase();
+
+        document.querySelectorAll('#templateTable tbody tr').forEach(row => {
+            const match = row.innerText.toLowerCase().includes(value);
+            row.style.display = match ? '' : 'none';
+        });
+    });
+</script>
+
+<script>
+    // Handle Add New Template button
+    document.getElementById('addNewBtn').addEventListener('click', function() {
+        const addModal = new bootstrap.Modal(document.getElementById('addTemplateModal'));
+        addModal.show();
+    });
+
+    // Handle Save Template
+    document.getElementById('saveTemplateBtn').addEventListener('click', function() {
+        const form = document.getElementById('addTemplateForm');
+        const formData = new FormData(form);
+
+        // Basic validation
+        const letterType = formData.get('letter_type');
+        const documentFile = formData.get('document');
+
+        if (!letterType) {
+            alert('Please select a letter type.');
+            return;
+        }
+
+        if (!documentFile || documentFile.size === 0) {
+            alert('Please select a document to upload.');
+            return;
+        }
+
+        // Show loading state
+        const saveBtn = document.getElementById('saveTemplateBtn');
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+
+        // Add IRB code
+        formData.append('irb_code', 'NOGUCHI MEMORIAL INSTITUTE FOR MEDICAL RESEARCH-IRB');
+
+        // Send request
+        fetch('/admin/handlers/add_template.php', {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Reset button state
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save me-1"></i>Save Template';
+
+                if (data.success) {
+                    // Close modal
+                    bootstrap.Modal.getInstance(document.getElementById('addTemplateModal')).hide();
+                    // Reset form
+                    form.reset();
+                    // Refresh template table (assuming there's a refresh function)
+                    if (typeof refreshTemplateTable === 'function') {
+                        refreshTemplateTable();
+                    }
+                    // Show success message
+                    showToast('Template added successfully!', 'success');
+                } else {
+                    alert('Error: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                // Reset button state
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save me-1"></i>Save Template';
+
+                console.error('Error:', error);
+                alert('An error occurred while saving the template.');
+            });
+    });
 </script>

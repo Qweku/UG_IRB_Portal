@@ -42,22 +42,15 @@ $contactDocs = getContactDocs($contactId);
             <div class="col-md-4">
                 <div class="card mb-4">
                     <div class="card-header bg-light">
-                        <h6 class="mb-0 fw-bold">Select Contact</h6>
+                        <h6 class="mb-0 fw-bold">Actions</h6>
                     </div>
                     <div class="card-body">
-                        <div class="mb-3">
-                            <select class="form-select">
-                                <option selected disabled>Select a Contact</option>
-                                <option>Active Contacts</option>
-                                <option>Inactive Contacts</option>
-                                <option>All Contacts</option>
-                            </select>
-                        </div>
-
                         <div class="d-grid gap-2">
-
-                            <button class="btn btn-danger">
-                                <i class="fas fa-trash me-1"></i> Delete Contact
+                            <button type="button" class="btn btn-primary" id="inviteBtn" disabled>
+                                <i class="fas fa-envelope me-1"></i> Invite
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="permissionsBtn" disabled>
+                                <i class="fas fa-key me-1"></i> Permissions
                             </button>
                         </div>
                     </div>
@@ -81,12 +74,13 @@ $contactDocs = getContactDocs($contactId);
                                     <tr>
                                         <th width="80px">Title</th>
                                         <th>Name</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="contactsTableBody">
                                     <?php if (empty($allContacts)): ?>
                                         <tr>
-                                            <td colspan="2" class="text-center text-muted py-3">
+                                            <td colspan="3" class="text-center text-muted py-3">
                                                 No contacts found.
                                             </td>
                                         </tr>
@@ -96,7 +90,15 @@ $contactDocs = getContactDocs($contactId);
                                         <tr class="contact-row"
                                             data-contact='<?= json_encode($contact, JSON_HEX_APOS | JSON_HEX_QUOT) ?>'>
                                             <td><?= htmlspecialchars($contact['title']) ?></td>
-                                            <td><?= htmlspecialchars($contact['first_name'] . ' ' . $contact['last_name']) ?></td>
+
+                                            <!-- Show last name and first but if empty show company name -->
+                                             <?php if (empty($contact['first_name']) && empty($contact['last_name'])): ?>
+                                                <td><?= htmlspecialchars($contact['company_dept_name']) ?></td>
+                                            <?php else: ?>
+                                                <td><?= htmlspecialchars($contact['last_name'] . ', ' . $contact['first_name']) ?></td>
+                                            <?php endif; ?>
+
+                                            <td><button class="btn btn-sm btn-danger" onclick="deleteContact(<?= $contact['id'] ?>)"><i class="fas fa-trash"></i></button></td>
                                         </tr>
                                     <?php endforeach; ?>
 
@@ -191,7 +193,7 @@ $contactDocs = getContactDocs($contactId);
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label fw-semibold">Logon Name</label>
-                                        <input type="text" class="form-control" disabled>
+                                        <input type="text" name="logon_name" class="form-control" disabled>
                                     </div>
                                 </div>
                             </div>
@@ -367,10 +369,31 @@ $contactDocs = getContactDocs($contactId);
             </div>
         </div>
     </div>
+
+    <!-- Invite Confirmation Modal -->
+    <div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="inviteModalLabel">Confirm Invite</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to send an invitation email to the selected contact?</p>
+                    <p>This will generate a username and password and send them to the contact's email address.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmInviteBtn">Send Invite</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
     let selectedFiles = [];
+    let selectedContactId = null;
 
     function showToast(type, message) {
         // Create toast container if not exists
@@ -486,6 +509,41 @@ $contactDocs = getContactDocs($contactId);
         xhr.send(JSON.stringify({ id: docId }));
     }
 
+    // Function to delete contact
+    function deleteContact(contactId) {
+        if (!confirm('Are you sure you want to delete this contact?')) {
+            return;
+        }
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/admin/handlers/delete_contacts.php', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                try {
+                    const data = JSON.parse(xhr.responseText);
+                    if (data.success) {
+                        showToast('success', 'Contact deleted successfully');
+                        // Reload the page to refresh the list
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        showToast('error', data.message || 'Failed to delete contact');
+                    }
+                } catch (e) {
+                    showToast('error', 'Invalid response from server');
+                }
+            } else {
+                showToast('error', 'Failed to delete contact');
+            }
+        };
+        xhr.onerror = function() {
+            showToast('error', 'Network error');
+        };
+        xhr.send(JSON.stringify({ id: contactId }));
+    }
+
     // Function to update documents table
     function updateDocumentsTable(documents) {
         const tbody = document.getElementById('documents-tbody');
@@ -504,6 +562,12 @@ $contactDocs = getContactDocs($contactId);
             `;
             tbody.appendChild(row);
         });
+    }
+
+    // Function to toggle action buttons
+    function toggleActionButtons(enable) {
+        document.getElementById('inviteBtn').disabled = !enable;
+        document.getElementById('permissionsBtn').disabled = !enable;
     }
 
     // Handle contact row click to populate form
@@ -540,7 +604,61 @@ $contactDocs = getContactDocs($contactId);
             const btnText = document.querySelector('#addContactBtn .btn-text');
             btnText.textContent = 'Update Contact';
 
+            // Enable action buttons
+            selectedContactId = contact.id;
+            toggleActionButtons(true);
+
         });
+    });
+
+    // Handle Invite button click
+    document.getElementById('inviteBtn').addEventListener('click', function() {
+        const modal = new bootstrap.Modal(document.getElementById('inviteModal'));
+        modal.show();
+    });
+
+    // Handle Confirm Invite button click
+    document.getElementById('confirmInviteBtn').addEventListener('click', function() {
+        if (!selectedContactId) {
+            showToast('error', 'No contact selected');
+            return;
+        }
+
+        // Disable button to prevent multiple clicks
+        this.disabled = true;
+        this.textContent = 'Sending...';
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/admin/handlers/send_invite.php', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.onload = function() {
+            document.getElementById('confirmInviteBtn').disabled = false;
+            document.getElementById('confirmInviteBtn').textContent = 'Send Invite';
+
+            if (xhr.status === 200) {
+                try {
+                    const data = JSON.parse(xhr.responseText);
+                    if (data.success) {
+                        showToast('success', 'Invitation sent successfully');
+                        // Close modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('inviteModal'));
+                        modal.hide();
+                    } else {
+                        showToast('error', data.message || 'Failed to send invitation');
+                    }
+                } catch (e) {
+                    showToast('error', 'Invalid response from server');
+                }
+            } else {
+                showToast('error', 'Failed to send invitation');
+            }
+        };
+        xhr.onerror = function() {
+            document.getElementById('confirmInviteBtn').disabled = false;
+            document.getElementById('confirmInviteBtn').textContent = 'Send Invite';
+            showToast('error', 'Network error');
+        };
+        xhr.send(JSON.stringify({ contact_id: selectedContactId }));
     });
 
     function sanitizeInput(input) {

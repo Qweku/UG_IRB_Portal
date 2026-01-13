@@ -54,6 +54,14 @@ try {
     $risk_categories = getRiskCategoriesList();
     $sae_types = getSAETypesList();
     $locations = getStudyLocationsList();
+    $allContacts = getAllContacts();
+    $contacts = [];
+    foreach ($allContacts as $c) {
+        $fullName = trim($c['first_name'] . ' ' . ($c['middle_name'] ? $c['middle_name'] . ' ' : '') . $c['last_name']);
+        if (!empty($fullName)) {
+            $contacts[] = $fullName;
+        }
+    }
     // Check for edit mode
     $is_edit = isset($_GET['edit']) && $_GET['edit'] == '1' && isset($_GET['id']) && is_numeric($_GET['id']);
     $study_id = null;
@@ -1079,10 +1087,7 @@ try {
                                     <label class="form-label fw-semibold">Name</label>
                                     <select name="contact" class="form-select">
                                         <option value="${person.name}" selected>${person.name}</option>
-                                        <option>John Doe</option>
-                                        <option>Mary Adjei</option>
-                                        <option>Michael Fosu</option>
-                                        <option>Anna George</option>
+                                        ${<?php echo json_encode($contacts); ?>.filter(c => c !== person.name).map(c => `<option value="${c}">${c}</option>`).join('')}
                                     </select>
                                 </div>
                                 <div class="col-md-6">
@@ -1137,27 +1142,51 @@ try {
         } else if (e.target.closest('.btn-outline-danger')) {
             const row = e.target.closest('tr');
             const personnel_id = row.getAttribute('data-personnel-id');
+            const study_id = document.querySelector('input[name="study_id"]').value;
 
-            // Remove the row from table
-            row.remove();
+            console.log('Delete personnel with ID:', personnel_id, 'from study ID:', study_id);
 
-            // If editing and has personnel_id, remove the corresponding hidden input
-            if (isEdit && personnel_id) {
-                const studyForm = document.getElementById('studyForm');
-                const hiddenInputs = studyForm.querySelectorAll('input[name="personnel[]"]');
-                hiddenInputs.forEach(input => {
-                    try {
-                        const data = JSON.parse(input.value);
-                        if (data.id == personnel_id) {
-                            input.remove();
+            if (confirm('Are you sure you want to delete this personnel?')) {
+                try {
+                    const response = await fetch('/admin/handlers/delete_personnel.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            id: personnel_id,
+                            study_id: study_id
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        // Remove the row from table
+                        row.remove();
+
+                        // If editing and has personnel_id, remove the corresponding hidden input
+                        if (isEdit && personnel_id) {
+                            const studyForm = document.getElementById('studyForm');
+                            const hiddenInputs = studyForm.querySelectorAll('input[name="personnel[]"]');
+                            hiddenInputs.forEach(input => {
+                                try {
+                                    const inputData = JSON.parse(input.value);
+                                    if (inputData.id == personnel_id) {
+                                        input.remove();
+                                    }
+                                } catch (e) {
+                                    // Ignore invalid JSON
+                                }
+                            });
                         }
-                    } catch (e) {
-                        // Ignore invalid JSON
-                    }
-                });
-            }
 
-            showToast('success', 'Personnel removed from table.');
+                        showToast('success', 'Personnel deleted successfully.');
+                    } else {
+                        showToast('error', data.message || 'Failed to delete personnel');
+                    }
+                } catch (error) {
+                    showToast('error', 'An error occurred while deleting personnel');
+                }
+            }
         }
     });
 
@@ -1272,10 +1301,15 @@ try {
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Name</label>
                                    <select name="contact" class="form-select">
-                                        <option >John Doe</option>
-                                        <option >Mary Adjei</option>
-                                        <option >Michael Fosu</option>
-                                        <option >Anna George</option>
+                                   <option value="" disabled selected>Choose a personnel...</option>
+                                        <?php foreach ($allContacts as $contact): ?>
+                                             <?php if (empty($contact['first_name']) && empty($contact['last_name'])): ?>
+                                                <option><?= htmlspecialchars($contact['company_dept_name']) ?></option>
+                                            <?php else: ?>
+                                                <option><?= htmlspecialchars($contact['last_name'] . ' ' . $contact['first_name']) ?></option>
+                                            <?php endif; ?>
+
+                                         <?php endforeach; ?>
                                     </select>
                                 </div>
                                 <div class="col-md-6">
@@ -1291,7 +1325,7 @@ try {
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label class="form-label fw-semibold">Title</label>
-                                        <input type="text" class="form-control" placeholder="Enter title">
+                                        <input type="text" name="title" class="form-control" placeholder="Enter title">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label fw-semibold">Start Date</label>
@@ -1313,13 +1347,13 @@ try {
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label class="form-label fw-semibold">Email</label>
-                                        <input type="email" class="form-control" placeholder="Enter email">
+                                        <input type="email" name="email" class="form-control" placeholder="Enter email">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label fw-semibold">Comments</label>
-                                        <input type="text" class="form-control" id="comments" placeholder="Enter comments">
+                                        <input type="text" name="comments" class="form-control" placeholder="Enter comments">
                                     </div>
-                                </div> 
+                                </div>
                                 </div>`;
         form.insertAdjacentHTML('beforeend', newFields);
     }
@@ -1526,4 +1560,26 @@ try {
             piInput.value = ""; // reset selection when disabled
         }
     }
+
+    // Auto-fill email when name is selected
+    document.addEventListener('change', function(e) {
+        if (e.target.matches('select[name="contact"]')) {
+            const section = e.target.closest('.new-personnel-section');
+            const titleInput = section.querySelector('input[name="title"]');
+            const emailInput = section.querySelector('input[name="email"]');
+            const selectedName = e.target.value;
+
+            if (selectedName && emailInput) {
+                fetch(`/admin/handlers/fetch_contact_email.php?name=${encodeURIComponent(selectedName)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.email) {
+                            emailInput.value = data.email;
+                            titleInput.value = data.title || '';
+                        }
+                    })
+                    .catch(error => console.error('Error fetching email:', error));
+            }
+        }
+    });
 </script>

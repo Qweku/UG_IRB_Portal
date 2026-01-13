@@ -1,18 +1,6 @@
 <?php
 
 
-// Define session lifetime (same as your ini settings)
-$session_lifetime = ini_get('session.gc_maxlifetime');
-
-// Store expiration time in session
-if (!isset($_SESSION['session_expire_time'])) {
-    $_SESSION['session_expire_time'] = time() + $session_lifetime;
-}
-
-error_log("SESSION MAX LIFE: ". $session_lifetime);
-
-// Calculate time remaining
-$time_remaining = $_SESSION['session_expire_time'] - time();
 // session_start();
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header('Location: login');
@@ -206,28 +194,81 @@ $meetingDates = getMeetingDates();
     </div>
 </div>
 
-<div class="modal fade" id="sessionTimeoutModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content text-center">
-                <div class="modal-header bg-danger text-light">
-                    <h5 class="modal-title">⚠️ Session Expiring Soon</h5>
-                </div>
-                <div class="modal-body">
-                    <p>Your session will expire in <span id="countdown">120</span> seconds.</p>
-                    <p>Would you like to stay logged in?</p>
-                    <button id="stayLoggedIn" class="btn btn-success me-2">Stay Logged In</button>
-                    <button id="logoutNow" class="btn btn-danger">Logout</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
+<!-- <script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const sidebarLinks = document.querySelectorAll('#sidebar a[data-target]');
+    const contentSections = document.querySelectorAll('.content-section');
+    const sidebar = document.getElementById('sidebar');
+
+    /**
+     * Hide all content sections
+     */
+    function hideAllSections() {
+        contentSections.forEach(section => {
+            section.style.display = 'none';
+        });
+    }
+
+    /**
+     * Remove active class from all sidebar links
+     */
+    function clearActiveLinks() {
+        sidebarLinks.forEach(link => link.classList.remove('active'));
+    }
+
+    /**
+     * Show selected section
+     */
+    function showSection(sectionId) {
+        const section = document.getElementById(sectionId);
+        if (!section) return;
+
+        hideAllSections();
+        section.style.display = 'block';
+    }
+
+    /**
+     * Handle sidebar navigation click
+     */
+    sidebarLinks.forEach(link => {
+        link.addEventListener('click', event => {
+
+            const target = link.dataset.target;
+
+            // Allow Bootstrap modal triggers to behave normally
+            if (link.hasAttribute('data-bs-toggle')) {
+                return;
+            }
+
+            event.preventDefault();
+            if (!target) return;
+
+            clearActiveLinks();
+            link.classList.add('active');
+            showSection(target);
+
+            // Auto-close sidebar on mobile
+            if (window.innerWidth < 768 && sidebar?.classList.contains('show')) {
+                const collapse = bootstrap.Collapse.getOrCreateInstance(sidebar, { toggle: false });
+                collapse.hide();
+            }
+        });
+    });
+
+    /**
+     * Initial page state
+     */
+    const defaultLink = document.querySelector('#sidebar a.active[data-target]');
+    if (defaultLink) {
+        showSection(defaultLink.dataset.target);
+    }
+});
+</script> -->
 
 
 <script>
-     window.sessionTimeout = <?php echo $time_remaining; ?>;
-
-
     const postIrbOkBtn = document.getElementById('postIrbOkBtn');
     postIrbOkBtn.addEventListener('click', () => {
         const target = postIrbOkBtn.getAttribute('data-target');
@@ -240,12 +281,18 @@ $meetingDates = getMeetingDates();
             return;
         }
 
+
+
         const newMeetingDate = selectedDateInput.value;
 
         loadAgendaMeetings(newMeetingDate);
     });
 
     function loadAgendaMeetings(meeting_date) {
+        const studyIdInput = document.querySelector('input[name="study_id"]');
+        const agendaItemInput = document.querySelector('input[name="agenda_id"]');
+        studyIdInput.value = ""; // Clear previous value
+        agendaItemInput.value = "";
         fetch("/admin/handlers/fetch_agenda_meetings.php?meeting_date=" + meeting_date)
             .then(res => res.json())
             .then(data => {
@@ -259,7 +306,7 @@ $meetingDates = getMeetingDates();
 
                 data.forEach(item => {
                     rowsHTML += `
-                    <tr class="meeting-row" data-id="${item.id}">
+                    <tr class="meeting-row" data-id="${item.id}" data-study-id="${item.study_id}">
                         <td>${item.id}</td>
                         <td>${item.irb_number}</td>
                         <td>${item.internal_number}</td>
@@ -281,6 +328,17 @@ $meetingDates = getMeetingDates();
                     row.addEventListener("click", function() {
 
                         const id = this.dataset.id;
+                        const studyID = this.dataset.studyId;
+                        studyIdInput.value = studyID; 
+                        agendaItemInput.value = id;
+
+                        // document.querySelector('select[name="action_explanation"]').value = dataset.action_taken ?? "";
+                        // document.querySelector('select[name="condition_1"]').value = dataset.condition_1 ?? "";
+                        // document.querySelector('select[name="condition_2"]').value = dataset.condition_2;
+                        // document.querySelector('textarea[name="action_explanation"]').value = dataset.action_explanation ?? "";
+
+
+                        console.log("Selected Study ID:", studyID);
 
                         // Remove active class from all rows
                         const allRows = document.querySelectorAll(".meeting-row");
@@ -323,6 +381,7 @@ $meetingDates = getMeetingDates();
                     alert("Error: " + data.error);
                     return;
                 }
+
 
                 document.getElementById("studyContent").innerHTML = `
                 <div class="row mb-4">
@@ -452,70 +511,3 @@ $meetingDates = getMeetingDates();
             });
     }
 </script>
-
-<script>
-       document.addEventListener('DOMContentLoaded', () => {
-
-    let warningTimer;
-    let countdownInterval;
-
-    function startWarningTimer() {
-        const sessionDuration = window.sessionTimeout * 1000; 
-        const warningBefore = 60 * 1000; 
-
-        warningTimer = setTimeout(showWarningModal, sessionDuration - warningBefore);
-    }
-
-    function showWarningModal() {
-        const modal = new bootstrap.Modal(document.getElementById('sessionTimeoutModal'));
-        modal.show();
-
-        let remaining = 60;
-        const countdown = document.getElementById('countdown');
-        countdown.textContent = remaining;
-
-        countdownInterval = setInterval(() => {
-            remaining--;
-            countdown.textContent = remaining;
-
-            if (remaining <= 0) {
-                clearInterval(countdownInterval);
-                window.location.href = '/logout';
-            }
-        }, 1000);
-    }
-
-    // ✔ Only attach these listeners ONCE
-    document.getElementById('stayLoggedIn').addEventListener('click', () => {
-        clearInterval(countdownInterval);
-        const modal = bootstrap.Modal.getInstance(document.getElementById('sessionTimeoutModal'));
-        modal.hide();
-        extendSession();
-    });
-
-    document.getElementById('logoutNow').addEventListener('click', () => {
-        window.location.href = '/logout';
-    });
-
-    function extendSession() {
-        fetch('/includes/config/extend_session.php')
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'ok') {
-                    console.log("Session extended");
-
-                    // ❗ Reset timers
-                    clearTimeout(warningTimer);
-                    clearInterval(countdownInterval);
-
-                    startWarningTimer();
-                }
-            })
-            .catch(err => console.error('Error extending session:', err));
-    }
-
-    // Start initial timer
-    startWarningTimer();
-});
-
-    </script>

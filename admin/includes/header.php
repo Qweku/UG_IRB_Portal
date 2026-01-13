@@ -1,6 +1,3 @@
-<?php
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -58,5 +55,5 @@
     <script>
         // Session timer variables
         const loginTime = <?php echo isset($_SESSION['login_time']) ? $_SESSION['login_time'] : 'null'; ?>;
-        const sessionDuration = 30 * 60; // 30 minutes in seconds
+        const sessionDuration = <?php echo ini_get('session.gc_maxlifetime'); ?>; // Session lifetime in seconds from PHP config
     </script>

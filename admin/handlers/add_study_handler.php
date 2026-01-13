@@ -61,11 +61,27 @@ function processSAESubmission()
 
     // Optional fields
     $optional_fields = [
-        'follow_up_report', 'original_sae_number', 'secondary_sae', 'internal_sae_number',
-        'ind_report_number', 'medwatch_report_filed', 'medwatch_number', 'local_event',
-        'location', 'study_related', 'patient_status', 'age', 'sex', 'patient_identifier',
-        'date_of_event', 'date_received', 'date_pi_aware', 'signed_by_pi', 'date_signed',
-        'risks_altered', 'new_consent_required'
+        'follow_up_report',
+        'original_sae_number',
+        'secondary_sae',
+        'internal_sae_number',
+        'ind_report_number',
+        'medwatch_report_filed',
+        'medwatch_number',
+        'local_event',
+        'location',
+        'study_related',
+        'patient_status',
+        'age',
+        'sex',
+        'patient_identifier',
+        'date_of_event',
+        'date_received',
+        'date_pi_aware',
+        'signed_by_pi',
+        'date_signed',
+        'risks_altered',
+        'new_consent_required'
     ];
 
     foreach ($optional_fields as $field) {
@@ -97,7 +113,6 @@ function processSAESubmission()
         } else {
             echo json_encode(['status' => 'error', 'message' => 'Failed to submit SAE report']);
         }
-
     } catch (PDOException $e) {
         error_log("Database error: " . $e->getMessage());
         echo json_encode(['status' => 'error', 'message' => 'Failed to submit SAE report. Please try again.']);
@@ -150,7 +165,7 @@ function processFormSubmission()
         'first_irb_review',
         'original_approval',
         'last_seen_by_irb',
-        'last_irb_renewal',        
+        'last_irb_renewal',
         'nos',
         'noc',
         'isoa',
@@ -171,6 +186,8 @@ function processFormSubmission()
         }
 
         $conn->beginTransaction();
+
+        $irb_code = "NOGUCHI MEMORIAL INSTITUTE FOR MEDICAL RESEARCH-IRB";
 
         if ($is_edit) {
             // Update study
@@ -255,19 +272,57 @@ function processFormSubmission()
                     ':comments' => $p_data['comments']
                 ]);
             }
-            $pi_string = implode(', ', $pi_names);
 
-            $stmt = $conn->prepare("UPDATE studies SET pi = :pi WHERE id = :study_id");
+            $new_pi = '';
+            $reviewer_names = '';
+            $admin_names = '';
+            $col_names = '';
+
+            // Compare study personnel role with study PI, Reviewer, Admins and cols
+            if (in_array('PI', array_map(function ($p_json) {
+                $p = json_decode($p_json, true);
+                return $p['staffType'] ?? '';
+            }, $_POST['personnel']))) {
+                // If PI role exists, ensure study PI is updated
+                foreach ($_POST['personnel'] as $p_json) {
+                    $p = json_decode($p_json, true);
+                    if (!$p) continue;
+                    if (trim($p['staffType'] ?? '') === 'PI') {
+                        $new_pi = trim($p['name'] ?? '');
+                    }
+
+                    if (trim($p['staffType'] ?? '') === 'Reviewer') {
+                        $reviewer_names .= trim($p['name'] ?? '') . ', ';
+                    }
+
+                    if (trim($p['staffType'] ?? '') === 'Admin') {
+                        $admin_names .= trim($p['name'] ?? '') . ', ';
+                    }
+                    if (trim($p['staffType'] ?? '') === 'Co-PI') {
+                        $col_names .= trim($p['name'] ?? '') . ', ';
+                    }
+                }
+            }
+
+
+            // $pi_string = implode(', ', $pi_names);
+
+            $stmt = $conn->prepare("UPDATE studies SET pi = :pi, reviewers = :reviewers, admins = :admins, cols = :cols WHERE id = :study_id");
 
             $stmt->execute([
 
-                ':pi' => $pi_string,
+                ':pi' => $new_pi,
+                ':reviewers' => rtrim($reviewer_names, ', '),
+                ':admins' => rtrim($admin_names, ', '),
+                ':cols' => rtrim($col_names, ', '),
 
                 ':study_id' => $study_id
 
             ]);
 
             $nextMeeting = getNextMeetingDate();
+
+            error_log("Next meeting date for update: " . $nextMeeting);
 
             // Check if agenda item exists
             $stmt = $conn->prepare("SELECT id FROM agenda_items WHERE irb_number = ?");
@@ -276,10 +331,10 @@ function processFormSubmission()
 
             if ($agenda_id) {
                 // Update existing agenda item
-                $stmt = $conn->prepare("UPDATE agenda_items SET
+                $stmt = $conn->prepare("UPDATE agenda_items SET study_id = :study_id,
                     agenda_category = 'Expedited', agenda_group = 'Expedited', expedite = 1, title = :title,
                     renewal = :renewal, review = :review, meeting_date = :meeting_date, reference_number = :reference_number, pi = :pi
-                    WHERE id = :id");
+                    WHERE study_id = :study_id");
 
                 $stmt->execute([
                     ':title' => $data['protocol_title'],
@@ -287,8 +342,8 @@ function processFormSubmission()
                     ':review' => $data['last_seen_by_irb'],
                     ':meeting_date' => $nextMeeting,
                     ':reference_number' => $data['ref_number'],
-                    ':pi' => $pi_string,
-                    ':id' => $agenda_id
+                    ':pi' => $new_pi,
+                    ':study_id' => $study_id
                 ]);
             } else {
                 // Insert new agenda item
@@ -306,22 +361,23 @@ function processFormSubmission()
                     ':review' => $data['last_seen_by_irb'],
                     ':meeting_date' => $nextMeeting,
                     ':reference_number' => $data['ref_number'],
-                    ':pi' => $pi_string,
+                    ':pi' => $new_pi,
                 ]);
             }
         } else {
             $nextMeeting = getNextMeetingDate();
+            error_log("Next meeting date for update: " . $nextMeeting);
             // Insert study
             $stmt = $conn->prepare("INSERT INTO studies (
                 protocol_number, ref_num, expiration_date, title, sponsor_displayname,
                 study_active, review_type, study_status, risk_category, patients_enrolled,
-                init_enroll, on_agenda_date, irb_of_record, cr_required, renewal_cycle,
+                init_enroll, on_agenda_date, irb_of_record, irb_code, cr_required, renewal_cycle,
                 date_received, first_irb_review, approval_date, last_irb_review, meeting_date,
                 last_renewal_date, remarks
             ) VALUES (
                 :study_number, :ref_number, :exp_date, :protocol_title, :sponsor,
                 :active, :review_type, :status, :risk_category, :approval_patient_enrollment,
-                :current_enrolled, :on_agenda_date, :irb_of_record, :cr_required,
+                :current_enrolled, :on_agenda_date, :irb_of_record, :irb_code, :cr_required,
                 :renewal_cycle, :date_received, :first_irb_review, :original_approval,
                 :last_seen_by_irb, :meeting_date, :last_irb_renewal, :internal_notes
             )");
@@ -340,6 +396,7 @@ function processFormSubmission()
                 ':current_enrolled' => $data['currentEnroll'],
                 ':on_agenda_date' => $data['oad'],
                 ':irb_of_record' => $data['ior'],
+                ':irb_code' => $irb_code,
                 ':cr_required' => $data['cRequired'],
                 ':renewal_cycle' => $data['rcm'],
                 ':date_received' => $data['date_received'],
@@ -398,7 +455,36 @@ function processFormSubmission()
                 ]);
             }
 
-            $pi_string = implode(', ', $pi_names);
+             $new_pi = '';
+            $reviewer_names = '';
+            $admin_names = '';
+            $col_names = '';
+
+            // Compare study personnel role with study PI, Reviewer, Admins and cols
+            if (in_array('PI', array_map(function ($p_json) {
+                $p = json_decode($p_json, true);
+                return $p['staffType'] ?? '';
+            }, $_POST['personnel']))) {
+                // If PI role exists, ensure study PI is updated
+                foreach ($_POST['personnel'] as $p_json) {
+                    $p = json_decode($p_json, true);
+                    if (!$p) continue;
+                    if (trim($p['staffType'] ?? '') === 'PI') {
+                        $new_pi = trim($p['name'] ?? '');
+                    }
+
+                    if (trim($p['staffType'] ?? '') === 'Reviewer') {
+                        $reviewer_names .= trim($p['name'] ?? '') . ', ';
+                    }
+
+                    if (trim($p['staffType'] ?? '') === 'Admin') {
+                        $admin_names .= trim($p['name'] ?? '') . ', ';
+                    }
+                    if (trim($p['staffType'] ?? '') === 'Co-PI') {
+                        $col_names .= trim($p['name'] ?? '') . ', ';
+                    }
+                }
+            }
 
             // Insert into agenda items
             $stmt = $conn->prepare("INSERT INTO agenda_items (
@@ -415,15 +501,18 @@ function processFormSubmission()
                 ':review' => $data['lsbi'],
                 ':meeting_date' => $nextMeeting,
                 ':reference_number' => $data['ref_number'],
-                ':pi' => $pi_string,
+                ':pi' => $new_pi,
             ]);
 
 
             // Update PI in studies
-            $stmt = $conn->prepare("UPDATE studies SET pi = :pi WHERE id = :study_id");
+            $stmt = $conn->prepare("UPDATE studies SET pi = :pi, reviewers = :reviewers, admins = :admins, cols = :cols WHERE id = :study_id");
 
             $stmt->execute([
-                ':pi' => $pi_string,
+                ':pi' => $new_pi,
+                ':reviewers' => $reviewer_names,
+                ':admins' => $admin_names,
+                ':cols' => $col_names,
                 ':study_id' => $study_id
             ]);
         }

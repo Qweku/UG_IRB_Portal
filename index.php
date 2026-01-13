@@ -4,7 +4,7 @@
 // Include configuration
 require_once 'config.php';
 
-include 'admin/includes/header.php'; 
+include 'admin/includes/header.php';
 // Get the requested path
 $request_uri = $_SERVER['REQUEST_URI'];
 $script_name = $_SERVER['SCRIPT_NAME'];
@@ -41,7 +41,8 @@ try {
 /**
  * Handle admin routes
  */
-function handleAdminRoutes($segments) {
+function handleAdminRoutes($segments)
+{
     $admin_path = 'admin/';
 
     // Remove 'admin' from segments
@@ -69,7 +70,8 @@ function handleAdminRoutes($segments) {
 /**
  * Handle API routes
  */
-function handleApiRoutes($segments) {
+function handleApiRoutes($segments)
+{
     $api_path = 'frontend/includes/api/';
 
     // Remove 'api' from segments
@@ -107,7 +109,8 @@ function handleApiRoutes($segments) {
 /**
  * Handle frontend routes
  */
-function handleFrontendRoutes($segments) {
+function handleFrontendRoutes($segments)
+{
     $frontend_path = 'admin/pages/';
 
     // Define direct route mappings
@@ -140,27 +143,11 @@ function handleFrontendRoutes($segments) {
 
     if (array_key_exists($route, $routes)) {
         require_once $frontend_path . $routes[$route];
-    } elseif ($route === 'products') {
-        if (count($segments) === 1) {
-            require_once $frontend_path . 'products/category.php';
-        } elseif (count($segments) === 2) {
-            $_GET['cat'] = $segments[1];
-            require_once $frontend_path . 'products/category.php';
-        } else {
-            require_once 'admin/404.php';
+    } elseif ($route === 'generate-letter') {
+        if (isset($segments[1]) && is_numeric($segments[1])) {
+            $_GET['study_id'] = (int) $segments[1];
         }
-    } elseif ($route === 'product') {
-        if (count($segments) >= 2) {
-            $slug_parts = explode('-', $segments[1]);
-            if (is_numeric($slug_parts[0])) {
-                $_GET['id'] = intval($slug_parts[0]);
-                require_once $frontend_path . 'products/product-detail.php';
-            } else {
-                require_once 'admin/404.php';
-            }
-        } else {
-            require_once 'admin/404.php';
-        }
+        require_once $frontend_path . 'contents/general_letters_content.php';
     } else {
         require_once 'admin/404.php';
     }

@@ -5,8 +5,8 @@
 ini_set('session.cookie_httponly', 1);
 ini_set('session.use_only_cookies', 1);
 ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on');
-ini_set('session.gc_maxlifetime', 1800); // 30 minutes
-ini_set('session.cookie_lifetime', 1800); // 30 minutes
+ini_set('session.gc_maxlifetime', 3600); // 10 minutes
+ini_set('session.cookie_lifetime', 3600); // 10 minutes
 
 // Set session save path if needed
 if (!is_writable(session_save_path())) {
@@ -29,6 +29,15 @@ define('DB_HOST', 'localhost');
 define('DB_NAME', 'ug_irb_portal');
 define('DB_USER', 'root');
 define('DB_PASS', '');
+
+// Email configuration for development
+define('SMTP_HOST', 'smtp.gmail.com');
+define('SMTP_PORT', 587);
+define('SMTP_USER', 'your-email@gmail.com'); // Replace with actual email
+define('SMTP_PASS', 'your-app-password'); // Replace with app password
+define('SMTP_ENCRYPTION', 'tls');
+define('FROM_EMAIL', 'no-reply@ug.edu.gh');
+define('FROM_NAME', 'UG IRB Portal');
 
 // Include required files
 require_once 'includes/config/database.php';

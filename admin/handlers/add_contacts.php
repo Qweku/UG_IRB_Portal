@@ -21,6 +21,7 @@ try {
         'first_name'          => trim($_POST['first_name'] ?? ''),
         'middle_name'         => trim($_POST['middle_name'] ?? null),
         'last_name'           => trim($_POST['last_name'] ?? ''),
+        'logon_name'         => trim($_POST['logon_name'] ?? null),
         'suffix'              => trim($_POST['suffix'] ?? null),
         'contact_type'        => trim($_POST['contact_type'] ?? null),
         'company_dept_name'   => trim($_POST['company_dept_name'] ?? null),
@@ -43,6 +44,11 @@ try {
         'email'               => trim($_POST['email'] ?? null),
         'updated_at'          => date('Y-m-d H:i:s')
     ];
+
+    // Logon name handling
+    if (empty($data['logon_name']) && !$isUpdate) {
+        $data['logon_name'] = strtolower($data['first_name'][0] . $data['last_name']);
+    }
 
     // -----------------------------
     // Validation
@@ -104,7 +110,7 @@ try {
         // -----------------------------
         $sql = "
             INSERT INTO contacts (
-                title, first_name, middle_name, last_name, suffix,
+                title, first_name, middle_name, last_name,logon_name, suffix,
                 contact_type, company_dept_name, active,
                 specialty_1, specialty_2, research_education,
                 street_address_1, street_address_2, city, state, zip,
@@ -112,7 +118,7 @@ try {
                 cell_phone, pager, email,
                 created_at, updated_at
             ) VALUES (
-                :title, :first_name, :middle_name, :last_name, :suffix,
+                :title, :first_name, :middle_name, :last_name, :logon_name, :suffix,
                 :contact_type, :company_dept_name, :active,
                 :specialty_1, :specialty_2, :research_education,
                 :street_address_1, :street_address_2, :city, :state, :zip,
