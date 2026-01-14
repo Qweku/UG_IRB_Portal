@@ -16,7 +16,7 @@ $agendaCategoriesList = getAgendaCategoriesList();
             <button class="btn btn-primary me-2">
                 <i class="fas fa-plus me-1"></i> Preview All Agenda Items
             </button>
-            <a href="/prepare-agenda" class="btn btn-outline-primary">
+            <a href="/agenda/prepare-agenda" class="btn btn-outline-primary">
                 <i class="fas fa-file-export me-1"></i> Prepare Agenda
             </a>
         </div>

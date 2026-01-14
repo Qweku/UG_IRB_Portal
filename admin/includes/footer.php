@@ -91,152 +91,6 @@
   </script>
 
   <script>
-      // Generic Menu System for IRB Portal
-      class MenuSystem {
-          constructor(defaultSection = 'dashboard-content') {
-              this.activeSection = defaultSection;
-              this.init();
-          }
-
-          init() {
-              this.bindEvents();
-              this.ensureSidebarVisibility();
-
-              window.addEventListener('resize', () => this.ensureSidebarVisibility());
-
-              this.showContent(this.activeSection);
-              this.setActiveLinkBySection(this.activeSection);
-          }
-
-          bindEvents() {
-              // Main navigation links
-              document.querySelectorAll('.sidebar .nav-link:not(.submenu-link)').forEach(link => {
-                  link.addEventListener('click', e => this.handleMainNavClick(e, link));
-              });
-
-              // Submenu links
-              document.querySelectorAll('.submenu-link').forEach(link => {
-                  link.addEventListener('click', e => this.handleSubmenuClick(e, link));
-              });
-          }
-
-          handleMainNavClick(e, link) {
-              e.preventDefault();
-
-              const targetId = link.dataset.target;
-              if (!targetId) return;
-
-              this.setActiveLink(link);
-              this.showContent(targetId);
-          }
-
-          handleSubmenuClick(e, link) {
-              e.preventDefault();
-
-              const targetId = link.dataset.target;
-              if (!targetId) return;
-
-              this.setActiveSubmenuLink(link);
-              this.showContent(targetId);
-          }
-
-          ensureSidebarVisibility() {
-              const sidebar = document.getElementById('sidebar');
-              if (!sidebar) return;
-
-              if (window.innerWidth >= 768) {
-                  sidebar.classList.add('show');
-              } else {
-                  sidebar.classList.remove('show');
-              }
-          }
-
-          setActiveLink(activeLink) {
-              this.clearAllActiveStates();
-              activeLink.classList.add('active');
-          }
-
-          setActiveSubmenuLink(activeLink) {
-              this.clearAllActiveStates();
-              activeLink.classList.add('active');
-
-              // Ensure parent accordion stays open
-              const accordion = activeLink.closest('.accordion-collapse');
-              if (accordion) {
-                  accordion.classList.add('show');
-              }
-          }
-
-          clearAllActiveStates() {
-              document.querySelectorAll('.sidebar .nav-link').forEach(link =>
-                  link.classList.remove('active')
-              );
-          }
-
-          setActiveLinkBySection(sectionId) {
-              const link = document.querySelector(
-                  `.sidebar .nav-link[data-target="${sectionId}"],
-         .sidebar .submenu-link[data-target="${sectionId}"]`
-              );
-
-              if (link) {
-                  link.classList.contains('submenu-link') ?
-                      this.setActiveSubmenuLink(link) :
-                      this.setActiveLink(link);
-              }
-          }
-
-          showContent(contentId) {
-              document.querySelectorAll('.content-section').forEach(section => {
-                  section.style.display = 'none';
-              });
-
-              const targetSection = document.getElementById(contentId);
-              if (!targetSection) return;
-
-              targetSection.style.display = 'block';
-              this.activeSection = contentId;
-
-              // Auto-close sidebar on mobile
-              const sidebar = document.getElementById('sidebar');
-              if (window.innerWidth < 768 && sidebar?.classList.contains('show')) {
-                  bootstrap.Collapse.getOrCreateInstance(sidebar, {
-                      toggle: false
-                  }).hide();
-              }
-          }
-
-          /* ----- Optional Dynamic Menu Support ----- */
-
-          addMenuItem(sectionId, menuData) {
-              const section = document.getElementById(sectionId);
-              if (!section) return;
-
-              const submenuNav = section.querySelector('.submenu-nav') || this.createSubmenuNav(section);
-
-              const li = document.createElement('li');
-              li.className = 'nav-item';
-
-              const a = document.createElement('a');
-              a.href = '#';
-              a.className = 'nav-link submenu-link';
-              a.dataset.target = menuData.target;
-              a.innerHTML = `<i class="${menuData.icon} me-2"></i>${menuData.title}`;
-
-              a.addEventListener('click', e => this.handleSubmenuClick(e, a));
-
-              li.appendChild(a);
-              submenuNav.appendChild(li);
-          }
-
-          createSubmenuNav(section) {
-              const nav = document.createElement('ul');
-              nav.className = 'nav flex-column submenu-nav';
-              section.querySelector('.accordion-body')?.appendChild(nav);
-              return nav;
-          }
-      }
-
 
       // Session Timer Function
       function updateSessionTimer() {
@@ -281,17 +135,14 @@
 
       // Initialize the menu system when DOM is loaded
       document.addEventListener('DOMContentLoaded', function() {
-          console.log('DOM loaded, initializing MenuSystem');
-          try {
-              console.log('MenuSystem class available:', typeof MenuSystem);
-              window.menuSystem = new MenuSystem();
-              console.log('MenuSystem initialized successfully');
+             try {
+              
               // Start session timer
               console.log('Starting session timer');
               updateSessionTimer();
               setInterval(updateSessionTimer, 1000);
           } catch (error) {
-              console.error('Error initializing MenuSystem:', error);
+              console.error('Error initializing :', error);
           }
       });
   </script>

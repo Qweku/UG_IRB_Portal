@@ -1,156 +1,141 @@
 <?php
 
+declare(strict_types=1);
 
-// Include configuration
+// --------------------------------------------------
+// Bootstrap
+// --------------------------------------------------
 require_once 'config.php';
 
-include 'admin/includes/header.php';
-// Get the requested path
-$request_uri = $_SERVER['REQUEST_URI'];
-$script_name = $_SERVER['SCRIPT_NAME'];
+// include 'admin/includes/header.php'; 
 
-// Remove query string and script name to get clean path
-$path = str_replace(dirname($script_name), '', $request_uri);
-$path = parse_url($path, PHP_URL_PATH);
-$path = trim($path, '/');
+$pageBase = 'admin/pages/';
+$errorPage = 'admin/404.php';
 
-// Split path into segments
-$segments = array_filter(explode('/', $path));
+// --------------------------------------------------
+// Get clean path (supports query strings)
+// --------------------------------------------------
+$requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$scriptName = dirname($_SERVER['SCRIPT_NAME']);
 
-// Route the request
-try {
-    if (empty($segments)) {
-        // Home page
-        require_once 'admin/pages/dashboard.php';
-    } elseif ($segments[0] === 'admin') {
-        // Admin routes
-        handleAdminRoutes($segments);
-    } elseif ($segments[0] === 'api') {
-        // API routes
-        handleApiRoutes($segments);
-    } else {
-        // Frontend routes
-        handleFrontendRoutes($segments);
-    }
-} catch (Exception $e) {
-    // Handle errors gracefully
-    error_log("Routing error: " . $e->getMessage());
-    require_once 'admin/404.php';
-}
+$path = trim(str_replace($scriptName, '', $requestUri), '/');
+$segments = array_values(array_filter(explode('/', $path)));
 
-/**
- * Handle admin routes
- */
-function handleAdminRoutes($segments)
-{
-    $admin_path = 'admin/';
+// Defaults
+$section = $segments[0] ?? 'dashboard';
+$subpage = $segments[1] ?? null;
 
-    // Remove 'admin' from segments
-    array_shift($segments);
+// --------------------------------------------------
+// Route map (supports sub-routes)
+// --------------------------------------------------
+$routes = [
+    'authenticate' => [
+        '_' => 'user/authenticate.php'
+    ],
+    'login' => [
+        '_' => 'user/login.php'
+    ],
+    'logout' => [
+        '_' => 'user/logout.php'
+    ],
 
-    if (empty($segments)) {
-        // Admin dashboard
-        require_once $admin_path . 'pages/dashboard.php';
-    } elseif ($segments[0] === 'login') {
-        require_once $admin_path . 'login.php';
-    } elseif ($segments[0] === 'dashboard') {
-        require_once $admin_path . 'pages/dashboard.php';
-    } elseif ($segments[0] === 'products') {
-        require_once $admin_path . 'pages/products/view-products.php';
-    } elseif ($segments[0] === 'categories') {
-        require_once $admin_path . 'pages/products/categories.php';
-    } elseif ($segments[0] === 'orders') {
-        require_once $admin_path . 'pages/orders/view-orders.php';
-    } else {
-        // 404 for admin
-        require_once 'admin/404.php';
-    }
-}
+    'dashboard' => [
+        '_'        => 'dashboard/index.php',          // /dashboard
+        'studies'  => 'dashboard/study_content.php',  // /dashboard/studies
+        'preliminary-agenda'  => 'dashboard/preliminary_agenda_content.php',  // /dashboard/reports
+        'continue-review'  => 'dashboard/due_continue_review_content.php',  // /dashboard/reports
+        'post-irb-meeting'  => 'dashboard/post_meeting_content.php',  // /dashboard/reports
+        'agenda-records'  => 'dashboard/agenda_records_content.php',  // /dashboard/reports
+        'reports'  => 'dashboard/reports_content.php',  // /dashboard/reports
+        'follow-up'  => 'dashboard/follow_up_content.php',  // /dashboard/reports
+        'administration'  => 'dashboard/administration_content.php',  // /dashboard/reports
+        'general-letters'  => 'dashboard/general_letters_content.php',  // /dashboard/reports
+    ],
 
-/**
- * Handle API routes
- */
-function handleApiRoutes($segments)
-{
-    $api_path = 'frontend/includes/api/';
+    'studies' => [
+        'add-study' => 'contents/add_new_study.php'
+    ],
 
-    // Remove 'api' from segments
-    array_shift($segments);
-
-    if (empty($segments)) {
-        // API root - could show API documentation
-        header('Content-Type: application/json');
-        echo json_encode(['error' => 'API endpoint required']);
-        exit;
-    }
-
-    $endpoint = $segments[0];
-
-    switch ($endpoint) {
-        case 'newsletter':
-            require_once $api_path . 'newsletter.php';
-            break;
-        case 'cart':
-            require_once $api_path . 'cart.php';
-            break;
-        case 'wishlist':
-            require_once $api_path . 'wishlist.php';
-            break;
-        case 'products':
-            require_once $api_path . 'products.php';
-            break;
-        default:
-            header('Content-Type: application/json');
-            echo json_encode(['error' => 'API endpoint not found']);
-            exit;
-    }
-}
-
-/**
- * Handle frontend routes
- */
-function handleFrontendRoutes($segments)
-{
-    $frontend_path = 'admin/pages/';
-
-    // Define direct route mappings
-    $routes = [
-        'dashboard' => 'dashboard.php',
-        'authenticate' => 'user/authenticate.php',
-        'add-study' => 'contents/add_new_study.php',
-        'prepare-agenda' => 'contents/prepare_agenda.php',
+    'agenda' => [
+        'prepare-agenda' => 'contents/minutes_preparation.php',
         'minutes' => 'contents/minutes_preparation.php',
-        'login' => 'user/login.php',
-        // 'logout' => 'user/login.php',
-        'register' => 'user/register.php',
-        'generate-letter' => 'contents/general_letters_content.php',
-        'contacts' => 'contents/create_contact.php',
-        'logout' => 'user/logout.php',
-        'about' => 'static/about.php',
-        'account-information' => 'contents/account_information.php',
-        'shipping' => 'static/shipping.php',
-        'returns' => 'static/returns.php',
-        'terms' => 'static/terms.php',
-        'privacy' => 'static/privacy.php',
-        'size-guide' => 'static/size-guide.php',
-        'careers' => 'static/careers.php',
-        'press' => 'static/press.php',
-        'blog' => 'static/blog.php',
-        'sustainability' => 'static/sustainability.php',
-    ];
+    ],
 
-    $route = $segments[0] ?? '';
+    'contacts' => [
+        '_' => 'contents/create_contact.php'
+    ],
+    'account-info' => [
+        '_' => 'contents/authenticate.php'
+    ],
 
-    if (array_key_exists($route, $routes)) {
-        require_once $frontend_path . $routes[$route];
-    } elseif ($route === 'generate-letter') {
-        if (isset($segments[1]) && is_numeric($segments[1])) {
-            $_GET['study_id'] = (int) $segments[1];
-        }
-        require_once $frontend_path . 'contents/general_letters_content.php';
-    } else {
-        require_once 'admin/404.php';
+    'generate-letter' => [
+        '_' => 'contents/general_letters_content.php'
+    ],
+
+  
+];
+
+// --------------------------------------------------
+// Resolve file
+// --------------------------------------------------
+$pageFile = null;
+
+if (isset($routes[$section])) {
+    if ($subpage && isset($routes[$section][$subpage])) {
+        $pageFile = $routes[$section][$subpage];
+    } elseif (!$subpage && isset($routes[$section]['_'])) {
+        $pageFile = $routes[$section]['_'];
     }
 }
 
-include 'admin/includes/footer.php';
+// // Default route
+// $route = $path ?: 'dashboard';
+
+// // --------------------------------------------------
+// // Route map
+// // --------------------------------------------------
+// $routes = [
+//     'authenticate' => 'user/authenticate.php',
+//     'login' => 'user/login.php',
+//     'logout' => 'user/logout.php',
+//     'add-study' => 'contents/add_new_study.php',
+//     'prepare-agenda' => 'contents/minutes_preparation.php',
+//     'minutes' => 'contents/minutes_preparation.php',
+//     'register' => 'contents/register.php',
+//     'contacts' => 'contents/create_contact.php',
+//     'account-information' => 'contents/authenticate.php',
+//     'dashboard'       => 'dashboard/index.php',
+//     'studies'         => 'contents/studies.php',
+//     'generate-letter' => 'contents/general_letters_content.php',
+// ];
+
+// // --------------------------------------------------
+// // Resolve route
+// // --------------------------------------------------
+// $pageFile = $routes[$route] ?? null;
+
+
+
+try {
+
+    include 'admin/includes/header.php';
+
+    error_log("Path: {$pageBase}{$pageFile}");
+
+    if ($pageFile && file_exists($pageBase . $pageFile)) {
+        require_once $pageBase . $pageFile;
+    } else {
+        http_response_code(404);
+        require_once $errorPage;
+    }
+
+    include 'admin/includes/footer.php';
+} catch (Throwable $e) {
+    error_log('[Router Error] ' . $e->getMessage());
+    http_response_code(500);
+    require_once $errorPage;
+}
+
+
+
+// include 'admin/includes/footer.php';

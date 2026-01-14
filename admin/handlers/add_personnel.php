@@ -12,7 +12,7 @@ if (!$data || !isset($data['study_id']) || !isset($data['name'])) {
 
 $study_id = $data['study_id'];
 $name = trim($data['name']);
-$role = trim($data['staffType']);
+$role = trim($data['staff_type']);
 $title = trim($data['title']);
 $start_date = $data['dateAdded'];
 $company_name = trim($data['companyName']);

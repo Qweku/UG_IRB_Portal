@@ -4,6 +4,7 @@ require_once '../../includes/config/database.php';
 
 use PhpOffice\PhpWord\TemplateProcessor;
 
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Invalid request method']);

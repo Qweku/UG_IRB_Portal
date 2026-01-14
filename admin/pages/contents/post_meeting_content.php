@@ -29,7 +29,7 @@ $irb_actions = getIRBActions();
                                     <button id="studyBtn" class="btn btn-outline-primary me-2" onclick="showHideStudyDetials()">
                                         <i class="fas fa-question-circle me-1"></i> Hide Study Details
                                     </button>
-                                    <a href="/minutes" class="btn btn-outline-primary me-2">
+                                    <a href="/agenda/minutes" class="btn btn-outline-primary me-2">
                                         <i class="fas fa-clipboard me-1"></i> Meeting Minutes
                                     </a>
                                     <a href="/generate-letter" id="sendCorrespondenceLink" class="btn btn-outline-primary me-2">
