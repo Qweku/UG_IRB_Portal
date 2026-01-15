@@ -14,9 +14,17 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $studyId = $_POST['study_id'] ?? null;
 $templatePath = $_POST['template_path'] ?? null;
 
-if (!$studyId || !$templatePath) {
+// data for follow up report
+$irbNumber = $_POST['study_number'] ?? '';
+$followUpDate = $_POST['follow_up_date'] ?? '';
+$letterType = $_POST['letter_type'] ?? "";
+$sentTo = "PI Post";
+$dateSent = $_POST['date_sent'] ?? "";
+$dueBy = $_POST['due_by'] ?? "";
+
+if (!$studyId || !$templatePath || !$irbNumber) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Study ID and template path are required']);
+    echo json_encode(['success' => false, 'message' => 'Study ID, template path and IRB number are required']);
     exit;
 }
 
@@ -78,11 +86,23 @@ try {
         throw new Exception('No data found for document generation');
     }
 
-    // $placeholders = [];
 
-    // foreach ($data as $key => $value) {
-    //     $placeholders['$_' . $key . '$'] = $value ?? '';
-    // }
+    // Add data to follow-up
+    $stmt = $conn->prepare("INSERT INTO 
+    follow_ups (irb_number, is_follow_up, follow_up_date, letter_type, sent_to, date_sent, due_by, status, study_id, created_at) 
+    VALUES (?, 0, ?, ?, ?, ?, ?, 'Pending', ?, NOW()) ");
+
+    $stmt->execute([
+        $irbNumber,
+        $followUpDate,
+        $letterType,
+        $sentTo,
+        $dateSent,
+        $dueBy,
+        $studyId
+    ]);
+
+
 
     $template = new TemplateProcessor($templatePath);
 

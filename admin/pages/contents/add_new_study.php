@@ -52,16 +52,24 @@ try {
     
     // Process contacts
     $allContacts = getAllContacts();
+
     $contact_list = [];
     foreach ($allContacts as $c) {
         if (!empty($c['first_name']) || !empty($c['last_name'])) {
             $fullName = trim($c['first_name'] . ' ' . ($c['middle_name'] ? $c['middle_name'] . ' ' : '') . $c['last_name']);
+
             if (!empty($fullName)) {
-                $contact_list[] = $fullName;
+                $contact_list[] = [
+                    'name' => $fullName,
+                    'id' => $c['id']
+                ];
             }
         }
     }
     $dropdown_data['contacts'] = $contact_list;
+
+    // Log contact list in readable format
+    error_log("Contact list: " . implode(', ', array_map(function($c) { return $c['name'] . ' => ' . $c['id']; }, $contact_list)));
 
     // Check for edit mode
     if (isset($_GET['edit']) && $_GET['edit'] == '1' && isset($_GET['id']) && is_numeric($_GET['id'])) {
@@ -125,6 +133,12 @@ try {
 } catch (Exception $e) {
     error_log("General error: " . $e->getMessage());
     $_SESSION['error_message'] = $e->getMessage();
+}
+
+// Set default values for new studies
+if (!$is_edit) {
+    $ref_number = 'NR' . $study_number;
+    $exp_date = date('Y-m-d', strtotime('+1 year'));
 }
 
 // Function to get status badge color
@@ -301,14 +315,14 @@ function formatFileSize($bytes) {
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label fw-semibold required-field">Reference Number</label>
-                                    <input type="text" id="ref_number" name="ref_number" class="form-control" 
-                                           value="<?php echo esc($ref_number); ?>" required>
+                                    <input type="text" id="ref_number" name="ref_number" class="form-control"
+                                           value="<?php echo esc($ref_number); ?>" readonly required>
                                     <div class="invalid-feedback">Please enter a reference number.</div>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label fw-semibold required-field">Expiration Date</label>
-                                    <input type="date" id="exp_date" name="exp_date" class="form-control" 
-                                           value="<?php echo esc($exp_date); ?>" required>
+                                    <input type="date" id="exp_date" name="exp_date" class="form-control"
+                                           value="<?php echo esc($exp_date); ?>" readonly required>
                                     <div class="invalid-feedback">Please select an expiration date.</div>
                                 </div>
                             </div>
@@ -1122,6 +1136,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }, false);
     });
     
+    // Auto-populate reference number based on study number
+    const studyNumberInput = document.getElementById('study_number');
+    const refNumberInput = document.getElementById('ref_number');
+    if (studyNumberInput && refNumberInput) {
+        studyNumberInput.addEventListener('input', function() {
+            refNumberInput.value = 'NR' + this.value;
+        });
+    }
+    
     // File upload handling
     const fileInput = document.getElementById('fileInput');
     const fileDropArea = document.getElementById('fileDropArea');
@@ -1339,6 +1362,7 @@ function editPersonnel(index) {
 
     formContent.innerHTML = `
         <input type="hidden" name="personnel_index" value="${index}">
+        <input type="hidden" name="contact_id" value="${personnel.contact_id || ''}">
 
         <div class="mb-3">
             <label class="form-label required-field">Name</label>
@@ -1374,9 +1398,9 @@ function editPersonnel(index) {
             </div>
         </div>
          <div class="mb-3">
-            <label class="form-label">Comments</label>
-            <textarea class="form-control" name="comments" rows="2" value="${esc(personnel.comments || "")}"></textarea>
-        </div>
+             <label class="form-label">Comments</label>
+             <textarea class="form-control" name="comments" rows="2">${esc(personnel.comments || "")}</textarea>
+         </div>
     `;
 
     attachAutocomplete(formContent);
@@ -1426,6 +1450,7 @@ function loadPersonnelForm() {
     document.getElementById('addPersonnelLabel').innerHTML = '<i class="fas fa-user-plus me-2"></i>Add Personnel';
     const formContent = document.getElementById('personnelFormContent');
     formContent.innerHTML = `
+        <input type="hidden" name="contact_id" hidden>
         <div class="mb-3">
             <label class="form-label required-field">Name</label>
             <input type="text" class="form-control" name="name" required placeholder="Enter full name">
@@ -1477,6 +1502,9 @@ function loadPersonnelForm() {
 
 function attachAutocomplete(formContent) {
     const nameInput = formContent.querySelector('input[name="name"]');
+    const contactId = formContent.querySelector('input[name="contact_id"]').value;
+
+    // console.log("Selected contact id: " + contactId);
     if (!nameInput) return;
 
     // Remove existing autocomplete container if present
@@ -1554,14 +1582,17 @@ function showPersonnelSuggestions(contacts, container, input, formContent) {
 
         item.addEventListener('mousedown', () => {
             input.value = contact.name;
-
+            const contactId = formContent.querySelector('input[name="contact_id"]');
             const email = formContent.querySelector('input[name="email"]');
             const phone = formContent.querySelector('input[name="phone"]');
             const title = formContent.querySelector('input[name="title"]');
 
+            if (contactId) contactId.value = contact.id || '';
             if (email) email.value = contact.email || '';
             if (phone) phone.value = contact.main_phone || '';
             if (title) title.value = contact.title || '';
+
+            console.log("Selected contact id: " + contactId.value);
 
             container.classList.add('d-none');
         });
@@ -1578,6 +1609,7 @@ function savePersonnel() {
     const fd = new FormData(form);
 
     const personnel = {
+        contact_id: fd.get('contact_id'),
         name: fd.get('name'),
         role: fd.get('role'),
         title: fd.get('title'),
@@ -1623,6 +1655,7 @@ async function submitStudyForm(e) {
     const originalText = submitBtn.innerHTML;
     
     try {
+        updatePersonnelTable();
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
         
@@ -1695,11 +1728,15 @@ function showSuggestionsForPersonnel(contacts, container, input, form) {
 
 function selectContactForPersonnel(contact, input, form) {
     input.value = contact.name;
+    const contactId = form.querySelector('input[name=contact_id"]');
     const emailInput = form.querySelector('input[name="email"]');
     const phoneInput = form.querySelector('input[name="phone"]');
     const titleInput = form.querySelector('input[name="title"]');
+    if (contactId) contactId.value = contact.id || '';
     if (emailInput) emailInput.value = contact.email || '';
     if (phoneInput) phoneInput.value = contact.main_phone || '';
     if (titleInput) titleInput.value = contact.title || '';
+
+    console.log("Contact id: "+ contactId);
 }
 </script>

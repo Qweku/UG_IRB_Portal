@@ -193,7 +193,7 @@ $contactDocs = getContactDocs($contactId);
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label fw-semibold">Logon Name</label>
-                                        <input type="text" name="logon_name" class="form-control" disabled>
+                                        <input type="text" name="logon_name" class="form-control" readonly>
                                     </div>
                                 </div>
                             </div>
@@ -206,8 +206,8 @@ $contactDocs = getContactDocs($contactId);
                                 </div>
                                 <div class="card-body">
                                     <div class="mb-3">
-                                        <label class="form-label fw-semibold">Client Name/Catalog</label>
-                                        <input type="text" class="form-control" placeholder="Document/Company Name/Superwriting (Use Dept Address)">
+                                        <label class="form-label fw-semibold">Company Name</label>
+                                        <input type="text" class="form-control" name="company_dept_name" placeholder="Document/Company Name/Superwriting (Use Dept Address)">
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label fw-semibold">Direct Address 1</label>
@@ -346,7 +346,6 @@ $contactDocs = getContactDocs($contactId);
                                     <input type="hidden" name="MAX_FILE_SIZE" value="10485760">
                                     <input type="file"
                                         id="fileInput"
-                                        name="documents[]"
                                         accept="application/pdf,.doc,.docx"
                                         multiple
                                         style="display: none;">
@@ -583,11 +582,14 @@ $contactDocs = getContactDocs($contactId);
             // Fill form fields
             Object.keys(contact).forEach(key => {
                 const field = document.querySelector(`[name="${key}"]`);
+
+                
                 if (field) {
                     if (field.type === 'checkbox') {
                         field.checked = contact[key] == 1;
                     } else {
                         field.value = contact[key] ?? '';
+                        console.log("Field key: "+ contact[key]);
                     }
                 }
             });
@@ -732,9 +734,9 @@ $contactDocs = getContactDocs($contactId);
         spinner.classList.remove('d-none');
 
         const formData = new FormData(this);
-        selectedFiles.forEach(file => {
-            formData.append('documents[]', file);
-        });
+        // selectedFiles.forEach(file => {
+        //     formData.append('documents[]', file);
+        // });
 
 
         const xhr = new XMLHttpRequest();

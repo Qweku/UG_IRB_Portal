@@ -1,11 +1,14 @@
 <?php
+error_log("Starting add_contacts.php script");
 require_once '../../includes/config/database.php';
 header('Content-Type: application/json');
 
 try {
     $db = new Database();
     $conn = $db->connect();
+    error_log("Database connection established");
     $conn->beginTransaction();
+    error_log("Transaction started");
 
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         throw new Exception('Invalid request method');
@@ -44,6 +47,8 @@ try {
         'email'               => trim($_POST['email'] ?? null),
         'updated_at'          => date('Y-m-d H:i:s')
     ];
+
+    error_log("Input data processed for " . ($isUpdate ? "update" : "insert"));
 
     // Logon name handling
     if (empty($data['logon_name']) && !$isUpdate) {
@@ -103,6 +108,26 @@ try {
             error_log('Invalid contact ID for update: ' . $data['id']);
             throw new Exception('Invalid contact ID');
         }
+
+        $fullname = trim(
+            $data['last_name'] . ' ' .
+                ($data['middle_name'] ? $data['middle_name'] . ' ' : '') .
+                $data['first_name']
+        );
+
+
+        // Update study personnel
+        error_log("Updating study_personnel for contact ID: " . $contactId);
+        $stmt = $conn->prepare("UPDATE study_personnel SET name=:name, title=:title, company_name=:company_name, email = :email, phone = :phone WHERE contact_id=:contact_id");
+        $stmt->execute([
+            ':name' => $fullname,
+            ':title' => $data['title'],
+            ':company_name' => $data['company_dept_name'],
+            ':email' => $data['email'],
+            ':phone' => $data['main_phone'],
+            ':contact_id' => $contactId
+        ]);
+        error_log("study_personnel updated successfully");
     } else {
 
         // -----------------------------
@@ -129,8 +154,43 @@ try {
         ";
     }
 
+    if ($isUpdate) {
+        $executeData = [
+            'title' => $data['title'],
+            'first_name' => $data['first_name'],
+            'middle_name' => $data['middle_name'],
+            'last_name' => $data['last_name'],
+            'suffix' => $data['suffix'],
+            'contact_type' => $data['contact_type'],
+            'company_dept_name' => $data['company_dept_name'],
+            'active' => $data['active'],
+            'specialty_1' => $data['specialty_1'],
+            'specialty_2' => $data['specialty_2'],
+            'research_education' => $data['research_education'],
+            'street_address_1' => $data['street_address_1'],
+            'street_address_2' => $data['street_address_2'],
+            'city' => $data['city'],
+            'state' => $data['state'],
+            'zip' => $data['zip'],
+            'main_phone' => $data['main_phone'],
+            'ext' => $data['ext'],
+            'alt_phone' => $data['alt_phone'],
+            'fax' => $data['fax'],
+            'alt_fax' => $data['alt_fax'],
+            'cell_phone' => $data['cell_phone'],
+            'pager' => $data['pager'],
+            'email' => $data['email'],
+            'updated_at' => $data['updated_at'],
+            'id' => (int)$_POST['id']
+        ];
+    } else {
+        $executeData = $data;
+    }
+
+    error_log("Executing main " . ($isUpdate ? "UPDATE" : "INSERT") . " query");
     $stmt = $conn->prepare($sql);
-    $stmt->execute($data);
+    $stmt->execute($executeData);
+    error_log("Main query executed successfully");
 
     if (!$isUpdate) {
         $contactId = (int)$conn->lastInsertId();
@@ -139,36 +199,59 @@ try {
     // -----------------------------
     // File uploads (same contact ID)
     // -----------------------------
+    error_log("Checking for file uploads");
     if (!empty($_FILES['documents']['tmp_name'][0])) {
+        error_log("Starting file uploads for contact ID: " . $contactId);
 
         $uploadDir = "../../uploads/contacts/{$contactId}/";
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
+
+        if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
+            throw new Exception('Failed to create upload directory');
+        }
+
+        if (!is_writable($uploadDir)) {
+            throw new Exception('Upload directory is not writable');
         }
 
         foreach ($_FILES['documents']['tmp_name'] as $i => $tmp) {
-            if ($_FILES['documents']['error'][$i] !== UPLOAD_ERR_OK) continue;
 
-            $name = basename($_FILES['documents']['name'][$i]);
-            $safe = time() . "_" . preg_replace('/[^a-zA-Z0-9._-]/', '_', $name);
+            if ($_FILES['documents']['error'][$i] !== UPLOAD_ERR_OK) {
+                throw new Exception('Upload error code: ' . $_FILES['documents']['error'][$i]);
+            }
 
-            move_uploaded_file($tmp, $uploadDir . $safe);
+            if (!is_uploaded_file($tmp)) {
+                throw new Exception('Invalid uploaded file');
+            }
 
+            $originalName = basename($_FILES['documents']['name'][$i]);
+            $safeName = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $originalName);
+            $targetPath = $uploadDir . $safeName;
+
+            error_log("Attempting to move uploaded file: " . $originalName);
+            if (!move_uploaded_file($tmp, $targetPath)) {
+                throw new Exception('File upload failed for: ' . $originalName);
+            }
+            error_log("File moved successfully: " . $originalName);
+
+            error_log("Inserting document record for: " . $originalName);
             $conn->prepare("
-                INSERT INTO contact_documents
-                (contact_id, file_name, file_path, file_size, comments, uploaded_at)
-                VALUES
-                (:cid, :name, :path, :size, :comments, NOW())
-            ")->execute([
+            INSERT INTO contact_documents
+            (contact_id, file_name, file_path, file_size, comments, uploaded_at)
+            VALUES
+            (:cid, :name, :path, :size, :comments, NOW())
+        ")->execute([
                 'cid' => $contactId,
-                'name' => $name,
-                'path' => $uploadDir . $safe,
+                'name' => $originalName,
+                'path' => $targetPath,
                 'size' => $_FILES['documents']['size'][$i],
                 'comments' => $_POST['file_comments'][$i] ?? null
             ]);
+            error_log("Document record inserted for: " . $originalName);
         }
     }
 
+
+    error_log("Committing transaction");
     $conn->commit();
 
     error_log("Contact " . ($isUpdate ? 'updated' : 'added') . " successfully with ID: " . $contactId);
@@ -179,6 +262,7 @@ try {
         'id' => $contactId
     ]);
 } catch (Exception $e) {
+    error_log("Exception caught: " . $e->getMessage());
 
     if (isset($conn) && $conn->inTransaction()) {
         $conn->rollBack();

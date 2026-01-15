@@ -91,6 +91,11 @@ function getActiveStudiesCount()
     return executeCountQuery("SELECT COUNT(*) as count FROM studies WHERE study_status = 'open'");
 }
 
+function getContactsCount()
+{
+    return executeCountQuery("SELECT COUNT(*) as count FROM contacts");
+}
+
 function getCPATypesCount()
 {
     return executeCountQuery("SELECT COUNT(*) as count FROM cpa_types");
@@ -217,7 +222,7 @@ function getLetterTypes()
 
 function getActionLetters()
 {
-    return executeAssocQuery("SELECT letter_name, file_path, closing, signatory FROM irb_templates WHERE letter_type = 'IRBAction' ORDER BY letter_name ASC");
+    return executeAssocQuery("SELECT letter_name, letter_type, file_path, closing, signatory FROM irb_templates WHERE letter_type = 'IRBAction' ORDER BY letter_name ASC");
 }
 
 

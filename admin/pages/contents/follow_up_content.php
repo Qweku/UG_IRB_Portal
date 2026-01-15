@@ -1,3 +1,54 @@
+<?php
+$followUpReports = [];
+$pendingReports = [];
+$pastReports = [];
+$completedReports = [];
+$allLetters = [];
+
+
+
+try {
+    $db = new Database();
+    $conn = $db->connect();
+
+    if (!$conn) {
+        throw new Exception("Database connection failed");
+    }
+
+    // Fetch follow up reports
+    $stmt = $conn->prepare("SELECT * FROM follow_ups ");
+    $stmt->execute();
+    $followUpReports = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // fetch number of pending follow up reports
+    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM follow_ups WHERE status = 'Pending' ");
+    $stmt->execute();
+    $pendingReports = $stmt->fetch();
+
+    // fetch number of completed follow up reports
+    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM follow_ups WHERE status = 'Completed' ");
+    $stmt->execute();
+    $completedReports = $stmt->fetch();
+
+    // fetch number of past due follow up reports
+    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM follow_ups WHERE status = 'Past Due' ");
+    $stmt->execute();
+    $pastReports = $stmt->fetch();
+
+    // fetch number of all follow up reports letters
+    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM follow_ups");
+    $stmt->execute();
+    $allLetters = $stmt->fetch();
+} catch (PDOException $e) {
+    error_log("Database error: " . $e->getMessage());
+    $_SESSION['error_message'] = 'Database connection error';
+} catch (Exception $e) {
+    error_log("General error: " . $e->getMessage());
+    $_SESSION['error_message'] = $e->getMessage();
+}
+
+
+?>
 <!-- Follow-Up Manager Content -->
 <div class="follow-up-manager">
     <!-- Page Header -->
@@ -27,25 +78,25 @@
                             <button class="filter-btn active">
                                 <i class="fas fa-clock me-2"></i>
                                 Response Required - Waiting
-                                <span class="badge bg-warning ms-2">12</span>
+                                <span class="badge bg-warning ms-2"><?php echo ($pendingReports['count'])?></span>
                             </button>
                             <button class="filter-btn">
                                 <i class="fas fa-exclamation-circle me-2"></i>
-                                All Response Required
-                                <span class="badge bg-primary ms-2">24</span>
+                                Response Required - Completed
+                                <span class="badge bg-success ms-2"><?php echo ($completedReports['count'])?></span>
                             </button>
                             <button class="filter-btn">
                                 <i class="fas fa-calendar-times me-2"></i>
                                 Response Required - Past Due
-                                <span class="badge bg-danger ms-2">8</span>
+                                <span class="badge bg-danger ms-2"><?php echo ($pastReports['count'])?></span>
                             </button>
                             <button class="filter-btn">
                                 <i class="fas fa-envelope-open me-2"></i>
                                 All Letters
-                                <span class="badge bg-secondary ms-2">156</span>
+                                <span class="badge bg-primary ms-2"><?php echo ($allLetters['count'])?></span>
                             </button>
                         </div>
-                        
+
                         <div class="date-filter mt-3">
                             <div class="row align-items-center">
                                 <div class="col-auto">
@@ -114,7 +165,7 @@
                     <thead class="table-light">
                         <tr>
                             <th width="120px">
-                               
+
                                 IRB#
                             </th>
                             <th width="100px">Follow Up?</th>
@@ -128,157 +179,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr class="table-warning">
-                            <td>
-                               
-                                <p>112/12-13</p>
-                            </td>
-                            <td>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" checked>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge bg-warning">04/15/2015</span>
-                            </td>
-                            <td>
-                                <i class="fas fa-file-contract me-2 text-primary"></i>
-                                Continuing Review Notice
-                            </td>
-                            <td>PI Post</td>
-                            <td>04/13/2015</td>
-                            <td>
-                                <span class="text-danger">04/22/2015</span>
-                            </td>
-                            <td>
-                                <span class="badge bg-warning">Waiting</span>
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr class="table-danger">
-                            <td>
-                               
-                                <p>101/15-16</p>
-                            </td>
-                            <td>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" checked>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge bg-danger">06/03/2018</span>
-                            </td>
-                            <td>
-                                <i class="fas fa-file-contract me-2 text-primary"></i>
-                                Continuing Review Notice
-                            </td>
-                            <td>PI Post</td>
-                            <td>06/04/2018</td>
-                            <td>
-                                <span class="text-danger">06/18/2018</span>
-                            </td>
-                            <td>
-                                <span class="badge bg-danger">Past Due</span>
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                               
-                                <p>087/11-12</p>
-                            </td>
-                            <td>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox">
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge bg-secondary">04/17/2013</span>
-                            </td>
-                            <td>
-                                <i class="fas fa-file-contract me-2 text-primary"></i>
-                                Continuing Review Notice
-                            </td>
-                            <td>PI Post</td>
-                            <td>04/15/2013</td>
-                            <td>04/24/2013</td>
-                            <td>
-                                <span class="badge bg-success">Completed</span>
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr class="table-warning">
-                            <td>
-                                
-                                <p>077/14-15</p>
-                            </td>
-                            <td>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" checked>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge bg-warning">04/13/2016</span>
-                            </td>
-                            <td>
-                                <i class="fas fa-file-contract me-2 text-primary"></i>
-                                Continuing Review Notice
-                            </td>
-                            <td>PI Post</td>
-                            <td>04/06/2016</td>
-                            <td>
-                                <span class="text-warning">04/20/2016</span>
-                            </td>
-                            <td>
-                                <span class="badge bg-warning">Waiting</span>
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                               
-                                <p>076/13-14</p>
-                            </td>
-                            <td>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox">
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge bg-secondary">04/12/2017</span>
-                            </td>
-                            <td>
-                                <i class="fas fa-file-contract me-2 text-primary"></i>
-                                Continuing Review Notice
-                            </td>
-                            <td>PI Post</td>
-                            <td>06/06/2017</td>
-                            <td>04/19/2017</td>
-                            <td>
-                                <span class="badge bg-success">Completed</span>
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </td>
-                        </tr>
+
                     </tbody>
                 </table>
             </div>
@@ -302,9 +203,7 @@
                             <button class="btn btn-primary me-2">
                                 <i class="fas fa-file-pdf me-1"></i> Generate Follow-Up Report
                             </button>
-                            <button class="btn btn-secondary">
-                                <i class="fas fa-undo me-1"></i> Return
-                            </button>
+                            
                         </div>
                     </div>
                 </div>
@@ -313,7 +212,7 @@
     </div>
 
     <!-- Quick Stats -->
-    <div class="row mt-4">
+    <!-- <div class="row mt-4">
         <div class="col-md-3">
             <div class="card stat-card">
                 <div class="card-body text-center">
@@ -358,128 +257,231 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> -->
 </div>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchFollowUps();
+    });
+
+    function fetchFollowUps() {
+        fetch('/admin/handlers/fetch_follow_ups.php')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    populateTable(data.data);
+                } else {
+                    console.error('Error fetching follow-ups:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+            });
+    }
+
+    function populateTable(followUps) {
+        const tbody = document.querySelector('.table tbody');
+        tbody.innerHTML = '';
+
+        followUps.forEach(followUp => {
+            const row = document.createElement('tr');
+
+            // IRB#
+            const irbCell = document.createElement('td');
+            irbCell.textContent = followUp.irb_number || '';
+            row.appendChild(irbCell);
+
+            // Follow Up?
+            const followUpCell = document.createElement('td');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = followUp.follow_up_required == 1;
+            checkbox.disabled = true;
+            followUpCell.appendChild(checkbox);
+            row.appendChild(followUpCell);
+
+            // Follow Up Date
+            const followDateCell = document.createElement('td');
+            followDateCell.textContent = followUp.follow_up_date || '';
+            row.appendChild(followDateCell);
+
+            // Letter
+            const letterCell = document.createElement('td');
+            letterCell.textContent = followUp.letter_type || '';
+            row.appendChild(letterCell);
+
+            // To
+            const toCell = document.createElement('td');
+            toCell.textContent = followUp.sent_to || '';
+            row.appendChild(toCell);
+
+            // Date Sent
+            const sentCell = document.createElement('td');
+            sentCell.textContent = followUp.date_sent || '';
+            row.appendChild(sentCell);
+
+            // Due By
+            const dueCell = document.createElement('td');
+            dueCell.textContent = followUp.due_by || '';
+            row.appendChild(dueCell);
+
+            // Status
+            const statusCell = document.createElement('td');
+            const statusBadge = document.createElement('span');
+            statusBadge.className = 'badge';
+            const status = followUp.status || '';
+            if (status.toLowerCase() === 'waiting') {
+                statusBadge.className += ' bg-warning';
+            } else if (status.toLowerCase() === 'past due') {
+                statusBadge.className += ' bg-danger';
+            } else if (status.toLowerCase() === 'completed') {
+                statusBadge.className += ' bg-success';
+            } else {
+                statusBadge.className += ' bg-secondary';
+            }
+            statusBadge.textContent = status;
+            statusCell.appendChild(statusBadge);
+            row.appendChild(statusCell);
+
+            // Actions
+            const actionsCell = document.createElement('td');
+            const viewBtn = document.createElement('button');
+            viewBtn.className = 'btn btn-sm btn-outline-primary me-1';
+            viewBtn.textContent = 'View';
+            viewBtn.onclick = () => viewFollowUp(followUp.id);
+            actionsCell.appendChild(viewBtn);
+            row.appendChild(actionsCell);
+
+            tbody.appendChild(row);
+        });
+    }
+
+    function viewFollowUp(id) {
+        // Placeholder for view action
+        alert('View follow-up ID: ' + id);
+    }
+</script>
+
 <style>
-.follow-up-manager {
-    padding: 20px 0;
-}
+    .follow-up-manager {
+        padding: 20px 0;
+    }
 
-.filter-card {
-    border: none;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
+    .filter-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
 
-.filter-buttons {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 10px;
-}
+    .filter-buttons {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 10px;
+    }
 
-.filter-btn {
-    background: white;
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
-    padding: 15px;
-    text-align: left;
-    transition: all 0.3s;
-    display: flex;
-    align-items: center;
-    font-weight: 500;
-}
+    .filter-btn {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        text-align: left;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        font-weight: 500;
+    }
 
-.filter-btn:hover {
-    border-color: var(--royal-blue);
-    transform: translateY(-2px);
-}
+    .filter-btn:hover {
+        border-color: var(--royal-blue);
+        transform: translateY(-2px);
+    }
 
-.filter-btn.active {
-    border-color: var(--royal-blue);
-    background-color: #e8f0fe;
-    color: var(--royal-blue);
-}
+    .filter-btn.active {
+        border-color: var(--royal-blue);
+        background-color: #e8f0fe;
+        color: var(--royal-blue);
+    }
 
-.main-card {
-    border: none;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
+    .main-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
 
-/* .table th {
+    /* .table th {
     background-color: #f8f9fa;
     font-weight: 600;
     border-bottom: 2px solid #dee2e6;
 } */
 
-.table tbody tr:hover {
-    background-color: #f8f9fa;
-}
-
-.table-warning {
-    background-color: #fff3cd !important;
-}
-
-.table-danger {
-    background-color: #f8d7da !important;
-}
-
-.stat-card {
-    border: none;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    transition: transform 0.2s;
-}
-
-.stat-card:hover {
-    transform: translateY(-2px);
-}
-
-.stat-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto;
-    color: white;
-    font-size: 1.5rem;
-}
-
-.form-check-input:checked {
-    background-color: var(--royal-blue);
-    border-color: var(--royal-blue);
-}
-
-.form-check-input:focus {
-    border-color: var(--royal-blue);
-    box-shadow: 0 0 0 0.2rem rgba(26, 86, 219, 0.25);
-}
-
-.badge {
-    font-size: 0.75rem;
-    font-weight: 500;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .filter-buttons {
-        grid-template-columns: 1fr;
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
     }
-    
-    .table-responsive {
-        font-size: 0.875rem;
+
+    .table-warning {
+        background-color: #fff3cd !important;
     }
-    
-    .action-buttons {
-        flex-direction: column;
-        gap: 10px;
+
+    .table-danger {
+        background-color: #f8d7da !important;
     }
-    
-    .action-buttons .btn {
-        width: 100%;
+
+    .stat-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
     }
-}
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        color: white;
+        font-size: 1.5rem;
+    }
+
+    .form-check-input:checked {
+        background-color: var(--royal-blue);
+        border-color: var(--royal-blue);
+    }
+
+    .form-check-input:focus {
+        border-color: var(--royal-blue);
+        box-shadow: 0 0 0 0.2rem rgba(26, 86, 219, 0.25);
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .filter-buttons {
+            grid-template-columns: 1fr;
+        }
+
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .action-buttons .btn {
+            width: 100%;
+        }
+    }
 </style>

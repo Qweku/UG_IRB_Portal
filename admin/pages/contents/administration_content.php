@@ -18,6 +18,8 @@ $activeCodes = getActiveCodes();
 $letterTypes = getLetterTypes();
 $letterTemplates = getLetterTemplates();
 
+$contactsCount = getContactsCount();
+
 
 ?>
 <style>
@@ -354,7 +356,7 @@ $letterTemplates = getLetterTemplates();
                             <i class="fas fa-address-book"></i>
                         </div>
                         <div class="ms-3">
-                            <h4 class="mb-0">24</h4>
+                            <h4 class="mb-0"><?php echo $contactsCount ?></h4>
                             <span class="text-muted">Active Contacts</span>
                         </div>
                     </div>
@@ -498,8 +500,8 @@ $letterTemplates = getLetterTemplates();
                                 <i class="fas fa-upload"></i>
                             </div>
                             <div class="admin-content">
-                                <h6 class="mb-1">Templates Weekly Upload</h6>
-                                <p class="text-muted mb-0">Manage weekly template uploads and schedules</p>
+                                <h6 class="mb-1">Templates Upload</h6>
+                                <p class="text-muted mb-0">Manage template uploads and schedules</p>
                             </div>
                             <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
                                 data-bs-target="#templateModal">Manage</button>

@@ -57,7 +57,7 @@ $actionLetters = getActionLetters();
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Study#</label>
-                                <input type="text" class="form-control" value=<?php echo htmlspecialchars($study_details['protocol_number'] ?? "#") ?> readonly>
+                                <input type="text" name="study_number" class="form-control" value=<?php echo htmlspecialchars($study_details['protocol_number'] ?? "#") ?> readonly>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Meeting Date</label>
@@ -74,8 +74,8 @@ $actionLetters = getActionLetters();
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Date Required</label>
-                                <input type="date" class="form-control">
+                                <label class="form-label fw-semibold">Date Required for Response</label>
+                                <input type="date" name="follow_up_date" class="form-control" required>
                             </div>
                         </div>
 
@@ -125,11 +125,11 @@ $actionLetters = getActionLetters();
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-semibold">Date To Follow Up</label>
-                                <input type="date" class="form-control">
+                                <input type="date" name="due_by" class="form-control">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-semibold">Letter Date</label>
-                                <input type="text" class="form-control" value="<?php echo date('m/d/Y'); ?>" readonly>
+                                <input type="text" name="date_sent" class="form-control" value="<?php echo date('Y-m-d'); ?>" readonly>
                             </div>
                         </div>
 
@@ -207,7 +207,7 @@ $actionLetters = getActionLetters();
         </div>
 
         <!-- Recent Letters (Optional Section) -->
-        <div class="row mt-4">
+        <!-- <div class="row mt-4">
             <div class="col-12">
                 <div class="card">
                     <div class="card-header bg-light">
@@ -216,7 +216,7 @@ $actionLetters = getActionLetters();
                     <div class="card-body">
                         <div class="table-responsive">
                             <table class="table table-sm table-hover">
-                                <thead>
+                                <thead class="table-primary">
                                     <tr>
                                         <th>Date</th>
                                         <th>Type</th>
@@ -257,7 +257,7 @@ $actionLetters = getActionLetters();
                     </div>
                 </div>
             </div>
-        </div>
+        </div> -->
     </div>
 </div>
 
@@ -361,6 +361,7 @@ $actionLetters = getActionLetters();
 <script>
     var study_id = <?php echo json_encode($study_id); ?>;
     var actionLetters = <?php echo json_encode($actionLetters); ?>;
+    var letterType = null;
     document.getElementById('addressee_role').addEventListener('change', function() {
         const selectedRole = this.value;
         // Simulated mapping of roles to names
@@ -384,8 +385,12 @@ $actionLetters = getActionLetters();
         const letter = actionLetters.find(l => l.file_path === selectedPath);
         if (letter && letter.signatory) {
             document.getElementById('signatoryInput').value = letter.closing +' '+ letter.signatory;
+            letterType = letter.letter_type;
+
+            console.log("Selected Letter Type: "+ letterType);
         } else {
             document.getElementById('signatoryInput').value = '';
+            letterType = letter.letter_type;
         }
     });
 </script>
@@ -506,41 +511,107 @@ $actionLetters = getActionLetters();
     });
 
     function downloadLetter() {
-        const templatePath = document.getElementById('letterSelect').value;
+    const templatePath = document.getElementById('letterSelect')?.value;
+    // const studyId = document.querySelector('input[name="study_id"]')?.value;
 
-        if (!templatePath) {
-            alert('Please select a letter type.');
-            return;
-        }
-
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/admin/handlers/download_letter.php';
-        form.style.display = 'none';
-
-        const studyInput = document.createElement('input');
-        studyInput.name = 'study_id';
-        studyInput.value = study_id;
-
-        const templateInput = document.createElement('input');
-        templateInput.name = 'template_path';
-        templateInput.value = templatePath;
-
-        form.appendChild(studyInput);
-        form.appendChild(templateInput);
-        document.body.appendChild(form);
-
-        // Show spinner
-        const btn = document.getElementById('downloadBtn');
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Downloading...';
-
-        form.submit();
-
-        // Reset spinner after a delay (assuming download starts quickly)
-        setTimeout(() => {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-download me-1"></i> Download';
-        }, 3000);
+    if (!templatePath) {
+        alert('Please select a letter template.');
+        return;
     }
+
+    if (!study_id) {
+        alert('Study ID is missing.');
+        return;
+    }
+
+    // Optional fields
+    const payload = {
+        study_id: study_id,
+        template_path: templatePath,
+        study_number: document.querySelector('input[name="study_number"]')?.value || '',
+        follow_up_date: document.querySelector('input[name="follow_up_date"]')?.value || '',
+        due_by: document.querySelector('input[name="due_by"]')?.value || '',
+        date_sent: document.querySelector('input[name="date_sent"]')?.value || '',
+        letter_type: letterType,
+    };
+
+    // Build hidden form
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/admin/handlers/download_letter.php';
+    form.style.display = 'none';
+
+    Object.entries(payload).forEach(([key, value]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+
+    // Spinner handling
+    const btn = document.getElementById('downloadBtn');
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Generating...';
+
+    // Submit form
+    form.submit();
+
+    // Restore button safely (cannot detect file download)
+    setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+        form.remove();
+    }, 2500);
+}
+
+
+    // function downloadLetter() {
+    //     const templatePath = document.getElementById('letterSelect').value;
+    //     const studyNumber = document.querySelector('input[name="study_number"]').value;
+    //     const followUpDate = document.querySelector('input[name="follow_up_date"]').value;
+    //     const sentTo = document.querySelector('input[name="addressee_name"]').value;
+    //     const dueDate = document.querySelector('input[name="due_date"]').value;
+    //     const dateSent = document.querySelector('input[name="date_sent"]').value;
+    //     const letterType = document.querySelector('input[name="letter_type"]').value;
+        
+
+    //     if (!templatePath) {
+    //         alert('Please select a letter type.');
+    //         return;
+    //     }
+
+    //     const form = document.createElement('form');
+    //     form.method = 'POST';
+    //     form.action = '/admin/handlers/download_letter.php';
+    //     form.style.display = 'none';
+
+    //     const studyInput = document.createElement('input');
+    //     studyInput.name = 'study_id';
+    //     studyInput.value = study_id;
+
+    //     const templateInput = document.createElement('input');
+    //     templateInput.name = 'template_path';
+    //     templateInput.value = templatePath;
+
+    //     form.appendChild(studyInput);
+    //     form.appendChild(templateInput);
+    //     document.body.appendChild(form);
+
+    //     // Show spinner
+    //     const btn = document.getElementById('downloadBtn');
+    //     btn.disabled = true;
+    //     btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Downloading...';
+
+    //     form.submit();
+
+    //     // Reset spinner after a delay (assuming download starts quickly)
+    //     setTimeout(() => {
+    //         btn.disabled = false;
+    //         btn.innerHTML = '<i class="fas fa-download me-1"></i> Download';
+    //     }, 3000);
+    // }
 </script>
