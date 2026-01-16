@@ -49,7 +49,7 @@ $contactDocs = getContactDocs($contactId);
                             <button type="button" class="btn btn-primary" id="inviteBtn" disabled>
                                 <i class="fas fa-envelope me-1"></i> Invite
                             </button>
-                            <button type="button" class="btn btn-secondary" id="permissionsBtn" disabled>
+                            <button type="button" class="btn btn-secondary" id="permissionsBtn" data-bs-target="#permissionsModal" data-bs-toggle="modal" disabled>
                                 <i class="fas fa-key me-1"></i> Permissions
                             </button>
                         </div>
@@ -72,7 +72,7 @@ $contactDocs = getContactDocs($contactId);
                             <table class="table mb-0">
                                 <thead class="sticky-top">
                                     <tr>
-                                        <th width="80px">Title</th>
+                                        <!-- <th width="80px">Title</th> -->
                                         <th>Name</th>
                                         <th>Actions</th>
                                     </tr>
@@ -89,7 +89,7 @@ $contactDocs = getContactDocs($contactId);
                                     <?php foreach ($allContacts as $contact): ?>
                                         <tr class="contact-row"
                                             data-contact='<?= json_encode($contact, JSON_HEX_APOS | JSON_HEX_QUOT) ?>'>
-                                            <td><?= htmlspecialchars($contact['title']) ?></td>
+                                            
 
                                             <!-- Show last name and first but if empty show company name -->
                                             <?php if (empty($contact['first_name']) && empty($contact['last_name'])): ?>
@@ -384,6 +384,787 @@ $contactDocs = getContactDocs($contactId);
         </div>
     </div>
 </div>
+
+<!-- Permissions Modal -->
+<div class="modal fade" id="permissionsModal" tabindex="-1" aria-labelledby="permissionsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="permissionsModalLabel">
+          <i class="fas fa-user-shield me-2"></i>User Permissions Management
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <!-- User Summary -->
+        <div class="user-summary-card mb-5">
+          <div class="row align-items-center">
+            <div class="col-auto">
+              <div class="user-avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center">
+                <i class="fas fa-user fa-lg"></i>
+              </div>
+            </div>
+            <div class="col">
+              <h5 class="mb-1">John Doe</h5>
+              <p class="text-muted mb-0">johndoe@example.com • Last active: Today</p>
+            </div>
+            <div class="col-auto">
+              <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">
+                <i class="fas fa-circle me-1 small"></i>Active
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Permission Sections -->
+        <div class="row g-4">
+          
+          <!-- Office Permissions -->
+          <div class="col-lg-6">
+            <div class="permission-card card border-0 shadow-sm h-100">
+              <div class="card-header bg-transparent border-0 py-4 px-4">
+                <div class="d-flex align-items-center justify-content-between">
+                  <div>
+                    <h5 class="card-title mb-1">
+                      <i class="fas fa-building me-2 text-primary"></i>Office Access
+                    </h5>
+                    <p class="text-muted small mb-0">Control administrative system permissions</p>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="officeToggle" checked>
+                    <label class="form-check-label" for="officeToggle"></label>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="card-body px-4 pb-4 pt-0">
+                <div class="permission-options">
+                  <!-- Role Selection -->
+                  <div class="role-selection mb-4">
+                    <h6 class="text-uppercase text-muted small fw-bold mb-3">Select Role Level</h6>
+                    <div class="d-flex flex-column gap-3">
+                      <div class="role-option active">
+                        <input type="radio" class="btn-check" name="officeRole" id="roleAdmin" checked>
+                        <label class="btn btn-outline-primary d-flex align-items-start w-100 text-start p-3" for="roleAdmin">
+                          <div class="role-icon me-3">
+                            <i class="fas fa-shield-alt fa-lg text-primary"></i>
+                          </div>
+                          <div class="flex-grow-1">
+                            <h6 class="fw-bold mb-1">Administrator</h6>
+                            <p class="text-muted small mb-0">Full system access including user management and settings</p>
+                            <div class="mt-2">
+                              <span class="badge bg-primary-subtle text-primary me-1">Create</span>
+                              <span class="badge bg-primary-subtle text-primary me-1">Edit</span>
+                              <span class="badge bg-primary-subtle text-primary me-1">Delete</span>
+                              <span class="badge bg-primary-subtle text-primary">Manage Users</span>
+                            </div>
+                          </div>
+                          <i class="fas fa-check-circle text-success ms-2 mt-1"></i>
+                        </label>
+                      </div>
+
+                      <div class="role-option">
+                        <input type="radio" class="btn-check" name="officeRole" id="roleReadWrite">
+                        <label class="btn btn-outline-secondary d-flex align-items-start w-100 text-start p-3" for="roleReadWrite">
+                          <div class="role-icon me-3">
+                            <i class="fas fa-edit fa-lg text-secondary"></i>
+                          </div>
+                          <div class="flex-grow-1">
+                            <h6 class="fw-bold mb-1">Read & Write</h6>
+                            <p class="text-muted small mb-0">Can create and edit content but cannot manage users</p>
+                            <div class="mt-2">
+                              <span class="badge bg-secondary-subtle text-secondary me-1">Create</span>
+                              <span class="badge bg-secondary-subtle text-secondary me-1">Edit</span>
+                              <span class="badge bg-secondary-subtle text-secondary">View</span>
+                            </div>
+                          </div>
+                        </label>
+                      </div>
+
+                      <div class="role-option">
+                        <input type="radio" class="btn-check" name="officeRole" id="roleReadOnly">
+                        <label class="btn btn-outline-secondary d-flex align-items-start w-100 text-start p-3" for="roleReadOnly">
+                          <div class="role-icon me-3">
+                            <i class="fas fa-eye fa-lg text-secondary"></i>
+                          </div>
+                          <div class="flex-grow-1">
+                            <h6 class="fw-bold mb-1">Read Only</h6>
+                            <p class="text-muted small mb-0">Can only view content without editing capabilities</p>
+                            <div class="mt-2">
+                              <span class="badge bg-secondary-subtle text-secondary">View Only</span>
+                            </div>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Advanced Options -->
+                  <div class="advanced-options">
+                    <h6 class="text-uppercase text-muted small fw-bold mb-3">Advanced Settings</h6>
+                    <div class="form-check form-switch mb-2">
+                      <input class="form-check-input" type="checkbox" id="auditLog" checked>
+                      <label class="form-check-label fw-medium" for="auditLog">
+                        Access Audit Logs
+                        <small class="text-muted d-block">View system activity and user actions</small>
+                      </label>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                      <input class="form-check-input" type="checkbox" id="exportData">
+                      <label class="form-check-label fw-medium" for="exportData">
+                        Export System Data
+                        <small class="text-muted d-block">Download reports and system information</small>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Agenda Permissions -->
+          <div class="col-lg-6">
+            <div class="permission-card card border-0 shadow-sm h-100">
+              <div class="card-header bg-transparent border-0 py-4 px-4">
+                <div class="d-flex align-items-center justify-content-between">
+                  <div>
+                    <h5 class="card-title mb-1">
+                      <i class="fas fa-calendar-alt me-2 text-info"></i>Agenda Management
+                    </h5>
+                    <p class="text-muted small mb-0">Control meeting agenda and document permissions</p>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="agendaToggle" checked>
+                    <label class="form-check-label" for="agendaToggle"></label>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="card-body px-4 pb-4 pt-0">
+                <div class="permission-options">
+                  <!-- Document Management -->
+                  <div class="document-permissions mb-4">
+                    <h6 class="text-uppercase text-muted small fw-bold mb-3">Document Control</h6>
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <div class="form-check card-check">
+                          <input class="form-check-input" type="checkbox" id="replaceAgenda">
+                          <label class="form-check-label w-100 p-3 border rounded-3" for="replaceAgenda">
+                            <div class="d-flex align-items-center">
+                              <i class="fas fa-exchange-alt text-primary me-3"></i>
+                              <div>
+                                <h6 class="fw-bold mb-1">Replace Agenda</h6>
+                                <small class="text-muted">Upload new agenda versions</small>
+                              </div>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-6">
+                        <div class="form-check card-check">
+                          <input class="form-check-input" type="checkbox" id="uploadDocs" checked>
+                          <label class="form-check-label w-100 p-3 border rounded-3" for="uploadDocs">
+                            <div class="d-flex align-items-center">
+                              <i class="fas fa-upload text-success me-3"></i>
+                              <div>
+                                <h6 class="fw-bold mb-1">Upload Documents</h6>
+                                <small class="text-muted">Add supporting files</small>
+                              </div>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Delete Permissions -->
+                  <div class="delete-permissions mb-4">
+                    <h6 class="text-uppercase text-muted small fw-bold mb-3">Delete Permissions</h6>
+                    <div class="permission-grid">
+                      <div class="form-check card-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="deleteUserDocs" checked>
+                        <label class="form-check-label w-100 p-3 border rounded-3" for="deleteUserDocs">
+                          <div class="d-flex align-items-center">
+                            <i class="fas fa-user-times text-warning me-3"></i>
+                            <div>
+                              <h6 class="fw-bold mb-1">Delete Own Documents</h6>
+                              <small class="text-muted">Remove user-uploaded files</small>
+                            </div>
+                          </div>
+                        </label>
+                      </div>
+
+                      <div class="form-check card-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="deleteGroupDocs">
+                        <label class="form-check-label w-100 p-3 border rounded-3" for="deleteGroupDocs">
+                          <div class="d-flex align-items-center">
+                            <i class="fas fa-users text-danger me-3"></i>
+                            <div>
+                              <h6 class="fw-bold mb-1">Delete Group Documents</h6>
+                              <small class="text-muted">Remove files from user group</small>
+                            </div>
+                          </div>
+                        </label>
+                      </div>
+
+                      <div class="form-check card-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="deleteAllDocs">
+                        <label class="form-check-label w-100 p-3 border rounded-3" for="deleteAllDocs">
+                          <div class="d-flex align-items-center">
+                            <i class="fas fa-trash-alt text-danger me-3"></i>
+                            <div>
+                              <h6 class="fw-bold mb-1">Delete All Documents</h6>
+                              <small class="text-muted">Remove any system documents</small>
+                            </div>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Comment Permissions -->
+                  <div class="comment-permissions">
+                    <h6 class="text-uppercase text-muted small fw-bold mb-3">Comment Management</h6>
+                    <div class="form-check card-check">
+                      <input class="form-check-input" type="checkbox" id="editComments">
+                      <label class="form-check-label w-100 p-3 border rounded-3" for="editComments">
+                        <div class="d-flex align-items-center">
+                          <i class="fas fa-comment-edit text-info me-3"></i>
+                          <div>
+                            <h6 class="fw-bold mb-1">Edit Own Comments</h6>
+                            <small class="text-muted">Modify user's posted comments</small>
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="permission-stats mt-5 pt-4 border-top">
+          <div class="row g-3">
+            <div class="col-md-3">
+              <div class="stat-card text-center p-3 rounded-3 bg-light">
+                <h3 class="text-primary mb-1" id="totalPermissions">7</h3>
+                <p class="text-muted small mb-0">Total Permissions</p>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="stat-card text-center p-3 rounded-3 bg-light">
+                <h3 class="text-success mb-1" id="activePermissions">5</h3>
+                <p class="text-muted small mb-0">Active Permissions</p>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="stat-card text-center p-3 rounded-3 bg-light">
+                <h3 class="text-warning mb-1" id="warningPermissions">2</h3>
+                <p class="text-muted small mb-0">High Risk Permissions</p>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="stat-card text-center p-3 rounded-3 bg-light">
+                <div class="access-level">
+                  <span class="badge bg-primary px-3 py-2 fs-6">Administrator</span>
+                </div>
+                <p class="text-muted small mb-0 mt-2">Current Access Level</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <div class="w-100 d-flex justify-content-between align-items-center">
+          <div class="permission-preview">
+            <small class="text-muted d-flex align-items-center">
+              <i class="fas fa-eye me-2"></i>
+              Preview: <span class="fw-medium ms-1" id="previewAccess">Administrator with full access</span>
+            </small>
+          </div>
+          <div class="d-flex gap-3">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+              <i class="fas fa-times me-2"></i>Cancel
+            </button>
+            <button type="button" class="btn btn-primary" id="savePermissions">
+              <i class="fas fa-save me-2"></i>Save Permissions
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+:root {
+  --primary-subtle: rgba(102, 126, 234, 0.1);
+  --success-subtle: rgba(56, 239, 125, 0.1);
+}
+
+/* User Summary */
+.user-summary-card {
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.user-avatar {
+  width: 60px;
+  height: 60px;
+  font-size: 24px;
+}
+
+/* Permission Cards */
+.permission-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 0.375rem;
+}
+
+.permission-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+}
+
+.card-header {
+  border-bottom: 1px solid #dee2e6;
+}
+
+/* Role Options */
+.role-option .btn {
+  border: 2px solid #e2e8f0;
+  border-radius: 0.375rem;
+  transition: all 0.3s ease;
+}
+
+.role-option .btn-check:checked + .btn {
+  border-color: #667eea;
+  background-color: var(--primary-subtle);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.15);
+}
+
+.role-option.active .btn {
+  border-color: #667eea;
+  background-color: var(--primary-subtle);
+}
+
+.role-icon {
+  width: 50px;
+  height: 50px;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 0.375rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Card Checkboxes */
+.card-check .form-check-input {
+  margin-top: 0;
+  margin-right: 10px;
+}
+
+.card-check .form-check-label {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.card-check .form-check-input:checked + .form-check-label {
+  border-color: #667eea;
+  background-color: var(--primary-subtle);
+}
+
+.card-check:hover .form-check-label {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Permission Grid */
+.permission-grid {
+  display: grid;
+  gap: 12px;
+}
+
+/* Form Switches */
+.form-switch .form-check-input {
+  width: 3em;
+  height: 1.5em;
+  background-color: #e2e8f0;
+  border-color: #e2e8f0;
+}
+
+.form-switch .form-check-input:checked {
+  background-color: #667eea;
+  border-color: #667eea;
+}
+
+/* Stats Cards */
+.stat-card {
+  transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card h3 {
+  font-weight: 800;
+}
+
+/* Badges */
+.badge {
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.bg-primary-subtle {
+  background-color: var(--primary-subtle) !important;
+}
+
+.bg-success-subtle {
+  background-color: var(--success-subtle) !important;
+}
+
+/* Access Level Badge */
+.access-level .badge {
+  font-size: 1rem;
+  padding: 8px 20px;
+  border-radius: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+  .modal-dialog {
+    margin: 1rem;
+  }
+  
+  .permission-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 576px) {
+  .modal-body {
+    padding: 1.5rem !important;
+  }
+  
+  .stat-card h3 {
+    font-size: 1.5rem;
+  }
+  
+  .user-avatar {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+  }
+}
+
+/* Animation for active items */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.role-option, .card-check {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+/* Smooth transitions */
+.form-check-input, .btn, .badge {
+  transition: all 0.2s ease;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const permissionsModal = document.getElementById('permissionsModal');
+  
+  // Permission tracking
+  let permissionStates = {
+    office: {
+      enabled: true,
+      role: 'admin',
+      auditLog: true,
+      exportData: false
+    },
+    agenda: {
+      enabled: true,
+      replaceAgenda: false,
+      uploadDocs: true,
+      deleteUserDocs: true,
+      deleteGroupDocs: false,
+      deleteAllDocs: false,
+      editComments: false
+    }
+  };
+  
+  // Initialize event listeners
+  function initializeListeners() {
+    // Office toggle
+    const officeToggle = document.getElementById('officeToggle');
+    const agendaToggle = document.getElementById('agendaToggle');
+    
+    if (officeToggle) {
+      officeToggle.addEventListener('change', function() {
+        permissionStates.office.enabled = this.checked;
+        updatePermissionStats();
+        toggleSectionState('office', this.checked);
+      });
+    }
+    
+    if (agendaToggle) {
+      agendaToggle.addEventListener('change', function() {
+        permissionStates.agenda.enabled = this.checked;
+        updatePermissionStats();
+        toggleSectionState('agenda', this.checked);
+      });
+    }
+    
+    // Office role selection
+    document.querySelectorAll('input[name="officeRole"]').forEach(radio => {
+      radio.addEventListener('change', function() {
+        const role = this.id.replace('role', '').toLowerCase();
+        permissionStates.office.role = role;
+        updatePermissionStats();
+        updateAccessPreview();
+        
+        // Show active state
+        document.querySelectorAll('.role-option').forEach(opt => {
+          opt.classList.remove('active');
+        });
+        this.closest('.role-option').classList.add('active');
+      });
+    });
+    
+    // Agenda permissions
+    const agendaPermissions = ['replaceAgenda', 'uploadDocs', 'deleteUserDocs', 
+                               'deleteGroupDocs', 'deleteAllDocs', 'editComments'];
+    
+    agendaPermissions.forEach(permission => {
+      const checkbox = document.getElementById(permission);
+      if (checkbox) {
+        checkbox.addEventListener('change', function() {
+          permissionStates.agenda[permission] = this.checked;
+          updatePermissionStats();
+        });
+      }
+    });
+    
+    // Office advanced options
+    const officeAdvanced = ['auditLog', 'exportData'];
+    officeAdvanced.forEach(option => {
+      const checkbox = document.getElementById(option);
+      if (checkbox) {
+        checkbox.addEventListener('change', function() {
+          permissionStates.office[option] = this.checked;
+          updatePermissionStats();
+        });
+      }
+    });
+    
+    // Save button
+    const saveBtn = document.getElementById('savePermissions');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', savePermissions);
+    }
+  }
+  
+  function updatePermissionStats() {
+    // Calculate total permissions
+    let totalPerms = 0;
+    let activePerms = 0;
+    let warningPerms = 0;
+    
+    // Office permissions
+    if (permissionStates.office.enabled) {
+      totalPerms += 1; // Main office permission
+      activePerms += 1;
+      
+      // Advanced permissions
+      ['auditLog', 'exportData'].forEach(perm => {
+        totalPerms += 1;
+        if (permissionStates.office[perm]) {
+          activePerms += 1;
+        }
+      });
+    }
+    
+    // Agenda permissions
+    if (permissionStates.agenda.enabled) {
+      const agendaPerms = ['replaceAgenda', 'uploadDocs', 'deleteUserDocs', 
+                          'deleteGroupDocs', 'deleteAllDocs', 'editComments'];
+      
+      agendaPerms.forEach(perm => {
+        totalPerms += 1;
+        if (permissionStates.agenda[perm]) {
+          activePerms += 1;
+          
+          // High risk permissions
+          if (['deleteGroupDocs', 'deleteAllDocs'].includes(perm)) {
+            warningPerms += 1;
+          }
+        }
+      });
+    }
+    
+    // Update display
+    document.getElementById('totalPermissions').textContent = totalPerms;
+    document.getElementById('activePermissions').textContent = activePerms;
+    document.getElementById('warningPermissions').textContent = warningPerms;
+    
+    // Update access preview
+    updateAccessPreview();
+  }
+  
+  function toggleSectionState(section, enabled) {
+    const checkboxes = document.querySelectorAll(`#${section}Permissions input[type="checkbox"]:not(#${section}Toggle)`);
+    const radios = document.querySelectorAll(`#${section}Permissions input[type="radio"]`);
+    
+    [...checkboxes, ...radios].forEach(input => {
+      input.disabled = !enabled;
+    });
+    
+    const labels = document.querySelectorAll(`#${section}Permissions .form-check-label`);
+    labels.forEach(label => {
+      label.style.opacity = enabled ? '1' : '0.5';
+    });
+  }
+  
+  function updateAccessPreview() {
+    let accessLevel = 'No Access';
+    let description = 'User has no permissions';
+    
+    if (permissionStates.office.enabled) {
+      switch(permissionStates.office.role) {
+        case 'admin':
+          accessLevel = 'Administrator';
+          description = 'Full system access with administrative privileges';
+          break;
+        case 'readwrite':
+          accessLevel = 'Read & Write';
+          description = 'Can create and edit content';
+          break;
+        case 'readonly':
+          accessLevel = 'Read Only';
+          description = 'View-only access to system content';
+          break;
+      }
+    } else if (permissionStates.agenda.enabled) {
+      accessLevel = 'Limited Access';
+      description = 'Agenda management only';
+    }
+    
+    // Update current access level badge
+    const badge = document.querySelector('.access-level .badge');
+    if (badge) {
+      badge.textContent = accessLevel;
+      badge.className = 'badge px-3 py-2 fs-6 ';
+      
+      switch(accessLevel) {
+        case 'Administrator':
+          badge.classList.add('bg-primary');
+          break;
+        case 'Read & Write':
+          badge.classList.add('bg-success');
+          break;
+        case 'Read Only':
+          badge.classList.add('bg-secondary');
+          break;
+        case 'Limited Access':
+          badge.classList.add('bg-warning');
+          break;
+        default:
+          badge.classList.add('bg-dark');
+      }
+    }
+    
+    // Update preview text
+    document.getElementById('previewAccess').textContent = description;
+  }
+  
+  function savePermissions() {
+    const saveBtn = document.getElementById('savePermissions');
+    const originalText = saveBtn.innerHTML;
+    
+    // Show loading state
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+    
+    // Simulate API call
+    setTimeout(() => {
+      // In production, this would be an actual API call
+      console.log('Saving permissions:', permissionStates);
+      
+      // Show success message
+      const modal = bootstrap.Modal.getInstance(permissionsModal);
+      modal.hide();
+      
+      // Show success toast (you can implement this separately)
+      showSuccessToast('Permissions updated successfully!');
+      
+      // Reset button state
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = originalText;
+    }, 1500);
+  }
+  
+  function showSuccessToast(message) {
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = 'toast align-items-center text-white bg-success border-0 position-fixed bottom-0 end-0 m-3';
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+      <div class="d-flex">
+        <div class="toast-body">
+          <i class="fas fa-check-circle me-2"></i>${message}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Initialize and show toast
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    
+    // Remove toast after hidden
+    toast.addEventListener('hidden.bs.toast', () => {
+      toast.remove();
+    });
+  }
+  
+  // Initialize when modal is shown
+  permissionsModal.addEventListener('show.bs.modal', function() {
+    initializeListeners();
+    updatePermissionStats();
+    updateAccessPreview();
+  });
+  
+  // Initialize on page load
+  updatePermissionStats();
+  updateAccessPreview();
+});
+</script>
 
 <script>
     let selectedFiles = [];
@@ -863,6 +1644,49 @@ $contactDocs = getContactDocs($contactId);
 </script>
 
 <style>
+    .permission-modal {
+        border-radius: 8px;
+    }
+
+    .permission-card {
+        background: #fff;
+        border-radius: 6px;
+        border: 1px solid #e1e4e8;
+        height: 100%;
+    }
+
+    .permission-card .card-header {
+        background: #f8f9fa;
+        font-size: 15px;
+        padding: 12px 15px;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .permission-card .card-body {
+        padding: 15px;
+    }
+
+    .permission-card label {
+        display: block;
+        margin-bottom: 10px;
+        cursor: pointer;
+    }
+
+    .help-icon {
+        color: #6c757d;
+        font-size: 13px;
+        margin-left: 4px;
+    }
+
+    .modal-header {
+        background: #2f75b5;
+        color: #fff;
+    }
+
+    .modal-header .close {
+        color: #fff;
+    }
+
     .contacts-management .card {
         border: 1px solid #e0e0e0;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);

@@ -128,6 +128,60 @@ try {
             ':contact_id' => $contactId
         ]);
         error_log("study_personnel updated successfully");
+
+        // Fetch all study_ids associated with the contact
+        $stmt = $conn->prepare("SELECT study_id, role FROM study_personnel WHERE contact_id=:contact_id");
+        $stmt->execute([':contact_id' => $contactId]);
+        $personnel = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Get unique study_ids
+        $studyIds = array_unique(array_column($personnel, 'study_id'));
+
+        // For each study, rebuild the pi, reviewer, cols, admins fields
+        foreach ($studyIds as $studyId) {
+            // Fetch all personnel for this study
+            $stmt = $conn->prepare("SELECT name, role FROM study_personnel WHERE study_id = :study_id");
+            $stmt->execute([':study_id' => $studyId]);
+            $studyPersonnel = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Build the fields
+            $pi = '';
+            $reviewers = [];
+            $admins = [];
+            $cols = [];
+
+            foreach ($studyPersonnel as $p) {
+                $role = $p['role'];
+                $name = $p['name'];
+                switch ($role) {
+                    case 'PI':
+                        $pi = $name;
+                        break;
+                    case 'Reviewer':
+                        $reviewers[] = $name;
+                        break;
+                    case 'Admin':
+                        $admins[] = $name;
+                        break;
+                    case 'Co-PI':
+                        $cols[] = $name;
+                        break;
+                }
+            }
+
+            // Update the studies table
+            $stmt = $conn->prepare("UPDATE studies SET pi=:pi, reviewer=:reviewer, cols=:cols, admins=:admins WHERE id=:id");
+            $stmt->execute([
+                ':pi' => $pi,
+                ':reviewer' => implode(', ', $reviewers),
+                ':cols' => implode(', ', $cols),
+                ':admins' => implode(', ', $admins),
+                ':id' => $studyId
+            ]);
+        }
+        error_log("Studies updated successfully for contact ID: " . $contactId);
+
+
     } else {
 
         // -----------------------------

@@ -31,10 +31,11 @@ define('DB_USER', 'root');
 define('DB_PASS', '');
 
 // Email configuration for development
+// smtp.office365.com, nirb@noguchi.ug.edu.gh
 define('SMTP_HOST', 'smtp.gmail.com');
 define('SMTP_PORT', 587);
-define('SMTP_USER', 'your-email@gmail.com'); // Replace with actual email
-define('SMTP_PASS', 'your-app-password'); // Replace with app password
+define('SMTP_USER', 'brobbeycollins96@gmail.com'); // Replace with actual email
+define('SMTP_PASS', 'vsno yity kewc xluk '); // Replace with app password
 define('SMTP_ENCRYPTION', 'tls');
 define('FROM_EMAIL', 'no-reply@ug.edu.gh');
 define('FROM_NAME', 'UG IRB Portal');

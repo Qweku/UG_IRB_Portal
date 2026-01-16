@@ -96,6 +96,16 @@ function getContactsCount()
     return executeCountQuery("SELECT COUNT(*) as count FROM contacts");
 }
 
+function getUsersCount()
+{
+    return executeCountQuery("SELECT COUNT(*) as count FROM users");
+}
+
+function getTemplatesCount()
+{
+    return executeCountQuery("SELECT COUNT(*) as count FROM irb_templates");
+}
+
 function getCPATypesCount()
 {
     return executeCountQuery("SELECT COUNT(*) as count FROM cpa_types");

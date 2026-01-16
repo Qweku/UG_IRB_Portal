@@ -1,6 +1,19 @@
 <?php
+require_once '../../vendor/autoload.php';
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
 require_once '../../includes/config/database.php';
 require_once '../../config.php'; // For email config if any
+
+// Configure SMTP settings for Gmail (development purposes)
+// Note: For Gmail, you need to use an app password instead of your regular password.
+// Generate an app password at https://myaccount.google.com/apppasswords
+// Replace SMTP_USER and SMTP_PASS in config.php with your Gmail address and app password.
+ini_set('SMTP', 'smtp.gmail.com');
+ini_set('smtp_port', 587);
+ini_set('smtp_crypto', 'tls');
+
 header('Content-Type: application/json');
 
 try {
@@ -54,21 +67,36 @@ try {
     ]);
 
     
-    // Send email
-    $to = $contact['email'];
-    $subject = 'UG IRB Portal Invitation';
-    $message = "Dear {$contact['first_name']} {$contact['last_name']},\n\n" .
-               "You have been invited to join the UG IRB Portal.\n\n" .
-               "Username: {$contact['email']}\n" .
-               "Password: {$password}\n\n" .
-               "Please log in and change your password upon first access.\n\n" .
-               "Best regards,\nUG IRB Team";
-    $headers = 'From: no-reply@ug.edu.gh' . "\r\n" .
-               'Reply-To: no-reply@ug.edu.gh' . "\r\n" .
-               'X-Mailer: PHP/' . phpversion();
+    // Send email using PHPMailer
+    $mail = new PHPMailer(true);
 
-    if (!mail($to, $subject, $message, $headers)) {
-        throw new Exception('Failed to send email');
+    try {
+        // Server settings
+        $mail->isSMTP();
+        $mail->Host = SMTP_HOST;
+        $mail->SMTPAuth = true;
+        $mail->Username = SMTP_USER;
+        $mail->Password = SMTP_PASS;
+        $mail->SMTPSecure = SMTP_ENCRYPTION;
+        $mail->Port = SMTP_PORT;
+
+        // Recipients
+        $mail->setFrom(FROM_EMAIL, FROM_NAME);
+        $mail->addAddress($contact['email']);
+
+        // Content
+        $mail->isHTML(false);
+        $mail->Subject = 'UG IRB Portal Invitation';
+        $mail->Body = "Dear {$contact['first_name']} {$contact['last_name']},\n\n" .
+                      "You have been invited to join the UG IRB Portal.\n\n" .
+                      "Username: {$contact['email']}\n" .
+                      "Password: {$password}\n\n" .
+                      "Please log in and change your password upon first access.\n\n" .
+                      "Best regards,\nUG IRB Team";
+
+        $mail->send();
+    } catch (Exception $e) {
+        throw new Exception('Failed to send email: ' . $mail->ErrorInfo);
     }
 
     echo json_encode([

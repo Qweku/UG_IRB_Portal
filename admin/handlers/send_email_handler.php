@@ -1,4 +1,5 @@
 <?php
+require_once '../../vendor/autoload.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
@@ -12,6 +13,13 @@ function sendEmailWithAttachment($to, $subject, $message, $attachment = null) {
     try {
         // Server settings
         $mail->isSMTP();
+        // $mail->SMTPOptions = array(
+        //     'ssl' => array(
+        //         'verify_peer' => false,
+        //         'verify_peer_name' => false,
+        //         'allow_self_signed' => true
+        //     )
+        // );
         $mail->Host = SMTP_HOST;
         $mail->SMTPAuth = true;
         $mail->Username = SMTP_USER;

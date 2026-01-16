@@ -442,7 +442,7 @@ $pi_names = getDistinctPINames();
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
                             <i class="fas fa-times-circle me-1"></i>Cancel
                         </button>
-                        <button type="button" class="btn btn-primary" onclick="sendEmail()" id="sendEmailBtn">
+                        <button type="button" class="btn btn-primary" onclick="sendEmail(this)" id="sendEmailBtn">
                             <i class="fas fa-paper-plane me-1"></i>Send Email
                         </button>
                         <div class="dropdown">
@@ -475,7 +475,7 @@ $pi_names = getDistinctPINames();
                     <div class="modal-body" id="previewContent"></div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" onclick="sendEmail()">Send Now</button>
+                        <button type="button" class="btn btn-primary" onclick="sendEmail(this)">Send Now</button>
                     </div>
                 </div>
             </div>
@@ -781,52 +781,6 @@ $pi_names = getDistinctPINames();
                 alert('Draft saved successfully!');
             }
 
-            function sendEmail() {
-                const form = document.getElementById('emailForm');
-                const sendBtn = document.getElementById('sendEmailBtn');
-
-                // Validate required fields
-                if (!form.checkValidity()) {
-                    form.classList.add('was-validated');
-                    return;
-                }
-
-                // Validate email addresses
-                const recipients = document.getElementById('recipientsInput').value;
-                const emails = recipients.split(',').map(email => email.trim());
-                const invalidEmails = emails.filter(email => !validateEmail(email));
-
-                if (invalidEmails.length > 0) {
-                    alert(`Invalid email addresses: ${invalidEmails.join(', ')}`);
-                    return;
-                }
-
-                // Show loading state
-                const originalText = sendBtn.innerHTML;
-                sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
-                sendBtn.disabled = true;
-
-                // Simulate API call
-                setTimeout(() => {
-                    // Here you would submit the form via AJAX
-                    // const formData = new FormData(form);
-                    // fetch('/send-email', { method: 'POST', body: formData })
-
-                    alert('Email sent successfully!');
-                    sendBtn.innerHTML = originalText;
-                    sendBtn.disabled = false;
-
-                    // Close modal
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('emailModal'));
-                    modal.hide();
-
-                    // Reset form
-                    form.reset();
-                    document.getElementById('studyDetailsCard').style.display = 'none';
-                    document.getElementById('attachmentPreview').innerHTML = '';
-                    updateCharCount();
-                }, 2000);
-            }
         </script>
 
         <script>
@@ -849,9 +803,15 @@ $pi_names = getDistinctPINames();
 
             });
 
-            function sendEmail() {
+            function sendEmail(button) {
                 const form = document.getElementById('emailForm');
                 const formData = new FormData(form);
+
+                // Show loading state
+                const originalText = button.innerHTML;
+                button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+                button.disabled = true;
+
                 fetch('/admin/handlers/send_email_handler.php', {
                         method: 'POST',
                         body: formData
@@ -865,10 +825,16 @@ $pi_names = getDistinctPINames();
                         } else {
                             alert('Error sending email: ' + data.message);
                         }
+                        // Reset button
+                        button.innerHTML = originalText;
+                        button.disabled = false;
                     })
                     .catch(error => {
                         console.error('Error:', error);
                         alert('An error occurred while sending the email.');
+                        // Reset button
+                        button.innerHTML = originalText;
+                        button.disabled = false;
                     });
             }
         </script>

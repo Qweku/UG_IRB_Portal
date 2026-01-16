@@ -19,6 +19,8 @@ $letterTypes = getLetterTypes();
 $letterTemplates = getLetterTemplates();
 
 $contactsCount = getContactsCount();
+$usersCount = getUsersCount();
+$templatesCount = getTemplatesCount();
 
 
 ?>
@@ -371,7 +373,7 @@ $contactsCount = getContactsCount();
                             <i class="fas fa-users"></i>
                         </div>
                         <div class="ms-3">
-                            <h4 class="mb-0">156</h4>
+                            <h4 class="mb-0"><?php echo $usersCount ?></h4>
                             <span class="text-muted">User Accounts</span>
                         </div>
                     </div>
@@ -386,7 +388,7 @@ $contactsCount = getContactsCount();
                             <i class="fas fa-clipboard-list"></i>
                         </div>
                         <div class="ms-3">
-                            <h4 class="mb-0">42</h4>
+                            <h4 class="mb-0"><?php echo $templatesCount ?></h4>
                             <span class="text-muted">Templates</span>
                         </div>
                     </div>
