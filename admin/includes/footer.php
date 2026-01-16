@@ -2,18 +2,19 @@
 
   <?php
     // Session timeout calculation for global modal
-    $session_lifetime = ini_get('session.gc_maxlifetime');
-    if (!isset($_SESSION['session_expire_time'])) {
-        $_SESSION['session_expire_time'] = time() + $session_lifetime;
-    }
-    $time_remaining = $_SESSION['session_expire_time'] - time();
+    // $session_lifetime = ini_get('session.gc_maxlifetime');
+    // if (!isset($_SESSION['session_expire_time'])) {
+    //     $_SESSION['session_expire_time'] = time() + $session_lifetime;
+    // }
+    // $time_remaining = $_SESSION['session_expire_time'] - time();
     ?>
 
-  <script>
-      window.sessionTimeout = <?php echo $time_remaining; ?>;
-  </script>
+  <!-- <script>
+      window.sessionTimeout = <?php 
+      //echo $time_remaining; ?>;
+  </script> -->
 
-  <script>
+  <!-- <script>
       document.addEventListener('DOMContentLoaded', () => {
 
           let warningTimer;
@@ -88,9 +89,9 @@
           // Start initial timer
           startWarningTimer();
       });
-  </script>
+  </script> -->
 
-  <script>
+  <!-- <script>
 
       // Session Timer Function
       function updateSessionTimer() {
@@ -145,10 +146,10 @@
               console.error('Error initializing :', error);
           }
       });
-  </script>
+  </script> -->
 
   <!-- Session Timeout Modal -->
-  <div class="modal fade" id="sessionTimeoutModal" tabindex="-1" aria-hidden="true">
+  <!-- <div class="modal fade" id="sessionTimeoutModal" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content text-center">
               <div class="modal-header bg-danger text-light">
@@ -162,7 +163,7 @@
               </div>
           </div>
       </div>
-  </div>
+  </div> -->
 
   </body>
 

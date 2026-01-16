@@ -5,7 +5,7 @@
 ini_set('session.cookie_httponly', 1);
 ini_set('session.use_only_cookies', 1);
 ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on');
-ini_set('session.gc_maxlifetime', 3600); // 10 minutes
+// ini_set('session.gc_maxlifetime', 3600); // 10 minutes
 ini_set('session.cookie_lifetime', 3600); // 10 minutes
 
 // Set session save path if needed

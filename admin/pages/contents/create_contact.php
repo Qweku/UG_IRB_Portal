@@ -92,7 +92,7 @@ $contactDocs = getContactDocs($contactId);
                                             <td><?= htmlspecialchars($contact['title']) ?></td>
 
                                             <!-- Show last name and first but if empty show company name -->
-                                             <?php if (empty($contact['first_name']) && empty($contact['last_name'])): ?>
+                                            <?php if (empty($contact['first_name']) && empty($contact['last_name'])): ?>
                                                 <td><?= htmlspecialchars($contact['company_dept_name']) ?></td>
                                             <?php else: ?>
                                                 <td><?= htmlspecialchars($contact['last_name'] . ', ' . $contact['first_name']) ?></td>
@@ -124,12 +124,7 @@ $contactDocs = getContactDocs($contactId);
                             <div class="row mb-3">
                                 <div class="col-md-2">
                                     <label class="form-label fw-semibold">Title</label>
-                                    <select class="form-select" name="title">
-                                        <option>Dr.</option>
-                                        <option>Prof.</option>
-                                        <option>Mr.</option>
-                                        <option>Mrs.</option>
-                                        <option>Ms.</option>
+                                    <input type="text" name="title" class="form-control" placeholder="Enter title">
                                     </select>
                                 </div>
                                 <div class="col-md-5">
@@ -319,21 +314,21 @@ $contactDocs = getContactDocs($contactId);
                                         </thead>
                                         <tbody id="documents-tbody">
                                             <?php if (empty($contactDocs)): ?>
-                                            <tr>
-                                                <td colspan="4" class="text-center text-muted py-3">
-                                                    No data available in table
-                                                </td>
-                                            </tr>
+                                                <tr>
+                                                    <td colspan="4" class="text-center text-muted py-3">
+                                                        No data available in table
+                                                    </td>
+                                                </tr>
                                             <?php endif; ?>
                                             <?php foreach ($contactDocs as $doc): ?>
-                                            <tr>
-                                                <td><?= htmlspecialchars($doc['file_name']) ?></td>
-                                                <td><?= htmlspecialchars($doc['comments']) ?></td>
-                                                <td><?= htmlspecialchars(date('Y-m-d', strtotime($doc['uploaded_at']))) ?></td>
-                                                <td>
-                                                    <button type="button" class="btn btn-sm btn-danger" onclick="removeFile(<?= $doc['id'] ?>)">Remove</button>
-                                                </td>
-                                            </tr>
+                                                <tr>
+                                                    <td><?= htmlspecialchars($doc['file_name']) ?></td>
+                                                    <td><?= htmlspecialchars($doc['comments']) ?></td>
+                                                    <td><?= htmlspecialchars(date('Y-m-d', strtotime($doc['uploaded_at']))) ?></td>
+                                                    <td>
+                                                        <button type="button" class="btn btn-sm btn-danger" onclick="removeFile(<?= $doc['id'] ?>)">Remove</button>
+                                                    </td>
+                                                </tr>
                                             <?php endforeach; ?>
                                         </tbody>
                                     </table>
@@ -505,7 +500,9 @@ $contactDocs = getContactDocs($contactId);
         xhr.onerror = function() {
             showToast('error', 'Network error');
         };
-        xhr.send(JSON.stringify({ id: docId }));
+        xhr.send(JSON.stringify({
+            id: docId
+        }));
     }
 
     // Function to delete contact
@@ -540,7 +537,9 @@ $contactDocs = getContactDocs($contactId);
         xhr.onerror = function() {
             showToast('error', 'Network error');
         };
-        xhr.send(JSON.stringify({ id: contactId }));
+        xhr.send(JSON.stringify({
+            id: contactId
+        }));
     }
 
     // Function to update documents table
@@ -583,13 +582,13 @@ $contactDocs = getContactDocs($contactId);
             Object.keys(contact).forEach(key => {
                 const field = document.querySelector(`[name="${key}"]`);
 
-                
+
                 if (field) {
                     if (field.type === 'checkbox') {
                         field.checked = contact[key] == 1;
                     } else {
                         field.value = contact[key] ?? '';
-                        console.log("Field key: "+ contact[key]);
+                        console.log("Field key: " + contact[key]);
                     }
                 }
             });
@@ -660,7 +659,9 @@ $contactDocs = getContactDocs($contactId);
             document.getElementById('confirmInviteBtn').textContent = 'Send Invite';
             showToast('error', 'Network error');
         };
-        xhr.send(JSON.stringify({ contact_id: selectedContactId }));
+        xhr.send(JSON.stringify({
+            contact_id: selectedContactId
+        }));
     });
 
     function sanitizeInput(input) {

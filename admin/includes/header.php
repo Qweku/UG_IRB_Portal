@@ -30,10 +30,10 @@
             </button>
             <div class="collapse navbar-collapse justify-content-end ms-auto" id="navbarNav">
                 <div class="d-flex ">
-                    <span class="navbar-text me-3" id="session-timer">
+                    <!-- <span class="navbar-text me-3" id="session-timer">
                         <i class="fas fa-clock me-1"></i>
                         <span id="timer-display">30:00</span>
-                    </span>
+                    </span> -->
                 </div>
                 <ul class="navbar-nav">
                     <li class="nav-item">
@@ -52,8 +52,10 @@
         </div>
     </nav>
 
-    <script>
+    <!-- <script>
         // Session timer variables
-        const loginTime = <?php echo isset($_SESSION['login_time']) ? $_SESSION['login_time'] : 'null'; ?>;
-        const sessionDuration = <?php echo ini_get('session.gc_maxlifetime'); ?>; // Session lifetime in seconds from PHP config
-    </script>
+        // const loginTime = <?php 
+        //echo isset($_SESSION['login_time']) ? $_SESSION['login_time'] : 'null'; ?>;
+        // const sessionDuration = <?php 
+        //echo ini_get('session.gc_maxlifetime'); ?>; // Session lifetime in seconds from PHP config
+    </script> -->
