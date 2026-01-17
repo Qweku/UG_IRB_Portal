@@ -1,29 +1,40 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_name('admin_session');
-    session_start();
-}
+session_name('admin_session');
+session_start();
 
-// Hardcoded credentials for demo (replace with database check in production)
-$valid_email = 'admin@irb.com';
-$valid_password = 'admin';
+require_once __DIR__ . '/../../../includes/config/database.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
 
-    if ($email === $valid_email && $password === $valid_password) {
-        $_SESSION['logged_in'] = true;
-        $_SESSION['role'] = 'admin';
-        $_SESSION['user_email'] = $email;
-        $_SESSION['login_time'] = time();
+    $db = new Database();
+    $conn = $db->connect();
 
-        if (is_admin_logged_in()) {
+    if ($conn) {
+        $stmt = $conn->prepare("SELECT id, full_name, email, password_hash, is_first FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($user && password_verify($password, $user['password_hash'])) {
+            $_SESSION['logged_in'] = true;
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['user_email'] = $user['email'];
+            $_SESSION['full_name'] = $user['full_name'];
+            $_SESSION['role'] = 'admin'; // Assuming all are admin for now
+            $_SESSION['login_time'] = time();
+            $_SESSION['is_first'] = $user['is_first'];
+
+            // Always redirect to dashboard, modal will be shown there if first login
             header('Location: /dashboard');
+            exit;
+        } else {
+            // Invalid credentials, redirect back with error
+            header('Location: /login?error=1');
             exit;
         }
     } else {
-        // Invalid credentials, redirect back with error
+        // Database error
         header('Location: /login?error=1');
         exit;
     }
