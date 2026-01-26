@@ -73,11 +73,11 @@ $meetingDates = getMeetingDates();
                         <i class="fas fa-toolbox me-2"></i>Administration
                     </a>
                 </li>
-                <li class="nav-item">
+                <!-- <li class="nav-item">
                     <a class="nav-link submenu-link <?php echo ($current_page == 'general-letters') ? 'active' : ''; ?>" href="/dashboard/general-letters">
                         <i class="fas fa-envelope me-2"></i>General Letter Choices
                     </a>
-                </li>
+                </li> -->
             </ul>
         </div>
 

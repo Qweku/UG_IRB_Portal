@@ -57,7 +57,7 @@ $routes = [
     ],
 
     'agenda' => [
-        'prepare-agenda' => 'contents/minutes_preparation.php',
+        'prepare-agenda' => 'contents/prepare_agenda.php',
         'minutes' => 'contents/minutes_preparation.php',
     ],
 
