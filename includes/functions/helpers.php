@@ -81,7 +81,17 @@ function is_admin_logged_in()
         session_name('admin_session');
         session_start();
     }
-    return isset($_SESSION['logged_in']) && isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
+    return isset($_SESSION['logged_in']) && isset($_SESSION['role']) && ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'super_admin');
+}
+
+
+function is_applicant_logged_in()
+{
+    if (session_status() === PHP_SESSION_NONE) {
+        session_name('applicant_session');
+        session_start();
+    }
+    return isset($_SESSION['logged_in']) && isset($_SESSION['role']) && ($_SESSION['role'] === 'applicant' || $_SESSION['role'] === 'reviewer');
 }
 
 
@@ -244,6 +254,11 @@ function getAgendaRecords()
 function getLetterTemplates()
 {
     return executeAssocQuery("SELECT * FROM irb_templates ORDER BY letter_type ASC");
+}
+
+function getAllInstitutions()
+{
+    return executeAssocQuery("SELECT * FROM institutions ORDER BY id ASC");
 }
 
 /**

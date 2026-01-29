@@ -387,317 +387,80 @@ $contactDocs = getContactDocs($contactId);
 
 <!-- Permissions Modal -->
 <div class="modal fade" id="permissionsModal" tabindex="-1" aria-labelledby="permissionsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="permissionsModalLabel">
-          <i class="fas fa-user-shield me-2"></i>User Permissions Management
-        </h5>
+        <h5 class="modal-title" id="permissionsModalLabel">Permissions</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
       <div class="modal-body">
-        <!-- User Summary -->
-        <div class="user-summary-card mb-5">
-          <div class="row align-items-center">
-            <div class="col-auto">
-              <div class="user-avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center">
-                <i class="fas fa-user fa-lg"></i>
-              </div>
-            </div>
-            <div class="col">
-              <h5 class="mb-1">John Doe</h5>
-              <p class="text-muted mb-0">johndoe@example.com • Last active: Today</p>
-            </div>
-            <div class="col-auto">
-              <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">
-                <i class="fas fa-circle me-1 small"></i>Active
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Permission Sections -->
-        <div class="row g-4">
-          
-          <!-- Office Permissions -->
-          <div class="col-lg-6">
-            <div class="permission-card card border-0 shadow-sm h-100">
-              <div class="card-header bg-transparent border-0 py-4 px-4">
-                <div class="d-flex align-items-center justify-content-between">
-                  <div>
-                    <h5 class="card-title mb-1">
-                      <i class="fas fa-building me-2 text-primary"></i>Office Access
-                    </h5>
-                    <p class="text-muted small mb-0">Control administrative system permissions</p>
-                  </div>
-                  <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="officeToggle" checked>
-                    <label class="form-check-label" for="officeToggle"></label>
-                  </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card permission-card mb-3">
+              <div class="card-body">
+                <h6 class="card-title"><i class="bi bi-building"></i> Office Access</h6>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="adminAccess" checked>
+                  <label class="form-check-label" for="adminAccess"><i class="bi bi-shield-check text-primary"></i> Administrator</label>
                 </div>
-              </div>
-              
-              <div class="card-body px-4 pb-4 pt-0">
-                <div class="permission-options">
-                  <!-- Role Selection -->
-                  <div class="role-selection mb-4">
-                    <h6 class="text-uppercase text-muted small fw-bold mb-3">Select Role Level</h6>
-                    <div class="d-flex flex-column gap-3">
-                      <div class="role-option active">
-                        <input type="radio" class="btn-check" name="officeRole" id="roleAdmin" checked>
-                        <label class="btn btn-outline-primary d-flex align-items-start w-100 text-start p-3" for="roleAdmin">
-                          <div class="role-icon me-3">
-                            <i class="fas fa-shield-alt fa-lg text-primary"></i>
-                          </div>
-                          <div class="flex-grow-1">
-                            <h6 class="fw-bold mb-1">Administrator</h6>
-                            <p class="text-muted small mb-0">Full system access including user management and settings</p>
-                            <div class="mt-2">
-                              <span class="badge bg-primary-subtle text-primary me-1">Create</span>
-                              <span class="badge bg-primary-subtle text-primary me-1">Edit</span>
-                              <span class="badge bg-primary-subtle text-primary me-1">Delete</span>
-                              <span class="badge bg-primary-subtle text-primary">Manage Users</span>
-                            </div>
-                          </div>
-                          <i class="fas fa-check-circle text-success ms-2 mt-1"></i>
-                        </label>
-                      </div>
-
-                      <div class="role-option">
-                        <input type="radio" class="btn-check" name="officeRole" id="roleReadWrite">
-                        <label class="btn btn-outline-secondary d-flex align-items-start w-100 text-start p-3" for="roleReadWrite">
-                          <div class="role-icon me-3">
-                            <i class="fas fa-edit fa-lg text-secondary"></i>
-                          </div>
-                          <div class="flex-grow-1">
-                            <h6 class="fw-bold mb-1">Read & Write</h6>
-                            <p class="text-muted small mb-0">Can create and edit content but cannot manage users</p>
-                            <div class="mt-2">
-                              <span class="badge bg-secondary-subtle text-secondary me-1">Create</span>
-                              <span class="badge bg-secondary-subtle text-secondary me-1">Edit</span>
-                              <span class="badge bg-secondary-subtle text-secondary">View</span>
-                            </div>
-                          </div>
-                        </label>
-                      </div>
-
-                      <div class="role-option">
-                        <input type="radio" class="btn-check" name="officeRole" id="roleReadOnly">
-                        <label class="btn btn-outline-secondary d-flex align-items-start w-100 text-start p-3" for="roleReadOnly">
-                          <div class="role-icon me-3">
-                            <i class="fas fa-eye fa-lg text-secondary"></i>
-                          </div>
-                          <div class="flex-grow-1">
-                            <h6 class="fw-bold mb-1">Read Only</h6>
-                            <p class="text-muted small mb-0">Can only view content without editing capabilities</p>
-                            <div class="mt-2">
-                              <span class="badge bg-secondary-subtle text-secondary">View Only</span>
-                            </div>
-                          </div>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Advanced Options -->
-                  <div class="advanced-options">
-                    <h6 class="text-uppercase text-muted small fw-bold mb-3">Advanced Settings</h6>
-                    <div class="form-check form-switch mb-2">
-                      <input class="form-check-input" type="checkbox" id="auditLog" checked>
-                      <label class="form-check-label fw-medium" for="auditLog">
-                        Access Audit Logs
-                        <small class="text-muted d-block">View system activity and user actions</small>
-                      </label>
-                    </div>
-                    <div class="form-check form-switch mb-2">
-                      <input class="form-check-input" type="checkbox" id="exportData">
-                      <label class="form-check-label fw-medium" for="exportData">
-                        Export System Data
-                        <small class="text-muted d-block">Download reports and system information</small>
-                      </label>
-                    </div>
-                  </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="readWriteAccess">
+                  <label class="form-check-label" for="readWriteAccess"><i class="bi bi-pencil-square text-success"></i> Read & Write</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="readOnlyAccess">
+                  <label class="form-check-label" for="readOnlyAccess"><i class="bi bi-eye text-info"></i> Read Only</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="auditLogAccess">
+                  <label class="form-check-label" for="auditLogAccess"><i class="bi bi-journal-text text-warning"></i> Access Audit Logs</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="exportDataAccess">
+                  <label class="form-check-label" for="exportDataAccess"><i class="bi bi-download text-secondary"></i> Export System Data</label>
                 </div>
               </div>
             </div>
           </div>
-
-          <!-- Agenda Permissions -->
-          <div class="col-lg-6">
-            <div class="permission-card card border-0 shadow-sm h-100">
-              <div class="card-header bg-transparent border-0 py-4 px-4">
-                <div class="d-flex align-items-center justify-content-between">
-                  <div>
-                    <h5 class="card-title mb-1">
-                      <i class="fas fa-calendar-alt me-2 text-info"></i>Agenda Management
-                    </h5>
-                    <p class="text-muted small mb-0">Control meeting agenda and document permissions</p>
-                  </div>
-                  <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="agendaToggle" checked>
-                    <label class="form-check-label" for="agendaToggle"></label>
-                  </div>
+          <div class="col-md-6">
+            <div class="card permission-card mb-3">
+              <div class="card-body">
+                <h6 class="card-title"><i class="bi bi-calendar-event"></i> Agenda Management</h6>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="replaceAgendaAccess">
+                  <label class="form-check-label" for="replaceAgendaAccess"><i class="bi bi-arrow-repeat text-primary"></i> Replace Agenda</label>
                 </div>
-              </div>
-              
-              <div class="card-body px-4 pb-4 pt-0">
-                <div class="permission-options">
-                  <!-- Document Management -->
-                  <div class="document-permissions mb-4">
-                    <h6 class="text-uppercase text-muted small fw-bold mb-3">Document Control</h6>
-                    <div class="row g-3">
-                      <div class="col-md-6">
-                        <div class="form-check card-check">
-                          <input class="form-check-input" type="checkbox" id="replaceAgenda">
-                          <label class="form-check-label w-100 p-3 border rounded-3" for="replaceAgenda">
-                            <div class="d-flex align-items-center">
-                              <i class="fas fa-exchange-alt text-primary me-3"></i>
-                              <div>
-                                <h6 class="fw-bold mb-1">Replace Agenda</h6>
-                                <small class="text-muted">Upload new agenda versions</small>
-                              </div>
-                            </div>
-                          </label>
-                        </div>
-                      </div>
-                      
-                      <div class="col-md-6">
-                        <div class="form-check card-check">
-                          <input class="form-check-input" type="checkbox" id="uploadDocs" checked>
-                          <label class="form-check-label w-100 p-3 border rounded-3" for="uploadDocs">
-                            <div class="d-flex align-items-center">
-                              <i class="fas fa-upload text-success me-3"></i>
-                              <div>
-                                <h6 class="fw-bold mb-1">Upload Documents</h6>
-                                <small class="text-muted">Add supporting files</small>
-                              </div>
-                            </div>
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Delete Permissions -->
-                  <div class="delete-permissions mb-4">
-                    <h6 class="text-uppercase text-muted small fw-bold mb-3">Delete Permissions</h6>
-                    <div class="permission-grid">
-                      <div class="form-check card-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="deleteUserDocs" checked>
-                        <label class="form-check-label w-100 p-3 border rounded-3" for="deleteUserDocs">
-                          <div class="d-flex align-items-center">
-                            <i class="fas fa-user-times text-warning me-3"></i>
-                            <div>
-                              <h6 class="fw-bold mb-1">Delete Own Documents</h6>
-                              <small class="text-muted">Remove user-uploaded files</small>
-                            </div>
-                          </div>
-                        </label>
-                      </div>
-
-                      <div class="form-check card-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="deleteGroupDocs">
-                        <label class="form-check-label w-100 p-3 border rounded-3" for="deleteGroupDocs">
-                          <div class="d-flex align-items-center">
-                            <i class="fas fa-users text-danger me-3"></i>
-                            <div>
-                              <h6 class="fw-bold mb-1">Delete Group Documents</h6>
-                              <small class="text-muted">Remove files from user group</small>
-                            </div>
-                          </div>
-                        </label>
-                      </div>
-
-                      <div class="form-check card-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="deleteAllDocs">
-                        <label class="form-check-label w-100 p-3 border rounded-3" for="deleteAllDocs">
-                          <div class="d-flex align-items-center">
-                            <i class="fas fa-trash-alt text-danger me-3"></i>
-                            <div>
-                              <h6 class="fw-bold mb-1">Delete All Documents</h6>
-                              <small class="text-muted">Remove any system documents</small>
-                            </div>
-                          </div>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Comment Permissions -->
-                  <div class="comment-permissions">
-                    <h6 class="text-uppercase text-muted small fw-bold mb-3">Comment Management</h6>
-                    <div class="form-check card-check">
-                      <input class="form-check-input" type="checkbox" id="editComments">
-                      <label class="form-check-label w-100 p-3 border rounded-3" for="editComments">
-                        <div class="d-flex align-items-center">
-                          <i class="fas fa-comment-edit text-info me-3"></i>
-                          <div>
-                            <h6 class="fw-bold mb-1">Edit Own Comments</h6>
-                            <small class="text-muted">Modify user's posted comments</small>
-                          </div>
-                        </div>
-                      </label>
-                    </div>
-                  </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="uploadDocsAccess" checked>
+                  <label class="form-check-label" for="uploadDocsAccess"><i class="bi bi-cloud-upload text-success"></i> Upload Documents</label>
                 </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- Summary Stats -->
-        <div class="permission-stats mt-5 pt-4 border-top">
-          <div class="row g-3">
-            <div class="col-md-3">
-              <div class="stat-card text-center p-3 rounded-3 bg-light">
-                <h3 class="text-primary mb-1" id="totalPermissions">7</h3>
-                <p class="text-muted small mb-0">Total Permissions</p>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="stat-card text-center p-3 rounded-3 bg-light">
-                <h3 class="text-success mb-1" id="activePermissions">5</h3>
-                <p class="text-muted small mb-0">Active Permissions</p>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="stat-card text-center p-3 rounded-3 bg-light">
-                <h3 class="text-warning mb-1" id="warningPermissions">2</h3>
-                <p class="text-muted small mb-0">High Risk Permissions</p>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="stat-card text-center p-3 rounded-3 bg-light">
-                <div class="access-level">
-                  <span class="badge bg-primary px-3 py-2 fs-6">Administrator</span>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="deleteOwnDocsAccess" checked>
+                  <label class="form-check-label" for="deleteOwnDocsAccess"><i class="bi bi-trash text-danger"></i> Delete Own Documents</label>
                 </div>
-                <p class="text-muted small mb-0 mt-2">Current Access Level</p>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="deleteGroupDocsAccess">
+                  <label class="form-check-label" for="deleteGroupDocsAccess"><i class="bi bi-trash2 text-warning"></i> Delete Group Documents</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="deleteAllDocsAccess">
+                  <label class="form-check-label" for="deleteAllDocsAccess"><i class="bi bi-trash3 text-danger"></i> Delete All Documents</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="editCommentsAccess">
+                  <label class="form-check-label" for="editCommentsAccess"><i class="bi bi-chat-dots text-info"></i> Edit Own Comments</label>
+                </div>
               </div>
             </div>
           </div>
         </div>
-
       </div>
 
       <div class="modal-footer">
-        <div class="w-100 d-flex justify-content-between align-items-center">
-          <div class="permission-preview">
-            <small class="text-muted d-flex align-items-center">
-              <i class="fas fa-eye me-2"></i>
-              Preview: <span class="fw-medium ms-1" id="previewAccess">Administrator with full access</span>
-            </small>
-          </div>
-          <div class="d-flex gap-3">
-            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-              <i class="fas fa-times me-2"></i>Cancel
-            </button>
-            <button type="button" class="btn btn-primary" id="savePermissions">
-              <i class="fas fa-save me-2"></i>Save Permissions
-            </button>
-          </div>
-        </div>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="savePermissions">Save</button>
+      </div>
       </div>
 
     </div>

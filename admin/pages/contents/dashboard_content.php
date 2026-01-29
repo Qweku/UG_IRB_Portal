@@ -4,13 +4,27 @@ $pendingReviews = getPendingReviewsCount();
 $overdueActions = getOverdueActionsCount();
 $newSAEReports = getNewSAEReportsCount();
 $recentActivities = getRecentActivities();
+
+$user_name = "";
+if (isset($_SESSION['user_id'])) {
+    $db = new Database();
+    $conn = $db->connect();
+
+    $stmt = $conn->prepare("SELECT full_name FROM users WHERE id = ?");
+    $stmt->execute([$_SESSION['user_id']]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($user) {
+        $user_name = $user['full_name'];
+    }
+}
 ?>
 <!-- Main Content -->
 <div class="">
     <!-- Welcome Banner -->
     <div class="welcome-banner">
-        <h2>Hello, Admin User!</h2>
-        <p class="mb-0">Welcome back to the Noguchi ProIRB. You have <?php echo $pendingReviews; ?> pending tasks that need your attention.</p>
+        <h2>Hello, <?php echo $user_name; ?>!</h2>
+        <p class="mb-0">Welcome back to the UG Hares. You have <?php echo $pendingReviews; ?> pending tasks that need your attention.</p>
     </div>
 
     <!-- Quick Stats -->

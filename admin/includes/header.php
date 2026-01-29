@@ -13,7 +13,7 @@
 <body>
     <!-- Navbar -->
     <?php
-    $navbar_display = is_admin_logged_in() ? 'block' : 'none';
+    $navbar_display = is_admin_logged_in() || is_applicant_logged_in() ? 'block' : 'none';
     ?>
     <nav class="navbar navbar-expand-lg navbar-dark" style="display: <?= htmlspecialchars($navbar_display); ?>;">
         

@@ -2,9 +2,18 @@
 
 $current_page = basename($_SERVER['PHP_SELF']);
 
-error_log("Current Page: ". $current_page);
+error_log("Current Page: " . $current_page);
 
 $meetingDates = getMeetingDates();
+
+// Get user role
+$userRole = $_SESSION['role'] ?? 'reviewer';
+
+$showAdminSections = ($userRole === 'admin' || $userRole === 'super_admin');
+$showInstitutionSection = ($userRole === 'super_admin');
+
+
+
 ?>
 <div id="sidebar" class="col-lg-2 col-md-3 d-md-block sidebar collapse">
     <div class="sidebar-sticky">
@@ -58,7 +67,7 @@ $meetingDates = getMeetingDates();
         </div>
 
         <!-- Task Managers Section -->
-        <div class="sidebar-section mb-3">
+        <div class="sidebar-section mb-3" style='display: <?php echo $showAdminSections ? 'block' : 'none' ?> '>
             <h6 class="sidebar-header ms-4">
                 <i class="fas fa-tasks me-2"></i>Task Managers
             </h6>
@@ -73,17 +82,18 @@ $meetingDates = getMeetingDates();
                         <i class="fas fa-toolbox me-2"></i>Administration
                     </a>
                 </li>
-                <!-- <li class="nav-item">
-                    <a class="nav-link submenu-link <?php echo ($current_page == 'general-letters') ? 'active' : ''; ?>" href="/dashboard/general-letters">
-                        <i class="fas fa-envelope me-2"></i>General Letter Choices
+                <li class="nav-item">
+                    <a class="nav-link submenu-link <?php echo ($current_page == 'institutions') ? 'active' : ''; ?>" href="/dashboard/institutions" style='display: <?php echo $showInstitutionSection ? 'block' : 'none' ?> '>
+                        <i class=" fas fa-building me-2"></i>Institutions
                     </a>
-                </li> -->
+                </li>
             </ul>
         </div>
 
 
     </div>
 </div>
+
 
 
 <!-- Post IRB Actions Modal -->

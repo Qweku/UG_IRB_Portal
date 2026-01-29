@@ -20,7 +20,7 @@ $pi_names = getDistinctPINames();
     <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="mb-0">Study / Protocol Management</h2>
-        <a class="btn btn-primary" href="/studies/add-study">
+        <a class="btn btn-success" href="/studies/add-study">
             <i class="fas fa-plus me-1"></i> Add New Study
         </a>
     </div>

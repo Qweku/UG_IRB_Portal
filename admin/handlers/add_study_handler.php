@@ -250,6 +250,16 @@ $roles = extractRoles($personnel);
 
 $data = mapStudyData($_POST);
 
+$irb_code = '';
+
+// Fetch IRB code based on selected user institution id
+if (isset($_SESSION['institution_id'])) {
+    $institutionId = (int)$_SESSION['institution_id'];
+    $stmt = $conn->prepare("SELECT institution_name FROM institutions WHERE id = ?");
+    $stmt->execute([$institutionId]);
+    $irb_code = $stmt->fetchColumn() ?: '';
+}
+
 foreach (['study_number', 'ref_number', 'expiration_date', 'protocol_title', 'sponsor', 'date_received'] as $field) {
     if (empty($data[$field])) jsonError("Missing required field: $field");
 }
@@ -341,7 +351,7 @@ try {
             $data['init_enroll'],
             $data['on_agenda_date'],
             $data['irb_of_record'],
-            'NOGUCHI MEMORIAL INSTITUTE FOR MEDICAL RESEARCH-IRB',
+            $irb_code,
             $data['cr_required'],
             $data['renewal_cycle'],
             $data['date_received'],
