@@ -3,6 +3,7 @@ require_once '../../vendor/autoload.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+require_once '../includes/auth_check.php';
 require_once '../../includes/config/database.php';
 require_once '../../config.php'; // For email config if any
 

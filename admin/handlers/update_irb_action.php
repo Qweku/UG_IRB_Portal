@@ -1,10 +1,5 @@
 <?php
-// Start session to get user role
-if (session_status() === PHP_SESSION_NONE) {
-    session_name('admin_session');
-    session_start();
-}
-
+require_once '../includes/auth_check.php';
 require_once '../../includes/config/database.php';
 require_once '../../includes/functions/helpers.php';
 

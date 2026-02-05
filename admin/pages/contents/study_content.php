@@ -1,10 +1,12 @@
 <?php
-
 // Get filter parameters from GET request or default
 $status = isset($_GET['status']) ? $_GET['status'] : 'all';
 $review_type = isset($_GET['review_type']) ? $_GET['review_type'] : 'all';
 $pi_name = isset($_GET['pi_name']) ? $_GET['pi_name'] : '';
 $sort_by = isset($_GET['sort_by']) ? $_GET['sort_by'] : 'protocol_number';
+
+// Include CSRF protection
+require_once '../../includes/functions/csrf.php';
 
 // Fetch studies based on filters
 $studies = getStudies($status, $review_type, $pi_name, $sort_by);
@@ -208,6 +210,7 @@ $pi_names = getDistinctPINames();
                     <!-- Modal Body -->
                     <div class="modal-body p-4">
                         <form id="emailForm" enctype="multipart/form-data">
+                            <?php echo csrf_token_field(); ?>
                             <!-- Study Selection -->
                             <div class="mb-4">
                                 <label for="studySelect" class="form-label fw-semibold">

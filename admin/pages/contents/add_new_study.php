@@ -6,6 +6,9 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     exit;
 }
 
+// Include CSRF protection
+require_once '../../includes/functions/csrf.php';
+
 // Initialize study variables with default values
 $study_vars = [
     'study_number' => '', 'ref_number' => '', 'exp_date' => '', 
@@ -271,6 +274,7 @@ function formatFileSize($bytes) {
     <?php endif; ?>
 
     <form class="needs-validation" id="studyForm" enctype="multipart/form-data" novalidate>
+        <?php echo csrf_token_field(); ?>
         <input type="hidden" name="study_id" value="<?php echo $is_edit ? $study_id : ''; ?>">
         <input type="hidden" name="action" value="<?php echo $is_edit ? 'update_study' : 'add_study'; ?>">
         
@@ -712,6 +716,7 @@ function formatFileSize($bytes) {
             </div>
             <div class="modal-body">
                 <form id="personnelForm">
+                    <?php echo csrf_token_field(); ?>
                     <div id="personnelFormContent">
                         <!-- Personnel form fields will be added here dynamically -->
                     </div>
@@ -768,6 +773,7 @@ function formatFileSize($bytes) {
             <!-- Modal Body -->
             <div class="modal-body">
                 <form id="saeForm">
+                    <?php echo csrf_token_field(); ?>
                     <input type="hidden" name="action" value="add_sae">
                     <input type="hidden" name="protocol_id" value="<?php echo $study_id; ?>">
                     <!-- Event Details Section -->

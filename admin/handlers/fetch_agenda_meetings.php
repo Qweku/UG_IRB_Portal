@@ -1,6 +1,7 @@
 <?php
 // require_once '/config.php';
 require_once '../../includes/functions/helpers.php';
+require_once '../includes/auth_check.php';
 
 if (!isset($_GET['meeting_date'])) {
     echo json_encode(["error" => "No meeting date"]);

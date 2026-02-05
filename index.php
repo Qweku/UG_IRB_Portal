@@ -6,6 +6,7 @@ declare(strict_types=1);
 // Bootstrap
 // --------------------------------------------------
 require_once 'config.php';
+require_once '/includes/functions/csrf.php';
 
 // include 'admin/includes/header.php'; 
 

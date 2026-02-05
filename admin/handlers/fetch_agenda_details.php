@@ -1,4 +1,5 @@
 <?php
+require_once '../includes/auth_check.php';
 require_once '../../includes/functions/helpers.php';
 
 if (!isset($_GET['id'])) {
@@ -6,7 +7,7 @@ if (!isset($_GET['id'])) {
     exit;
 }
 
-$id = $_GET['id'];
+$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 $item = executeAssocQuery("SELECT a.pi, a.irb_number, a.agenda_group, a.reference_number, a.title, a.meeting_date, a.internal_number,
 a.action_taken, a.condition_1, a.condition_2, a.action_explanation,

@@ -1,8 +1,9 @@
 <?php
-
 declare(strict_types=1);
 
+require_once '../includes/auth_check.php';
 require_once '../../includes/config/database.php';
+require_once '../../includes/functions/csrf.php';
 
 header('Content-Type: application/json');
 
@@ -226,6 +227,11 @@ function handleUploads(PDO $conn, int $studyId): void
 ========================================================== */
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonError("Invalid request method", 405);
+}
+
+// CSRF validation
+if (!isset($_POST['csrf_token']) || !csrf_validate_token($_POST['csrf_token'])) {
+    jsonError("Invalid CSRF token", 403);
 }
 
 $nextMeeting = '';

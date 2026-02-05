@@ -341,7 +341,13 @@ function getStudies($status = 'all', $review_type = 'all', $pi_name = '', $sort_
                 $order_by = 's.title';
                 break;
         }
-        $query .= " ORDER BY $order_by";
+        
+        // Whitelist validation for ORDER BY clause
+        $allowed_columns = ['s.protocol_number', 's.approval_date', 's.title'];
+        if (!in_array($order_by, $allowed_columns, true)) {
+            $order_by = 's.protocol_number'; // Safe fallback
+        }
+        $query .= " ORDER BY " . $order_by;
 
         $stmt = $conn->prepare($query);
         $stmt->execute($params);

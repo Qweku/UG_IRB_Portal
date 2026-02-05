@@ -1,4 +1,5 @@
 <?php
+require_once '../includes/auth_check.php';
 require_once '../../includes/config/database.php';
 header('Content-Type: application/json');
 

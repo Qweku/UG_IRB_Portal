@@ -1,5 +1,6 @@
 <?php
 require_once '../../includes/functions/helpers.php';
+require_once '../includes/auth_check.php';
 header('Content-Type: application/json');
 
 try {

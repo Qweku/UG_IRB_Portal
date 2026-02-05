@@ -3,6 +3,7 @@ require_once '../../vendor/autoload.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+require_once '../includes/auth_check.php';
 require_once '../../includes/config/database.php';
 require_once '../../config.php';
 header('Content-Type: application/json');
@@ -13,13 +14,6 @@ function sendEmailWithAttachment($to, $subject, $message, $attachment = null) {
     try {
         // Server settings
         $mail->isSMTP();
-        // $mail->SMTPOptions = array(
-        //     'ssl' => array(
-        //         'verify_peer' => false,
-        //         'verify_peer_name' => false,
-        //         'allow_self_signed' => true
-        //     )
-        // );
         $mail->Host = SMTP_HOST;
         $mail->SMTPAuth = true;
         $mail->Username = SMTP_USER;
@@ -31,9 +25,16 @@ function sendEmailWithAttachment($to, $subject, $message, $attachment = null) {
         $mail->setFrom(FROM_EMAIL, FROM_NAME);
         $mail->addAddress($to);
 
-        // Attachments
+        // Secure attachment validation
         if ($attachment && isset($_FILES['attachment']) && $_FILES['attachment']['error'] == UPLOAD_ERR_OK) {
-            $mail->addAttachment($_FILES['attachment']['tmp_name'], $_FILES['attachment']['name']);
+            $allowed_types = ['application/pdf', 'image/jpeg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime_type = finfo_file($finfo, $_FILES['attachment']['tmp_name']);
+            finfo_close($finfo);
+            
+            if (in_array($mime_type, $allowed_types)) {
+                $mail->addAttachment($_FILES['attachment']['tmp_name'], $_FILES['attachment']['name']);
+            }
         }
 
         // Content
@@ -54,6 +55,11 @@ function sendEmailWithAttachment($to, $subject, $message, $attachment = null) {
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         throw new Exception('Invalid request method');
+    }
+
+    // CSRF validation for POST
+    if (!isset($_POST['csrf_token']) || empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        throw new Exception('Invalid CSRF token');
     }
 
     $studyId = $_POST['study_id'] ?? null;
@@ -102,4 +108,3 @@ try {
         'message' => $e->getMessage()
     ]);
 }
-?>

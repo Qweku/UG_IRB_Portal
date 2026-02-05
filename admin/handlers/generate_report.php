@@ -1,5 +1,6 @@
 <?php
 require_once '../../includes/functions/helpers.php';
+require_once '../includes/auth_check.php';
 
 // ----- INPUTS -----
 $reportType = $_POST['reportType'] ?? '';
@@ -69,9 +70,17 @@ if ($reportType === 'Study Search') {
                 pi
             FROM studies WHERE 1=1";
 
-    // OPTIONAL FILTER LOGIC
+    // OPTIONAL FILTER LOGIC - Whitelist validation for columns
+    $allowed_study_columns = ['irb_code', 'protocol_number', 'title', 'study_active', 'study_status', 'date_received', 'approval_date', 'last_irb_review', 'expiration_date', 'sponsor_displayname', 'pi'];
+    $allowed_contact_columns = ['last', 'first', 'company_dept_name', 'email', 'main_phone', 'specialty_1', 'specialty_2'];
+    
+    $allowed_columns = ($reportType === 'Study Search') ? $allowed_study_columns : $allowed_contact_columns;
+    
     foreach ($filters as $filter) {
         $col = $filter['column'];
+        if (!in_array($col, $allowed_columns, true)) {
+            continue; // Skip invalid columns
+        }
         $val = $filter['value'];
         $sql .= " AND $col LIKE :$col";
         $params[":$col"] = "%$val%";

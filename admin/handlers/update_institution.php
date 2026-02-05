@@ -1,17 +1,26 @@
 <?php
 require_once '../../includes/functions/helpers.php';
+require_once '../includes/auth_check.php';
+require_once '../../includes/functions/csrf.php';
 
 header('Content-Type: application/json');
 $data = json_decode(file_get_contents('php://input'), true);
+
+// CSRF validation
+if (!isset($data['csrf_token']) || !csrf_validate_token($data['csrf_token'])) {
+    echo json_encode(['success' => false, 'message' => 'Invalid CSRF token']);
+    exit;
+}
+
 if (!$data || !isset($data['id'])) {
     echo json_encode(['success' => false, 'message' => 'Invalid data']);
     exit;
 }
-$id = trim($data['id']);
+$id = isset($data['id']) ? (int)$data['id'] : 0;
 $institution_name = trim($data['institution_name'] ?? '');
 $email = trim($data['email'] ?? '');
-if (empty($id)) {
-    echo json_encode(['success' => false, 'message' => 'Institution ID cannot be empty']);
+if ($id <= 0) {
+    echo json_encode(['success' => false, 'message' => 'Invalid Institution ID']);
     exit;
 }
 $db = new Database();
@@ -27,4 +36,3 @@ if ($stmt->rowCount() > 0) {
 } else {
     echo json_encode(['success' => false, 'message' => 'Failed to update institution or no changes made']);
 }
-?>

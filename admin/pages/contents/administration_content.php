@@ -1,5 +1,8 @@
 <?php
 
+// Include CSRF protection
+require_once '../../includes/functions/csrf.php';
+
 $cpaTypes = getCPATypesCount();
 $investigators = getInvestigatorCount();
 $irbMeetings = getIRBMeetingsCount();
@@ -768,6 +771,7 @@ $templatesCount = getTemplatesCount();
             </div>
             <div class="modal-body">
                 <form id="replaceTemplateForm" enctype="multipart/form-data">
+                    <?php echo csrf_token_field(); ?>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -999,6 +1003,7 @@ $templatesCount = getTemplatesCount();
             </div>
             <div class="modal-body">
                 <form id="addTemplateForm" enctype="multipart/form-data">
+                    <?php echo csrf_token_field(); ?>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">

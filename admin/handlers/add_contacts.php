@@ -1,4 +1,5 @@
 <?php
+require_once '../includes/auth_check.php';
 error_log("Starting add_contacts.php script");
 require_once '../../includes/config/database.php';
 header('Content-Type: application/json');

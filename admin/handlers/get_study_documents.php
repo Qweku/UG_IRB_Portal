@@ -1,5 +1,6 @@
 <?php
 require_once '../../includes/functions/helpers.php';
+require_once '../includes/auth_check.php';
 $studyId = $_GET['study_id'] ?? '';
 if (!$studyId) {
     http_response_code(400);
