@@ -93,6 +93,12 @@ $routes = [
 // --------------------------------------------------
 $pageConfig = null;
 
+if($session_name === 'applicant_session') {
+    $section = $segments[0] ?? 'applicant-dashboard';
+}else{
+    $section = $segments[0] ?? 'dashboard';
+}
+
 if (isset($routes[$section])) {
     if ($subpage && isset($routes[$section][$subpage])) {
         $pageConfig = $routes[$section][$subpage];
@@ -156,16 +162,16 @@ try {
 
 
         error_log("USER STATUS: " . (isUserAdmin() ? "Admin" : (isUserSuperAdmin() ? "Super Admin" : "Applicant")));
+        error_log("USER SESSION: " . ($session_name));
         error_log("Applicant Path: {$applicantBase}{$file}");
+        error_log("Admin Path: {$pageBase}{$file}");
         if (!empty($roles) && !requireRole($roles)) {
             http_response_code(403);
             require_once $forbiddenPage;
-        }
-        elseif (file_exists($pageBase . $file) ) {
+        } elseif (file_exists($pageBase . $file)) {
             error_log("Admin Path: {$pageBase}{$file}");
             require_once $pageBase . $file;
-        } 
-        elseif (file_exists($applicantBase . $file)) {
+        } elseif (file_exists($applicantBase . $file)) {
             error_log("Applicant Path: {$applicantBase}{$file}");
             require_once $applicantBase . $file;
         } elseif (file_exists($userBase . $file)) {

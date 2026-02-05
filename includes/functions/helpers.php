@@ -7,6 +7,16 @@
 // require_once "/config.php";
 require_once __DIR__ . '/../config/database.php';
 
+
+// Fetch user instition id from session
+function get_user_institution_id()
+{
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    return isset($_SESSION['institution_id']) ? $_SESSION['institution_id'] : null;
+}
+
 /**
  * Execute a count query and return the count
  * @param string $query
@@ -98,6 +108,10 @@ function is_applicant_logged_in()
 
 function getActiveStudiesCount()
 {
+    $institutionId = get_user_institution_id();
+    if ($institutionId) {
+        return executeCountQuery("SELECT COUNT(*) as count FROM studies WHERE study_status = 'open' AND institution_id = ?", [$institutionId]);
+    }
     return executeCountQuery("SELECT COUNT(*) as count FROM studies WHERE study_status = 'open'");
 }
 
@@ -187,6 +201,10 @@ function getActiveCodes()
  */
 function getPendingReviewsCount()
 {
+    $institutionId = get_user_institution_id();
+    if ($institutionId) {
+        return executeCountQuery("SELECT COUNT(*) as count FROM studies WHERE study_status = 'pending' AND institution_id = ?", [$institutionId]);
+    }
     return executeCountQuery("SELECT COUNT(*) as count FROM studies WHERE study_status = 'pending'");
 }
 
@@ -196,6 +214,10 @@ function getPendingReviewsCount()
  */
 function getOverdueActionsCount()
 {
+    $institutionId = get_user_institution_id();
+    if ($institutionId) {
+        return executeCountQuery("SELECT COUNT(*) as count FROM studies WHERE study_status = 'open' AND expiration_date < CURDATE() AND institution_id = ?", [$institutionId]);
+    }
     return executeCountQuery("SELECT COUNT(*) as count FROM studies WHERE study_status = 'open' AND expiration_date < CURDATE()");
 }
 
@@ -248,6 +270,10 @@ function getActionLetters()
 
 function getAgendaRecords()
 {
+    $institutionId = get_user_institution_id();
+    if ($institutionId) {
+        return executeAssocQuery("SELECT irb_code, meeting_date, agenda_heading FROM agenda_records WHERE institution_id = ? ORDER BY meeting_date DESC", [$institutionId]);
+    }
     return executeAssocQuery("SELECT irb_code, meeting_date, agenda_heading FROM agenda_records ORDER BY meeting_date DESC");
 }
 
@@ -277,7 +303,17 @@ function getStudies($status = 'all', $review_type = 'all', $pi_name = '', $sort_
         return [];
     }
 
+ 
+
     try {
+        $institutionId = get_user_institution_id();
+        if ($institutionId) {
+            $query = "SELECT s.*, sp.name as pi_name FROM studies s LEFT JOIN study_personnel sp ON s.id = sp.study_id AND sp.role = 'PI' WHERE s.institution_id = ?";
+            $params = [$institutionId];
+        } else {
+            $query = "SELECT s.*, sp.name as pi_name FROM studies s LEFT JOIN study_personnel sp ON s.id = sp.study_id AND sp.role = 'PI' WHERE 1=1";
+            $params = [];
+        }
         $query = "SELECT s.*, sp.name as pi_name FROM studies s LEFT JOIN study_personnel sp ON s.id = sp.study_id AND sp.role = 'PI' WHERE 1=1";
         $params = [];
 
@@ -353,6 +389,13 @@ function getRecentReports()
     }
 
     try {
+        $institutionId = get_user_institution_id();
+        if ($institutionId) {
+            // Assuming a reports table exists with columns: report_name, generated_date, filters_applied, format
+            $stmt = $conn->prepare("SELECT id, report_name, generated_date, filters_applied, doc_format FROM reports WHERE institution_id = ? ORDER BY generated_date DESC LIMIT 5");
+            $stmt->execute([$institutionId]);
+            return $stmt->fetchAll();
+        }
         // Assuming a reports table exists with columns: report_name, generated_date, filters_applied, format
         $stmt = $conn->prepare("SELECT id, report_name, generated_date, filters_applied, doc_format FROM reports ORDER BY generated_date DESC LIMIT 5");
         $stmt->execute();
@@ -401,6 +444,13 @@ function getContinueReviewStudies()
     }
 
     try {
+        $institutionId = get_user_institution_id();
+        if ($institutionId) {
+            // Assuming a reports table exists with columns: report_name, generated_date, filters_applied, format
+            $stmt = $conn->prepare("SELECT * FROM studies WHERE expiration_date <= NOW() AND institution_id = ?");
+            $stmt->execute([$institutionId]);
+            return $stmt->fetchAll();
+        }
         // Assuming a reports table exists with columns: report_name, generated_date, filters_applied, format
         $stmt = $conn->prepare("SELECT * FROM studies WHERE expiration_date <= NOW()");
         $stmt->execute();
@@ -509,6 +559,13 @@ function getMeetings()
     }
 
     try {
+        $institutionId = get_user_institution_id();
+        if ($institutionId) {
+            // Assuming a meetings table exists
+            $stmt = $conn->prepare("SELECT * FROM agenda_items WHERE institution_id = ? ORDER BY meeting_date DESC");
+            $stmt->execute([$institutionId]);
+            return $stmt->fetchAll();
+        }
         // Assuming a meetings table exists
         $stmt = $conn->prepare("SELECT * FROM agenda_items ORDER BY meeting_date DESC");
         $stmt->execute();
@@ -532,6 +589,13 @@ function getFollowUps()
     }
 
     try {
+        $institutionId = get_user_institution_id();
+        if ($institutionId) {
+            // Assuming a follow_ups table exists
+            $stmt = $conn->prepare("SELECT * FROM follow_ups WHERE institution_id = ? ORDER BY due_date");
+            $stmt->execute([$institutionId]);
+            return $stmt->fetchAll();
+        }
         // Assuming a follow_ups table exists
         $stmt = $conn->prepare("SELECT * FROM follow_ups ORDER BY due_date");
         $stmt->execute();
@@ -677,13 +741,7 @@ function getAllContacts()
 
     try {
         // Assuming a contacts table exists
-        $stmt = $conn->prepare("SELECT id, title, first_name, middle_name, last_name, logon_name, suffix,
-            contact_type, company_dept_name, active,
-            specialty_1, specialty_2, research_education,
-            street_address_1, street_address_2, city, state, zip,
-            main_phone, ext, alt_phone, fax, alt_fax,
-            cell_phone, pager, email,
-            created_at, updated_at FROM contacts");
+        $stmt = $conn->prepare("SELECT * FROM contacts");
         $stmt->execute();
         $contacts = $stmt->fetchAll();
         error_log("Fetched " . count($contacts) . " contacts from database");

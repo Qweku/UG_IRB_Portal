@@ -14,6 +14,7 @@
     <!-- Navbar -->
     <?php
     $navbar_display = is_admin_logged_in() || is_applicant_logged_in() ? 'block' : 'none';
+    $home_path =  is_applicant_logged_in() ? '/applicant-dashboard' : '/';
     ?>
     <nav class="navbar navbar-expand-lg navbar-dark" style="display: <?= htmlspecialchars($navbar_display); ?>;">
         
@@ -21,7 +22,7 @@
             <button class="btn btn-outline-light me-2 d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar">
                 <i class="fas fa-bars"></i>
             </button>
-            <a class="navbar-brand d-flex" href="/">
+            <a class="navbar-brand d-flex" href="<?= htmlspecialchars($home_path); ?>">
                 <img src="/admin/assets/images/ug_logo_white.png" alt="Noguchi Logo" height="70" class="d-inline-block align-text-top me-2">
                 <h2 class="m-auto"><strong>UG HARES Software</strong></h2>
             </a>
