@@ -4,8 +4,16 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 require_once '../includes/auth_check.php';
+require_once '../../includes/functions/csrf.php';
 require_once '../../includes/config/database.php';
 require_once '../../config.php';
+
+// Ensure session is started before CSRF operations
+if (session_status() === PHP_SESSION_NONE) {
+    session_name(CSRF_SESSION_NAME);
+    session_start();
+}
+
 header('Content-Type: application/json');
 
 function sendEmailWithAttachment($to, $subject, $message, $attachment = null) {
@@ -57,10 +65,17 @@ try {
         throw new Exception('Invalid request method');
     }
 
-    // CSRF validation for POST
-    if (!isset($_POST['csrf_token']) || empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+    // DEBUG: Log CSRF validation details
+    error_log("[CSRF DEBUG] Session status: " . session_status());
+    error_log("[CSRF DEBUG] Session token: " . ($_SESSION['csrf_token'] ?? 'EMPTY'));
+    error_log("[CSRF DEBUG] POST token: " . ($_POST['csrf_token'] ?? 'EMPTY'));
+
+    // CSRF validation
+    if (!isset($_POST['csrf_token']) || !csrf_validate()) {
+        error_log("[CSRF DEBUG] Validation failed!");
         throw new Exception('Invalid CSRF token');
     }
+    error_log("[CSRF DEBUG] Validation passed!");
 
     $studyId = $_POST['study_id'] ?? null;
     $recipients = $_POST['recipients'] ?? '';

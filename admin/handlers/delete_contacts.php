@@ -34,4 +34,3 @@ try {
     error_log("Error deleting contact: " . $e->getMessage());
     echo json_encode(['success' => false, 'message' => 'Database error']);
 }
-?>

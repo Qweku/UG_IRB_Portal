@@ -1003,7 +1003,7 @@ function getPersonnelEmails($study_id)
             // Match by full name: first_name + middle_name + last_name
             foreach ($contacts as $contact) {
                 $fullName = trim($contact['last_name'] . ' ' . ($contact['first_name'] ?? ''));
-                error_log("Comparing personnel '$name' with contact full name '$fullName'");
+                // error_log("Comparing personnel '$name' with contact full name '$fullName'");
                 if (strtolower($fullName) === strtolower($name) && !empty($contact['email'])) {
                     $emails[] = $contact['email'];
                     error_log("Matched personnel '$name' to email: " . $contact['email']);

@@ -50,4 +50,3 @@ try {
     error_log("Database error: " . $e->getMessage());
     echo json_encode(['status' => 'error', 'message' => 'Database error']);
 }
-?>

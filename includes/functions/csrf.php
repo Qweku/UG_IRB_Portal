@@ -21,14 +21,19 @@ function csrf_validate() {
         $sessionToken = $_SESSION['csrf_token'] ?? '';
         $postToken = $_POST['csrf_token'] ?? '';
         
-        // Clear the token after validation to prevent reuse
-        $_SESSION['csrf_token'] = '';
+        // DEBUG: Log validation details
+        error_log("[CSRF VALIDATE] Session token exists: " . (!empty($sessionToken) ? 'YES' : 'NO'));
+        error_log("[CSRF VALIDATE] POST token exists: " . (!empty($postToken) ? 'YES' : 'NO'));
         
+        // Token is not cleared - it persists for the session
         if (!$sessionToken || !$postToken) {
+            error_log("[CSRF VALIDATE] FAILED: Missing token");
             return false;
         }
         
-        return hash_equals($sessionToken, $postToken);
+        $match = hash_equals($sessionToken, $postToken);
+        error_log("[CSRF VALIDATE] Tokens match: " . ($match ? 'YES' : 'NO'));
+        return $match;
     }
     return true;
 }
