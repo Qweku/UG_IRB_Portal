@@ -8,7 +8,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 }
 
 // Include CSRF protection
-require_once '../../includes/functions/csrf.php';
+// require_once '../../includes/functions/csrf.php';
 $userId = null;
 if (isset($_SESSION['user_id'])) {
     $userId = $_SESSION['user_id'];
@@ -24,7 +24,7 @@ error_log("First time : " . $showPasswordModal);
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['new_password'])) {
 
     // Validate CSRF token
-    if (!isset($_POST['csrf_token']) || !csrf_validate_token($_POST['csrf_token'])) {
+    if (!isset($_POST['csrf_token']) || !csrf_validate()) {
         http_response_code(403);
         die('CSRF validation failed');
     }
@@ -101,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['new_password'])) {
 
                 <form id="passwordResetForm"
                     method="post">
-                    <?php echo csrf_token_field(); ?>
+                    <?php echo csrf_field(); ?>
 
                     <div class="mb-3">
                         <label class="form-label">New Password</label>

@@ -6,7 +6,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 }
 
 // Include CSRF protection
-require_once '../../includes/functions/csrf.php';
+// require_once '../../includes/functions/csrf.php';
 
 // Fetch institutions from the database
 $institutions = getAllInstitutions();
@@ -63,7 +63,7 @@ $institutions = getAllInstitutions();
                 <div class="modal-body">
                     <!-- Institution creation form -->
                     <form id="institutionForm">
-                        <input type="hidden" name="csrf_token" value="<?php echo csrf_generate_token(); ?>">
+                        <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
                         <div class="mb-3">
                             <label for="institutionName" class="form-label">Institution Name</label>
                             <input type="text" class="form-control" id="institutionName" name="institutionName" required>

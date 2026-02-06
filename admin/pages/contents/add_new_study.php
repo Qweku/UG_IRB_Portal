@@ -1,13 +1,25 @@
 <?php
 
+// Prevent caching
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: 0');
+
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    $session_name = 'ug_irb_session';
+    session_name($session_name);
+    session_start();
+}
+
 // Authentication check
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header('Location: /login');
     exit;
 }
 
-// Include CSRF protection
-require_once '../../includes/functions/csrf.php';
+// Include CSRF protection functions
+// require_once '../../includes/functions/csrf.php';
 
 // Initialize study variables with default values
 $study_vars = [
@@ -274,7 +286,15 @@ function formatFileSize($bytes) {
     <?php endif; ?>
 
     <form class="needs-validation" id="studyForm" enctype="multipart/form-data" novalidate>
-        <?php echo csrf_token_field(); ?>
+        <?php
+        // Debug logging for CSRF token generation
+        $token = csrf_token();
+        error_log("=== CSRF FORM DEBUG ===");
+        error_log("CSRF token generated: " . substr($token, 0, 8) . '...');
+        error_log("CSRF token in session: " . (isset($_SESSION['csrf_token']) ? 'set' : 'not set'));
+        error_log("=======================");
+        echo csrf_field();
+        ?>
         <input type="hidden" name="study_id" value="<?php echo $is_edit ? $study_id : ''; ?>">
         <input type="hidden" name="action" value="<?php echo $is_edit ? 'update_study' : 'add_study'; ?>">
         
@@ -716,7 +736,7 @@ function formatFileSize($bytes) {
             </div>
             <div class="modal-body">
                 <form id="personnelForm">
-                    <?php echo csrf_token_field(); ?>
+                    <?php echo csrf_field(); ?>
                     <div id="personnelFormContent">
                         <!-- Personnel form fields will be added here dynamically -->
                     </div>
@@ -773,7 +793,7 @@ function formatFileSize($bytes) {
             <!-- Modal Body -->
             <div class="modal-body">
                 <form id="saeForm">
-                    <?php echo csrf_token_field(); ?>
+                    <?php echo csrf_field(); ?>
                     <input type="hidden" name="action" value="add_sae">
                     <input type="hidden" name="protocol_id" value="<?php echo $study_id; ?>">
                     <!-- Event Details Section -->

@@ -1,8 +1,17 @@
 <?php
 declare(strict_types=1);
 
+// Load configuration FIRST - before any session operations
+require_once '../../config.php';
+
+// Start session with consistent session name
+if (session_status() === PHP_SESSION_NONE) {
+    $session_name = 'ug_irb_session';
+    session_name($session_name);
+    session_start();
+}
+
 require_once '../includes/auth_check.php';
-require_once '../../includes/config/database.php';
 require_once '../../includes/functions/csrf.php';
 
 header('Content-Type: application/json');
@@ -229,10 +238,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonError("Invalid request method", 405);
 }
 
-// CSRF validation
-if (!isset($_POST['csrf_token']) || !csrf_validate_token($_POST['csrf_token'])) {
-    jsonError("Invalid CSRF token", 403);
-}
+// CSRF validation already done above (lines 32-37)
+// Note: csrf_validate() clears the token after validation to prevent reuse
 
 $nextMeeting = '';
 
@@ -399,7 +406,6 @@ try {
     }
 
    
-
 
     // Handle agenda items: Update if exists (for edits), insert if not
     $agendaExists = false;

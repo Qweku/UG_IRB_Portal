@@ -6,7 +6,7 @@ declare(strict_types=1);
 // Bootstrap
 // --------------------------------------------------
 require_once 'config.php';
-require_once '/includes/functions/csrf.php';
+require_once 'includes/functions/csrf.php';
 
 // include 'admin/includes/header.php'; 
 
@@ -29,9 +29,9 @@ $segments = array_values(array_filter(explode('/', $path)));
 $section = $segments[0] ?? 'dashboard';
 $subpage = $segments[1] ?? null;
 
-// Set session name based on request path
-$session_name = in_array($section, ['dashboard', 'admin']) ? 'admin_session' : 'applicant_session';
-session_name($session_name);
+// Set consistent session name for entire application
+defined('CSRF_SESSION_NAME') || define('CSRF_SESSION_NAME', 'ug_irb_session');
+session_name(CSRF_SESSION_NAME);
 
 // --------------------------------------------------
 // Route map (supports sub-routes)
@@ -94,19 +94,41 @@ $routes = [
 // --------------------------------------------------
 $pageConfig = null;
 
-if($session_name === 'applicant_session') {
-    $section = $segments[0] ?? 'applicant-dashboard';
-}else{
-    $section = $segments[0] ?? 'dashboard';
-}
+error_log("SECTION BEFORE: " . $section);
+error_log("SUBPAGE BEFORE: " . ($subpage ?? 'null'));
+error_log("PATH: " . $path);
 
-if (isset($routes[$section])) {
-    if ($subpage && isset($routes[$section][$subpage])) {
-        $pageConfig = $routes[$section][$subpage];
-    } elseif (!$subpage && isset($routes[$section]['_'])) {
-        $pageConfig = $routes[$section]['_'];
+// Define top-level routes that should not be auto-converted
+$topLevelRoutes = ['login', 'logout', 'authenticate', 'studies', 'agenda', 'contacts', 'account-information', 'generate-letter'];
+
+if (in_array($section, $topLevelRoutes)) {
+    // Keep section as-is for top-level routes
+    error_log("TOP-LEVEL ROUTE DETECTED: " . $section);
+} else {
+    // Determine section based on URL path for section-based routes
+    if ($section === 'applicant-dashboard' || in_array($section, ['applicant', 'add-protocol'])) {
+        $section = 'applicant-dashboard';
+    } else {
+        $section = 'dashboard';
     }
 }
+
+error_log("SECTION AFTER: " . $section);
+
+if (isset($routes[$section])) {
+    error_log("ROUTE FOUND FOR SECTION: " . $section);
+    if ($subpage && isset($routes[$section][$subpage])) {
+        $pageConfig = $routes[$section][$subpage];
+        error_log("MATCHED SUBPAGE ROUTE: " . $subpage);
+    } elseif (!$subpage && isset($routes[$section]['_'])) {
+        $pageConfig = $routes[$section]['_'];
+        error_log("MATCHED DEFAULT ROUTE");
+    }
+} else {
+    error_log("NO ROUTE FOUND FOR SECTION: " . $section);
+}
+
+error_log("PAGECONFIG: " . ($pageConfig ? json_encode($pageConfig) : 'null'));
 
 // --------------------------------------------------
 // Role check functions
@@ -114,7 +136,7 @@ if (isset($routes[$section])) {
 function isUserAdmin(): bool
 {
     if (session_status() === PHP_SESSION_NONE) {
-        session_name('admin_session');
+        session_name(CSRF_SESSION_NAME);
         session_start();
     }
     return isset($_SESSION['logged_in']) && isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
@@ -123,7 +145,7 @@ function isUserAdmin(): bool
 function isUserSuperAdmin(): bool
 {
     if (session_status() === PHP_SESSION_NONE) {
-        session_name('admin_session');
+        session_name(CSRF_SESSION_NAME);
         session_start();
     }
     return isset($_SESSION['logged_in']) && isset($_SESSION['role']) && $_SESSION['role'] === 'super_admin';
@@ -132,7 +154,7 @@ function isUserSuperAdmin(): bool
 function isUserApplicant(): bool
 {
     if (session_status() === PHP_SESSION_NONE) {
-        session_name('applicant_session');
+        session_name(CSRF_SESSION_NAME);
         session_start();
     }
     return isset($_SESSION['logged_in']) && isset($_SESSION['role']) && ($_SESSION['role'] === 'applicant' || $_SESSION['role'] === 'reviewer');
@@ -141,11 +163,7 @@ function isUserApplicant(): bool
 function requireRole(array $allowedRoles): bool
 {
     if (session_status() === PHP_SESSION_NONE) {
-        if (in_array('applicant', $allowedRoles) || in_array('reviewer', $allowedRoles)) {
-            session_name('applicant_session');
-        } else {
-            session_name('admin_session');
-        }
+        session_name(CSRF_SESSION_NAME);
         session_start();
     }
     return isset($_SESSION['logged_in']) && isset($_SESSION['role']) && in_array($_SESSION['role'], $allowedRoles);
@@ -163,10 +181,15 @@ try {
 
 
         error_log("USER STATUS: " . (isUserAdmin() ? "Admin" : (isUserSuperAdmin() ? "Super Admin" : "Applicant")));
-        error_log("USER SESSION: " . ($session_name));
-        error_log("Applicant Path: {$applicantBase}{$file}");
-        error_log("Admin Path: {$pageBase}{$file}");
+        error_log("USER SESSION: " . CSRF_SESSION_NAME);
+        error_log("ROLES: " . json_encode($roles));
+        error_log("FILE: " . $file);
+        
+        // Debug session status
+        error_log("SESSION STATUS before requireRole: " . session_status());
+        
         if (!empty($roles) && !requireRole($roles)) {
+            error_log("requireRole failed - returning 403");
             http_response_code(403);
             require_once $forbiddenPage;
         } elseif (file_exists($pageBase . $file)) {
@@ -196,4 +219,4 @@ try {
 
 
 
-// include 'admin/includes/footer.php';
+// include admin/includes/footer.php;

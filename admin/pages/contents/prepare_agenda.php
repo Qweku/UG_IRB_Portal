@@ -7,7 +7,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 }
 
 // Include CSRF protection
-require_once '../../includes/functions/csrf.php';
+// require_once '../../includes/functions/csrf.php';
 
 try {
     $db = new Database();
@@ -253,7 +253,7 @@ function esc($value) {
 
     <!-- Main Form Content -->
     <form class="needs-validation" id="agendaForm">
-        <?php echo csrf_token_field(); ?>
+        <?php echo csrf_field(); ?>
         <div class="main-content">
             <!-- Study Header Section -->
             <div class="row mb-4">

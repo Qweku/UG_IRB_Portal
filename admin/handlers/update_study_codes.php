@@ -13,7 +13,7 @@ if (!$data || !isset($data['id']) || !isset($data['study_status'])) {
 }
 
 // CSRF validation
-if (!isset($data['csrf_token']) || !csrf_validate_token($data['csrf_token'])) {
+if (!isset($data['csrf_token']) || !csrf_validate()) {
     echo json_encode(['success' => false, 'message' => 'Invalid CSRF token']);
     exit;
 }

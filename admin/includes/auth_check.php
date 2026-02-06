@@ -4,9 +4,13 @@
  * Checks if user is authenticated before allowing access to protected resources
  */
 
+// Use consistent session name across entire application
+defined('CSRF_SESSION_NAME') || define('CSRF_SESSION_NAME', 'ug_irb_session');
+
 function require_auth() {
-    // Start session if not already started
+    // Start session if not already started with consistent session name
     if (session_status() === PHP_SESSION_NONE) {
+        session_name(CSRF_SESSION_NAME);
         session_start();
     }
     
@@ -25,8 +29,9 @@ function require_auth() {
  * @return bool
  */
 function is_authenticated() {
-    // Start session if not already started
+    // Start session if not already started with consistent session name
     if (session_status() === PHP_SESSION_NONE) {
+        session_name(CSRF_SESSION_NAME);
         session_start();
     }
     
@@ -38,8 +43,9 @@ function is_authenticated() {
  * @return int|null
  */
 function get_current_user_id() {
-    // Start session if not already started
+    // Start session if not already started with consistent session name
     if (session_status() === PHP_SESSION_NONE) {
+        session_name(CSRF_SESSION_NAME);
         session_start();
     }
     

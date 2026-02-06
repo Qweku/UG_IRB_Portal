@@ -31,28 +31,6 @@ if (getenv('APP_ENV') === 'production') {
     error_reporting(E_ALL);
 }
 
-// Session will be started in individual pages with appropriate names
-
-// Configure session settings for better persistence
-ini_set('session.cookie_httponly', 1);
-ini_set('session.use_only_cookies', 1);
-ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on');
-ini_set('session.cookie_samesite', 'Strict');
-// ini_set('session.gc_maxlifetime', 3600); // 10 minutes
-ini_set('session.cookie_lifetime', 3600); // 10 minutes
-
-// Set session save path if needed
-if (!is_writable(session_save_path())) {
-    // Try to create a custom session directory
-    $custom_session_path = __DIR__ . '/sessions';
-    if (!is_dir($custom_session_path)) {
-        mkdir($custom_session_path, 0755, true);
-    }
-    if (is_writable($custom_session_path)) {
-        session_save_path($custom_session_path);
-    }
-}
-
 // Base path configuration
 define('BASE_URL', getenv('BASE_URL') ?: 'http://localhost/UG_IRB_Portal/');
 define('BASE_PATH', dirname(__FILE__));

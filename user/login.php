@@ -1,6 +1,10 @@
 <?php
 // require_once '../includes/functions/csrf.php';
 
+// Include necessary files
+require_once __DIR__ . '/../includes/functions/helpers.php';
+require_once __DIR__ . '/../includes/functions/csrf.php';
+
 if (is_admin_logged_in()) {
     header('Location: /dashboard');
     exit;
@@ -65,7 +69,7 @@ if (is_admin_logged_in()) {
             </div>
             <div class="card-body p-4">
                 <form action="/authenticate" method="post">
-                    <input type="hidden" name="csrf_token" value="<?php echo csrf_generate_token(); ?>">
+                    <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
                     <div class="mb-3">
                         <label for="email" class="form-label">Email Address</label>
                         <input type="email" class="form-control" id="email" name="email" required>

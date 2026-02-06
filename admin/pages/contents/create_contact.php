@@ -6,7 +6,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 }
 
 // Include CSRF protection
-require_once '../../includes/functions/csrf.php';
+// require_once '../../includes/functions/csrf.php';
 
 $specialties = getSpecialties();
 $allContacts = getAllContacts();
@@ -116,7 +116,7 @@ $contactDocs = getContactDocs($contactId);
             <!-- Right Column - Contact Details -->
             <div class="col-md-8">
                 <form id="contactForm">
-                    <?php echo csrf_token_field(); ?>
+                    <?php echo csrf_field(); ?>
                     <input type="hidden" name="id" id="contact_id">
 
                     <!-- Basic Information Card -->

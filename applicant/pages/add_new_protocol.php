@@ -2,7 +2,7 @@
 // require_once '../../includes/functions/helpers.php';
 
 // Include CSRF protection
-require_once '../../includes/functions/csrf.php';
+// require_once '../../includes/functions/csrf.php';
 
 // Fetch dropdown data
 // $sponsors = getSponsors();
@@ -36,7 +36,7 @@ require_once '../../includes/functions/csrf.php';
     </div>
 
     <form id="protocolForm">
-        <?php echo csrf_token_field(); ?>
+        <?php echo csrf_field(); ?>
         <div class="row">
             <div class="col-md-6">
                 <!-- Basic Information -->

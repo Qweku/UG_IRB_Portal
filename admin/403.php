@@ -18,8 +18,8 @@
                     <button onclick="history.back()" class="btn btn-outline-primary">
                         <i class="fas fa-arrow-left me-2"></i>Go Back
                     </button>
-                    <a href="/dashboard" class="btn btn-primary">
-                        <i class="fas fa-home me-2"></i>Go to Dashboard
+                    <a href="/logout" class="btn btn-primary">
+                        <i class="fas fa-sign-out-alt me-2"></i>Logout
                     </a>
                 </div>
             </div>

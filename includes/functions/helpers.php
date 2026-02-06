@@ -7,11 +7,15 @@
 // require_once "/config.php";
 require_once __DIR__ . '/../config/database.php';
 
+// Use consistent session name across entire application
+defined('CSRF_SESSION_NAME') || define('CSRF_SESSION_NAME', 'ug_irb_session');
+
 
 // Fetch user instition id from session
 function get_user_institution_id()
 {
     if (session_status() === PHP_SESSION_NONE) {
+        session_name(CSRF_SESSION_NAME);
         session_start();
     }
     return isset($_SESSION['institution_id']) ? $_SESSION['institution_id'] : null;
@@ -88,7 +92,7 @@ function executeAssocQuery($query, $params = [])
 function is_admin_logged_in()
 {
     if (session_status() === PHP_SESSION_NONE) {
-        session_name('admin_session');
+        session_name(CSRF_SESSION_NAME);
         session_start();
     }
     return isset($_SESSION['logged_in']) && isset($_SESSION['role']) && ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'super_admin');
@@ -98,7 +102,7 @@ function is_admin_logged_in()
 function is_applicant_logged_in()
 {
     if (session_status() === PHP_SESSION_NONE) {
-        session_name('applicant_session');
+        session_name(CSRF_SESSION_NAME);
         session_start();
     }
     return isset($_SESSION['logged_in']) && isset($_SESSION['role']) && ($_SESSION['role'] === 'applicant' || $_SESSION['role'] === 'reviewer');

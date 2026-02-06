@@ -5,9 +5,10 @@ require_once '../../includes/functions/helpers.php';
 
 header('Content-Type: application/json');
 
-// Start session to get user role
+// Start session with consistent session name
 if (session_status() === PHP_SESSION_NONE) {
-    session_name('admin_session');
+    defined('CSRF_SESSION_NAME') || define('CSRF_SESSION_NAME', 'ug_irb_session');
+    session_name(CSRF_SESSION_NAME);
     session_start();
 }
 
