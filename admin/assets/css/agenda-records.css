@@ -1,0 +1,76 @@
+/**
+ * Agenda Records Styles
+ * Uses unified design system from admin-commons.css
+ */
+
+/* Import Unified Design System */
+@import url('admin-commons.css');
+
+/* ==========================================================================
+   PAGE-SPECIFIC OVERRIDES
+   ========================================================================== */
+
+/* Selected Row */
+.selected {
+    background-color: var(--admin-bg-subtle) !important;
+}
+
+/* Agenda Records Table */
+.agenda-records-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--admin-white);
+    border-radius: var(--admin-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--admin-shadow-sm);
+}
+
+.agenda-records-table thead th {
+    background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-primary-dark) 100%);
+    color: var(--admin-white);
+    border: none;
+    padding: var(--admin-space-3) var(--admin-space-4);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: var(--admin-font-size-xs);
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.agenda-records-table tbody tr {
+    transition: all var(--admin-transition-fast);
+    border-bottom: 1px solid var(--admin-border-light);
+}
+
+.agenda-records-table tbody tr:hover {
+    background-color: var(--admin-bg-subtle);
+}
+
+.agenda-records-table tbody td {
+    padding: var(--admin-space-3) var(--admin-space-4);
+    border: none;
+    vertical-align: middle;
+    color: var(--admin-text-secondary);
+}
+
+.agenda-records-table tbody tr.selected td {
+    background-color: var(--admin-bg-subtle);
+    font-weight: 500;
+}
+
+/* Modern Agenda Records Page */
+.modern-agenda-records {
+    padding: var(--admin-space-4) 0;
+    background: linear-gradient(135deg, var(--admin-bg-light) 0%, var(--admin-gray-100) 100%);
+    min-height: calc(100vh - 120px);
+}
+
+/* Page Header */
+.page-header {
+    background: var(--admin-white);
+    border-radius: var(--admin-radius-lg);
+    padding: var(--admin-space-4);
+    margin-bottom: var(--admin-space-4);
+    box-shadow: var(--admin-shadow-md);
+    border-bottom: 2px solid var(--admin-accent);
+}

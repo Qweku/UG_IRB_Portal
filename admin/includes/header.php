@@ -7,56 +7,81 @@
     <title>UG HARES Software</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="/admin/assets/style.css" rel="stylesheet">
+    <link href="/admin/assets/css/admin-commons.css" rel="stylesheet">
+    <link href="/admin/assets/css/sidebar.css" rel="stylesheet">
+    <link href="/admin/assets/css/profile.css" rel="stylesheet">
+    <link href="/admin/assets/css/applicant-dashboard.css" rel="stylesheet">
+    <link href="/admin/assets/css/style.css" rel="stylesheet">
+    <link href="/admin/assets/css/header.css" rel="stylesheet">
+    <link href="/admin/assets/css/dashboard.css" rel="stylesheet">
+    <link href="/admin/assets/css/administration.css" rel="stylesheet">
+    <link href="/admin/assets/css/follow-up.css" rel="stylesheet">
+    <link href="/admin/assets/css/letter-manager.css" rel="stylesheet">
+    <link href="/admin/assets/css/shared-forms.css" rel="stylesheet">
+    <link href="/admin/assets/css/create-contact.css" rel="stylesheet">
+    <link href="/admin/assets/css/account-information.css" rel="stylesheet">
+    <link href="/admin/assets/css/post-meeting.css" rel="stylesheet">
 </head>
 
 <body>
-    <!-- Navbar -->
+    <!-- Premium Navbar -->
     <?php
     $navbar_display = is_admin_logged_in() || is_applicant_logged_in() ? 'block' : 'none';
-    $home_path =  is_applicant_logged_in() ? '/applicant-dashboard' : '/';
+    $home_path = is_applicant_logged_in() ? '/applicant-dashboard' : '/dashboard';
+    $userName = $_SESSION['full_name'] ?? 'User';
+    $userRole = $_SESSION['role'] ?? 'admin';
     ?>
-    <nav class="navbar navbar-expand-lg navbar-dark" style="display: <?= htmlspecialchars($navbar_display); ?>;">
-        
-    <div class="container-fluid">
-            <button class="btn btn-outline-light me-2 d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar">
+    
+    <nav class="navbar navbar-expand-lg premium-navbar" style="display: <?= htmlspecialchars($navbar_display); ?>;">
+        <div class="container-fluid">
+            <!-- Sidebar Toggle (Mobile) -->
+            <button class="sidebar-toggle me-3 d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar">
                 <i class="fas fa-bars"></i>
             </button>
-            <a class="navbar-brand d-flex" href="<?= htmlspecialchars($home_path); ?>">
-                <img src="/admin/assets/images/ug_logo_white.png" alt="Noguchi Logo" height="70" class="d-inline-block align-text-top me-2">
-                <h2 class="m-auto"><strong>UG HARES Software</strong></h2>
+            
+            <!-- Brand -->
+            <a class="navbar-brand-premium" href="<?= htmlspecialchars($home_path); ?>">
+                <img src="/admin/assets/images/ug_logo_white.png" alt="Noguchi Logo" class="brand-logo-img">
+                <div class="brand-text-premium">
+                    <span class="brand-title">UG HARES</span>
+                    <span class="brand-subtitle">Research Portal</span>
+                </div>
             </a>
+            
+            <!-- Mobile Toggle -->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse justify-content-end ms-auto" id="navbarNav">
-                <div class="d-flex ">
-                    <!-- <span class="navbar-text me-3" id="session-timer">
-                        <i class="fas fa-clock me-1"></i>
-                        <span id="timer-display">30:00</span>
-                    </span> -->
+            
+            <!-- Navbar Content -->
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <div class="nav-actions">
+                    <!-- Notifications -->
+                    <a href="#" class="nav-btn" title="Notifications">
+                        <i class="fas fa-bell"></i>
+                    </a>
+                    
+                    <!-- Settings -->
+                    <a href="#" class="nav-btn" title="Settings">
+                        <i class="fas fa-cog"></i>
+                    </a>
+                    
+                    <!-- User Info -->
+                    <div class="user-info-premium">
+                        <div class="user-avatar-nav">
+                            <?php echo strtoupper(substr($userName, 0, 1)); ?>
+                        </div>
+                        <div class="user-text-nav">
+                            <span class="user-name-nav"><?php echo htmlspecialchars($userName); ?></span>
+                            <span class="user-role-nav"><?php echo htmlspecialchars($userRole); ?></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Logout -->
+                    <a href="/logout" class="nav-btn logout" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </a>
                 </div>
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="fas fa-bell"></i></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="fas fa-cog"></i></a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt me-1"></i> Logout</a>
-                    </li>
-                </ul>
-
             </div>
         </div>
     </nav>
-
-    <!-- <script>
-        // Session timer variables
-        // const loginTime = <?php 
-        //echo isset($_SESSION['login_time']) ? $_SESSION['login_time'] : 'null'; ?>;
-        // const sessionDuration = <?php 
-        //echo ini_get('session.gc_maxlifetime'); ?>; // Session lifetime in seconds from PHP config
-    </script> -->

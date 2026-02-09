@@ -7,6 +7,7 @@ $allLetters = [];
 
 
 
+
 try {
     $db = new Database();
     $conn = $db->connect();
@@ -50,28 +51,32 @@ try {
 
 ?>
 <!-- Follow-Up Manager Content -->
-<div class="follow-up-manager">
+<div class="content-wrapper">
     <!-- Page Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="mb-1">Follow-Up Manager</h2>
-            <p class="text-muted mb-0">Track and manage letter responses and follow-ups</p>
-        </div>
-        <div class="badge bg-primary fs-6">
-            <i class="fas fa-envelope me-1"></i> Letter Tracking
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="page-header-card">
+                        <div class="d-flex align-items-center">
+                            <div class="header-icon-wrapper">
+                                <i class="fas fa-envelope-open-text"></i>
+                            </div>
+                            <div class="header-content">
+                                <h4 class="page-title">Follow-Up Manager</h4>
+                                <p class="page-subtitle">Track and manage letter responses and follow-ups</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Filter Cards -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card filter-card">
-                <div class="card-header bg-light">
-                    <h6 class="mb-0">
-                        <i class="fas fa-filter me-2 text-primary"></i>
-                        Letter Display Options
-                    </h6>
-                </div>
+    <div class="content-body">
+        <div class="container-fluid">
+            <!-- Filter Cards -->
+            <div class="filter-section">
                 <div class="card-body">
                     <div class="filter-options">
                         <div class="filter-buttons">
@@ -81,7 +86,7 @@ try {
                                 <span class="badge bg-warning ms-2"><?php echo ($pendingReports['count'])?></span>
                             </button>
                             <button class="filter-btn">
-                                <i class="fas fa-exclamation-circle me-2"></i>
+                                <i class="fas fa-check-circle me-2"></i>
                                 Response Required - Completed
                                 <span class="badge bg-success ms-2"><?php echo ($completedReports['count'])?></span>
                             </button>
@@ -91,13 +96,13 @@ try {
                                 <span class="badge bg-danger ms-2"><?php echo ($pastReports['count'])?></span>
                             </button>
                             <button class="filter-btn">
-                                <i class="fas fa-envelope-open me-2"></i>
+                                <i class="fas fa-envelope me-2"></i>
                                 All Letters
                                 <span class="badge bg-primary ms-2"><?php echo ($allLetters['count'])?></span>
                             </button>
                         </div>
 
-                        <div class="date-filter mt-3">
+                        <div class="date-filter mt-4">
                             <div class="row align-items-center">
                                 <div class="col-auto">
                                     <label class="form-label fw-semibold mb-0">For follow-up on or before</label>
@@ -120,144 +125,95 @@ try {
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Search Bar -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <div class="input-group">
-                        <span class="input-group-text bg-light">
-                            <i class="fas fa-search text-muted"></i>
-                        </span>
-                        <input type="text" class="form-control" placeholder="Search by IRB#, PI Name, or Letter Type...">
-                        <button class="btn btn-primary">
-                            <i class="fas fa-search me-1"></i> Search
+            <!-- Search Bar -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="premium-card">
+                        <div class="card-body">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light">
+                                    <i class="fas fa-search text-muted"></i>
+                                </span>
+                                <input type="text" class="form-control" placeholder="Search by IRB#, PI Name, or Letter Type...">
+                                <button class="btn btn-primary">
+                                    <i class="fas fa-search me-1"></i> Search
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Letters Table -->
+            <div class="premium-card mb-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-list-alt me-2 text-primary"></i>
+                        Letters Requiring Follow-Up
+                    </h6>
+                    <div class="d-flex align-items-center">
+                        <span class="text-white me-3">Showing 10 of 24 letters</span>
+                        <button class="btn btn-sm btn-outline-default text-white me-2">
+                            <i class="fas fa-download  me-1"></i> Export
+                        </button>
+                        <button class="btn btn-sm btn-primary">
+                            <i class="fas fa-sync-alt me-1"></i> Refresh
                         </button>
                     </div>
                 </div>
+                <div class="card-body p-3">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-premium mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="120px">
+                                        IRB#
+                                    </th>
+                                    <th width="100px">Follow Up?</th>
+                                    <th>Follow Up Date</th>
+                                    <th>Letter</th>
+                                    <th>To</th>
+                                    <th width="120px">Date Sent</th>
+                                    <th width="120px">Due By</th>
+                                    <th width="80px">Status</th>
+                                    <th width="100px">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Letters Table -->
-    <div class="card main-card">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-            <h6 class="mb-0">
-                <i class="fas fa-list-alt me-2 text-primary"></i>
-                Letters Requiring Follow-Up
-            </h6>
-            <div class="d-flex align-items-center">
-                <span class="text-muted me-3">Showing 10 of 24 letters</span>
-                <button class="btn btn-sm btn-outline-primary me-2">
-                    <i class="fas fa-download me-1"></i> Export
-                </button>
-                <button class="btn btn-sm btn-primary">
-                    <i class="fas fa-sync-alt me-1"></i> Refresh
-                </button>
-            </div>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th width="120px">
-
-                                IRB#
-                            </th>
-                            <th width="100px">Follow Up?</th>
-                            <th>Follow Up Date</th>
-                            <th>Letter</th>
-                            <th>To</th>
-                            <th width="120px">Date Sent</th>
-                            <th width="120px">Due By</th>
-                            <th width="80px">Status</th>
-                            <th width="100px">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Action Buttons -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="mb-0 fw-bold">Bulk Actions</h6>
-                            <small class="text-muted">Apply actions to selected letters</small>
-                        </div>
-                        <div>
-                            <button class="btn btn-success me-2">
-                                <i class="fas fa-paper-plane me-1"></i> Send Follow-Up Letter
-                            </button>
-                            <button class="btn btn-primary me-2">
-                                <i class="fas fa-file-pdf me-1"></i> Generate Follow-Up Report
-                            </button>
-                            
+            <!-- Action Buttons -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="premium-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0 fw-bold">Bulk Actions</h6>
+                                    <small class="text-muted">Apply actions to selected letters</small>
+                                </div>
+                                <div>
+                                    <button class="btn btn-success me-2">
+                                        <i class="fas fa-paper-plane me-1"></i> Send Follow-Up Letter
+                                    </button>
+                                    <button class="btn btn-primary me-2">
+                                        <i class="fas fa-file-pdf me-1"></i> Generate Follow-Up Report
+                                    </button>
+                                    
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Quick Stats -->
-    <!-- <div class="row mt-4">
-        <div class="col-md-3">
-            <div class="card stat-card">
-                <div class="card-body text-center">
-                    <div class="stat-icon bg-warning">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <h3 class="text-warning mt-3">12</h3>
-                    <p class="text-muted mb-0">Waiting Response</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card stat-card">
-                <div class="card-body text-center">
-                    <div class="stat-icon bg-danger">
-                        <i class="fas fa-exclamation-triangle"></i>
-                    </div>
-                    <h3 class="text-danger mt-3">8</h3>
-                    <p class="text-muted mb-0">Past Due</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card stat-card">
-                <div class="card-body text-center">
-                    <div class="stat-icon bg-success">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <h3 class="text-success mt-3">136</h3>
-                    <p class="text-muted mb-0">Completed</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card stat-card">
-                <div class="card-body text-center">
-                    <div class="stat-icon bg-primary">
-                        <i class="fas fa-envelope"></i>
-                    </div>
-                    <h3 class="text-primary mt-3">24</h3>
-                    <p class="text-muted mb-0">Require Action</p>
-                </div>
-            </div>
-        </div>
-    </div> -->
 </div>
 
 <script>

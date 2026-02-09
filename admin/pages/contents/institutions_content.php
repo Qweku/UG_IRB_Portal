@@ -8,11 +8,39 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 // Include CSRF protection
 // require_once '../../includes/functions/csrf.php';
 
-// Fetch institutions from the database
-$institutions = getAllInstitutions();
+// Pagination parameters
+$limit = 5;
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$offset = ($page - 1) * $limit;
 
+// Get total count of institutions
+$db = new Database();
+$conn = $db->connect();
+$total_records = 0;
+if ($conn) {
+    try {
+        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM institutions");
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $total_records = $result['count'] ?? 0;
+    } catch (PDOException $e) {
+        error_log("Error counting institutions: " . $e->getMessage());
+    }
+}
+$total_pages = ceil($total_records / $limit);
 
+// Fetch institutions from the database with pagination
+$institutions = getAllInstitutions($limit, $offset);
 
+// Build query string for pagination links (preserve filter params)
+function buildQueryString($exclude = [])
+{
+    $params = $_GET;
+    foreach ($exclude as $key) {
+        unset($params[$key]);
+    }
+    return http_build_query($params);
+}
 
 ?>
 
@@ -50,7 +78,87 @@ $institutions = getAllInstitutions();
             </tbody>
         </table>
 
-    </div>
+                        <!-- Pagination -->
+                        <?php if ($total_pages > 1): ?>
+                            <div class="pagination-wrapper mt-3">
+                                <nav aria-label="Institutions pagination">
+                                    <ul class="pagination justify-content-center mb-0">
+                                        <?php
+                                        $queryString = buildQueryString(['page']);
+                                        $currentUrl = strtok($_SERVER['REQUEST_URI'], '?');
+                                        $separator = empty($queryString) ? '?' : '?' . $queryString . '&';
+                                        ?>
+                                        <!-- First Page -->
+                                        <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
+                                            <a class="page-link" href="<?php echo $currentUrl . $separator . 'page=1'; ?>" aria-label="First">
+                                                <i class="fas fa-angle-double-left"></i>
+                                            </a>
+                                        </li>
+                                        <!-- Previous Page -->
+                                        <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
+                                            <a class="page-link" href="<?php echo $currentUrl . $separator . 'page=' . max(1, $page - 1); ?>" aria-label="Previous">
+                                                <i class="fas fa-chevron-left"></i>
+                                            </a>
+                                        </li>
+
+                                        <?php
+                                        // Show limited page numbers around current page
+                                        $startPage = max(1, min($page - 2, $total_pages - 4));
+                                        $endPage = min($total_pages, max(5, $page + 2));
+
+                                        if ($startPage > 1):
+                                        ?>
+                                            <li class="page-item disabled">
+                                                <span class="page-link">...</span>
+                                            </li>
+                                        <?php endif; ?>
+
+                                        <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
+                                            <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
+                                                <a class="page-link" href="<?php echo $currentUrl . $separator . 'page=' . $i; ?>">
+                                                    <?php echo $i; ?>
+                                                    <?php if ($i == $page): ?>
+                                                        <span class="visually-hidden">(current)</span>
+                                                    <?php endif; ?>
+                                                </a>
+                                            </li>
+                                        <?php endfor; ?>
+
+                                        <?php if ($endPage < $total_pages): ?>
+                                            <li class="page-item disabled">
+                                                <span class="page-link">...</span>
+                                            </li>
+                                        <?php endif; ?>
+
+                                        <!-- Next Page -->
+                                        <li class="page-item <?php echo $page >= $total_pages ? 'disabled' : ''; ?>">
+                                            <a class="page-link" href="<?php echo $currentUrl . $separator . 'page=' . min($total_pages, $page + 1); ?>" aria-label="Next">
+                                                <i class="fas fa-chevron-right"></i>
+                                            </a>
+                                        </li>
+                                        <!-- Last Page -->
+                                        <li class="page-item <?php echo $page >= $total_pages ? 'disabled' : ''; ?>">
+                                            <a class="page-link" href="<?php echo $currentUrl . $separator . 'page=' . $total_pages; ?>" aria-label="Last">
+                                                <i class="fas fa-angle-double-right"></i>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                                <div class="text-center mt-2">
+                                    <span class="text-muted small">
+                                        Showing page <?php echo $page; ?> of <?php echo $total_pages; ?>
+                                        (<?php echo $total_records; ?> total institutions)
+                                    </span>
+                                </div>
+                            </div>
+                        <?php elseif ($total_records > 0): ?>
+                            <div class="text-center mt-3">
+                                <span class="text-muted small">
+                                    Showing all <?php echo $total_records; ?> institutions
+                                </span>
+                            </div>
+                        <?php endif; ?>
+                    </div>
 
     <!-- Create New Institution Modal -->
     <div class="modal fade" id="createInstitutionModal" tabindex="-1" aria-labelledby="createInstitutionModalLabel" aria-hidden="true">

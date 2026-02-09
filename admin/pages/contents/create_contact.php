@@ -96,9 +96,9 @@ $contactDocs = getContactDocs($contactId);
 
                                             <!-- Show last name and first but if empty show company name -->
                                             <?php if (empty($contact['first_name']) && empty($contact['last_name'])): ?>
-                                                <td><?= htmlspecialchars($contact['company_dept_name']) ?></td>
+                                                <td><?= htmlspecialchars($contact['company_dept_name'] ?? '') ?></td>
                                             <?php else: ?>
-                                                <td><?= htmlspecialchars($contact['last_name'] . ', ' . $contact['first_name']) ?></td>
+                                                <td><?= htmlspecialchars(($contact['last_name'] ?? '') . ', ' . ($contact['first_name'] ?? '')) ?></td>
                                             <?php endif; ?>
 
                                             <td><button class="btn btn-sm btn-danger" onclick="deleteContact(<?= $contact['id'] ?>)"><i class="fas fa-trash"></i></button></td>
@@ -174,7 +174,7 @@ $contactDocs = getContactDocs($contactId);
                                         <label class="form-label fw-semibold">Specialty</label>
                                         <select type="text" name="specialty_1" class="form-select">
                                             <?php foreach ($specialties as $spec): ?>
-                                                <option value="<?= htmlspecialchars($spec) ?>"><?php echo htmlspecialchars($spec); ?></option>
+                                                <option value="<?= htmlspecialchars($spec ?? '') ?>"><?php echo htmlspecialchars($spec ?? ''); ?></option>
                                             <?php endforeach; ?>
                                         </select>
                                     </div>
@@ -182,7 +182,7 @@ $contactDocs = getContactDocs($contactId);
                                         <label class="form-label fw-semibold">Specialty 2</label>
                                         <select type="text" name="specialty_2" class="form-select">
                                             <?php foreach ($specialties as $spec): ?>
-                                                <option value="<?= htmlspecialchars($spec) ?>"><?php echo htmlspecialchars($spec); ?></option>
+                                                <option value="<?= htmlspecialchars($spec ?? '') ?>"><?php echo htmlspecialchars($spec ?? ''); ?></option>
                                             <?php endforeach; ?>
                                         </select>
                                     </div>

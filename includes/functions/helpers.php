@@ -14,10 +14,7 @@ defined('CSRF_SESSION_NAME') || define('CSRF_SESSION_NAME', 'ug_irb_session');
 // Fetch user instition id from session
 function get_user_institution_id()
 {
-    if (session_status() === PHP_SESSION_NONE) {
-        session_name(CSRF_SESSION_NAME);
-        session_start();
-    }
+    // Session is already started in index.php, just return the value
     return isset($_SESSION['institution_id']) ? $_SESSION['institution_id'] : null;
 }
 
@@ -91,20 +88,22 @@ function executeAssocQuery($query, $params = [])
  */
 function is_admin_logged_in()
 {
-    if (session_status() === PHP_SESSION_NONE) {
-        session_name(CSRF_SESSION_NAME);
-        session_start();
+    // Session is already started in index.php, just verify it's active
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        return isset($_SESSION['logged_in']) && isset($_SESSION['role']) && ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'super_admin');
     }
+    // Fallback: check if session variables exist (for included files before index.php)
     return isset($_SESSION['logged_in']) && isset($_SESSION['role']) && ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'super_admin');
 }
 
 
 function is_applicant_logged_in()
 {
-    if (session_status() === PHP_SESSION_NONE) {
-        session_name(CSRF_SESSION_NAME);
-        session_start();
+    // Session is already started in index.php, just verify it's active
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        return isset($_SESSION['logged_in']) && isset($_SESSION['role']) && ($_SESSION['role'] === 'applicant' || $_SESSION['role'] === 'reviewer');
     }
+    // Fallback: check if session variables exist
     return isset($_SESSION['logged_in']) && isset($_SESSION['role']) && ($_SESSION['role'] === 'applicant' || $_SESSION['role'] === 'reviewer');
 }
 
@@ -272,9 +271,15 @@ function getActionLetters()
 }
 
 
-function getAgendaRecords()
+function getAgendaRecords($limit = null, $offset = null)
 {
     $institutionId = get_user_institution_id();
+    if ($limit !== null && $offset !== null) {
+        if ($institutionId) {
+            return executeAssocQuery("SELECT irb_code, meeting_date, agenda_heading FROM agenda_records WHERE institution_id = ? ORDER BY meeting_date DESC LIMIT ? OFFSET ?", [$institutionId, $limit, $offset]);
+        }
+        return executeAssocQuery("SELECT irb_code, meeting_date, agenda_heading FROM agenda_records ORDER BY meeting_date DESC LIMIT ? OFFSET ?", [$limit, $offset]);
+    }
     if ($institutionId) {
         return executeAssocQuery("SELECT irb_code, meeting_date, agenda_heading FROM agenda_records WHERE institution_id = ? ORDER BY meeting_date DESC", [$institutionId]);
     }
@@ -286,8 +291,11 @@ function getLetterTemplates()
     return executeAssocQuery("SELECT * FROM irb_templates ORDER BY letter_type ASC");
 }
 
-function getAllInstitutions()
+function getAllInstitutions($limit = null, $offset = null)
 {
+    if ($limit !== null && $offset !== null) {
+        return executeAssocQuery("SELECT * FROM institutions ORDER BY id ASC LIMIT ? OFFSET ?", [$limit, $offset]);
+    }
     return executeAssocQuery("SELECT * FROM institutions ORDER BY id ASC");
 }
 
@@ -299,7 +307,7 @@ function getAllInstitutions()
  * @param string $sort_by Sort by (protocol_number, approval_date, title)
  * @return array
  */
-function getStudies($status = 'all', $review_type = 'all', $pi_name = '', $sort_by = 'protocol_number')
+function getStudies($status = 'all', $review_type = 'all', $pi_name = '', $sort_by = 'protocol_number', $limit = 0, $offset = 0)
 {
     $db = new Database();
     $conn = $db->connect();
@@ -318,8 +326,7 @@ function getStudies($status = 'all', $review_type = 'all', $pi_name = '', $sort_
             $query = "SELECT s.*, sp.name as pi_name FROM studies s LEFT JOIN study_personnel sp ON s.id = sp.study_id AND sp.role = 'PI' WHERE 1=1";
             $params = [];
         }
-        $query = "SELECT s.*, sp.name as pi_name FROM studies s LEFT JOIN study_personnel sp ON s.id = sp.study_id AND sp.role = 'PI' WHERE 1=1";
-        $params = [];
+
 
         if ($status !== 'all') {
             $query .= " AND s.status = ?";
@@ -353,12 +360,67 @@ function getStudies($status = 'all', $review_type = 'all', $pi_name = '', $sort_
         }
         $query .= " ORDER BY " . $order_by;
 
+        // Add LIMIT and OFFSET for pagination
+        if ($limit > 0) {
+            $query .= " LIMIT " . (int)$limit . " OFFSET " . (int)$offset;
+        }
+
         $stmt = $conn->prepare($query);
         $stmt->execute($params);
         return $stmt->fetchAll();
     } catch (PDOException $e) {
         error_log("Error fetching studies: " . $e->getMessage());
         return [];
+    }
+}
+
+/**
+ * Get total count of studies with filtering
+ * @param string $status Filter by status (all, open, closed, pending)
+ * @param string $review_type Filter by review type (all, full_board, expedited, exempt)
+ * @param string $pi_name Filter by PI name (empty for all)
+ * @return int
+ */
+function getStudiesCount($status = 'all', $review_type = 'all', $pi_name = '')
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) {
+        return 0;
+    }
+
+    try {
+        $institutionId = get_user_institution_id();
+        if ($institutionId) {
+            $query = "SELECT COUNT(*) as total FROM studies s LEFT JOIN study_personnel sp ON s.id = sp.study_id AND sp.role = 'PI' WHERE s.institution_id = ?";
+            $params = [$institutionId];
+        } else {
+            $query = "SELECT COUNT(*) as total FROM studies s LEFT JOIN study_personnel sp ON s.id = sp.study_id AND sp.role = 'PI' WHERE 1=1";
+            $params = [];
+        }
+
+        if ($status !== 'all') {
+            $query .= " AND s.status = ?";
+            $params[] = $status;
+        }
+
+        if ($review_type !== 'all') {
+            $query .= " AND s.review_type = ?";
+            $params[] = $review_type;
+        }
+
+        if (!empty($pi_name)) {
+            $query .= " AND sp.name LIKE ?";
+            $params[] = '%' . $pi_name . '%';
+        }
+
+        $stmt = $conn->prepare($query);
+        $stmt->execute($params);
+        $result = $stmt->fetch();
+        return (int)($result['total'] ?? 0);
+    } catch (PDOException $e) {
+        error_log("Error counting studies: " . $e->getMessage());
+        return 0;
     }
 }
 
@@ -443,9 +505,11 @@ function getContactDocs($contact_id = null)
 
 /**
  * Get continue review studies
+ * @param int|null $limit
+ * @param int|null $offset
  * @return array
  */
-function getContinueReviewStudies()
+function getContinueReviewStudies($limit = null, $offset = null)
 {
     $db = new Database();
     $conn = $db->connect();
@@ -455,15 +519,23 @@ function getContinueReviewStudies()
 
     try {
         $institutionId = get_user_institution_id();
-        if ($institutionId) {
-            // Assuming a reports table exists with columns: report_name, generated_date, filters_applied, format
-            $stmt = $conn->prepare("SELECT * FROM studies WHERE expiration_date <= NOW() AND institution_id = ?");
-            $stmt->execute([$institutionId]);
-            return $stmt->fetchAll();
+        if ($limit !== null && $offset !== null) {
+            if ($institutionId) {
+                $stmt = $conn->prepare("SELECT * FROM studies WHERE expiration_date <= NOW() AND institution_id = ? ORDER BY expiration_date ASC LIMIT ? OFFSET ?");
+                $stmt->execute([$institutionId, $limit, $offset]);
+            } else {
+                $stmt = $conn->prepare("SELECT * FROM studies WHERE expiration_date <= NOW() ORDER BY expiration_date ASC LIMIT ? OFFSET ?");
+                $stmt->execute([$limit, $offset]);
+            }
+        } else {
+            if ($institutionId) {
+                $stmt = $conn->prepare("SELECT * FROM studies WHERE expiration_date <= NOW() AND institution_id = ? ORDER BY expiration_date ASC");
+                $stmt->execute([$institutionId]);
+            } else {
+                $stmt = $conn->prepare("SELECT * FROM studies WHERE expiration_date <= NOW() ORDER BY expiration_date ASC");
+                $stmt->execute();
+            }
         }
-        // Assuming a reports table exists with columns: report_name, generated_date, filters_applied, format
-        $stmt = $conn->prepare("SELECT * FROM studies WHERE expiration_date <= NOW()");
-        $stmt->execute();
         return $stmt->fetchAll();
     } catch (PDOException $e) {
         error_log("Error fetching continue review studies: " . $e->getMessage());
@@ -558,9 +630,11 @@ function getEducationCourses()
 
 /**
  * Get meetings
+ * @param int|null $limit
+ * @param int|null $offset
  * @return array
  */
-function getMeetings()
+function getMeetings($limit = null, $offset = null)
 {
     $db = new Database();
     $conn = $db->connect();
@@ -571,14 +645,22 @@ function getMeetings()
     try {
         $institutionId = get_user_institution_id();
         if ($institutionId) {
-            // Assuming a meetings table exists
-            $stmt = $conn->prepare("SELECT * FROM agenda_items WHERE institution_id = ? ORDER BY meeting_date DESC");
-            $stmt->execute([$institutionId]);
+            if ($limit !== null && $offset !== null) {
+                $stmt = $conn->prepare("SELECT * FROM agenda_items WHERE institution_id = ? ORDER BY meeting_date DESC LIMIT ? OFFSET ?");
+                $stmt->execute([$institutionId, $limit, $offset]);
+            } else {
+                $stmt = $conn->prepare("SELECT * FROM agenda_items WHERE institution_id = ? ORDER BY meeting_date DESC");
+                $stmt->execute([$institutionId]);
+            }
             return $stmt->fetchAll();
         }
-        // Assuming a meetings table exists
-        $stmt = $conn->prepare("SELECT * FROM agenda_items ORDER BY meeting_date DESC");
-        $stmt->execute();
+        if ($limit !== null && $offset !== null) {
+            $stmt = $conn->prepare("SELECT * FROM agenda_items ORDER BY meeting_date DESC LIMIT ? OFFSET ?");
+            $stmt->execute([$limit, $offset]);
+        } else {
+            $stmt = $conn->prepare("SELECT * FROM agenda_items ORDER BY meeting_date DESC");
+            $stmt->execute();
+        }
         return $stmt->fetchAll();
     } catch (PDOException $e) {
         error_log("Error fetching agenda_items: " . $e->getMessage());
@@ -1146,4 +1228,141 @@ function getFirstFridayOfMonth($year, $month)
     $daysToAdd = (5 - $dayOfWeek + 7) % 7;
     $date->modify("+$daysToAdd days");
     return $date;
+}
+
+// ===========================================
+// APPLICANT HELPER FUNCTIONS
+// ===========================================
+
+/**
+ * Get applicant's applications count
+ * @param int $userId
+ * @return int
+ */
+function getApplicantApplicationsCount($userId)
+{
+    return executeCountQuery(
+        "SELECT COUNT(*) as count FROM studies WHERE user_id = ?",
+        [$userId]
+    );
+}
+
+/**
+ * Get applicant's studies
+ * @param int $userId
+ * @return array
+ */
+function getApplicantStudies($userId)
+{
+    return executeAssocQuery(
+        "SELECT id, title, date_received, status, application_type 
+         FROM studies 
+         WHERE user_id = ? 
+         ORDER BY date_received DESC",
+        [$userId]
+    );
+}
+
+/**
+ * Get applicant profile
+ * @param int $userId
+ * @return array
+ */
+function getApplicantProfile($userId)
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) return [];
+    
+    try {
+        $stmt = $conn->prepare(
+            "SELECT full_name, email, phone, institution 
+             FROM users WHERE id = ?"
+        );
+        $stmt->execute([$userId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error fetching applicant profile: " . $e->getMessage());
+        return [];
+    }
+}
+
+/**
+ * Check if user can submit new application (max 3)
+ * @param int $userId
+ * @return bool
+ */
+function canSubmitNewApplication($userId)
+{
+    return getApplicantApplicationsCount($userId) < 3;
+}
+
+/**
+ * Get application type display name
+ * @param string $type
+ * @return string
+ */
+function getApplicationTypeName($type)
+{
+    $types = [
+        'student' => 'Students',
+        'nmimr' => 'NMIMR Researchers',
+        'non_nmimr' => 'Non-NMIMR Researchers'
+    ];
+    return $types[$type] ?? 'Unknown';
+}
+
+/**
+ * Application status labels
+ * @param string $status
+ * @return string
+ */
+function getStatusLabel($status)
+{
+    $labels = [
+        'submitted' => 'Submitted',
+        'under_review' => 'Under Review',
+        'approved' => 'Approved',
+        'rejected' => 'Rejected'
+    ];
+    return $labels[$status] ?? ucfirst(str_replace('_', ' ', $status));
+}
+
+/**
+ * Application status badge colors
+ * @param string $status
+ * @return string
+ */
+function getStatusColor($status)
+{
+    $colors = [
+        'submitted' => 'info',
+        'under_review' => 'warning',
+        'approved' => 'success',
+        'rejected' => 'danger'
+    ];
+    return $colors[$status] ?? 'secondary';
+}
+
+/**
+ * Get applicant stats summary
+ * @param int $userId
+ * @return array
+ */
+function getApplicantStats($userId)
+{
+    $total = getApplicantApplicationsCount($userId);
+    $studies = getApplicantStudies($userId);
+    
+    $underReview = count(array_filter($studies, fn($s) => ($s['status'] ?? '') === 'under_review'));
+    $approved = count(array_filter($studies, fn($s) => ($s['status'] ?? '') === 'approved'));
+    $rejected = count(array_filter($studies, fn($s) => ($s['status'] ?? '') === 'rejected'));
+    
+    return [
+        'total' => $total,
+        'under_review' => $underReview,
+        'approved' => $approved,
+        'rejected' => $rejected,
+        'can_submit' => canSubmitNewApplication($userId)
+    ];
 }

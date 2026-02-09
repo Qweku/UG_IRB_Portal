@@ -1,99 +1,108 @@
 <?php
 
 $current_page = basename($_SERVER['PHP_SELF']);
-
-error_log("Current Page: " . $current_page);
-
 $meetingDates = getMeetingDates();
-
-// Get user role
 $userRole = $_SESSION['role'] ?? 'reviewer';
-
+$userName = $_SESSION['full_name'] ?? 'Admin';
 $showAdminSections = ($userRole === 'admin' || $userRole === 'super_admin');
 $showInstitutionSection = ($userRole === 'super_admin');
 
-
+// Get admin stats
+$activeStudies = getActiveStudiesCount();
+$pendingReviews = getPendingReviewsCount();
 
 ?>
+
+
 <div id="sidebar" class="col-lg-2 col-md-3 d-md-block sidebar collapse">
     <div class="sidebar-sticky">
-        <!-- Dashboard - Always visible -->
-        <ul class="nav flex-column mb-3">
-            <li class="nav-item">
-                <a class="nav-link <?php echo ($current_page == 'dashboard') ? 'active' : ''; ?>" href="/dashboard">
-                    <i class="fas fa-home"></i> Dashboard
+
+
+
+        <!-- User Card -->
+        <!-- <div class="user-card">
+            <div class="user-avatar-wrapper">
+                <div class="user-avatar">
+                    <?php echo strtoupper(substr($userName, 0, 1)); ?>
+                </div>
+                <div class="user-info">
+                    <div class="user-name"><?php echo htmlspecialchars($userName); ?></div>
+                    <div class="user-role"><?php echo htmlspecialchars($userRole); ?></div>
+                </div>
+            </div>
+        </div> -->
+
+
+
+        <!-- Navigation - Dashboard -->
+        <div class="nav-section">
+            <div class="nav-section-title">Main Menu</div>
+
+            <a class="nav-link <?php echo ($current_page == 'dashboard' || $current_page == 'index.php') ? 'active' : ''; ?>" href="/dashboard">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <!-- Add or Modify Section -->
+            <div class="nav-section-title" style="margin-top: 16px;">Management</div>
+
+            <a class="nav-link <?php echo ($current_page == 'studies') ? 'active' : ''; ?>" href="/dashboard/studies">
+                <i class="fas fa-file-medical"></i>
+                <span>Studies / Protocol</span>
+            </a>
+
+            <a class="nav-link <?php echo ($current_page == 'preliminary-agenda') ? 'active' : ''; ?>" href="/dashboard/preliminary-agenda">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Agenda Items</span>
+            </a>
+
+            <a class="nav-link <?php echo ($current_page == 'continue-review') ? 'active' : ''; ?>" href="/dashboard/continue-review">
+                <i class="fas fa-eye"></i>
+                <span>Continuing Review</span>
+            </a>
+
+            <a class="nav-link <?php echo ($current_page == 'post-irb-meeting') ? 'active' : ''; ?>" href="#" data-bs-target="#postIrbModal" data-bs-toggle="modal">
+                <i class="fas fa-clipboard-check"></i>
+                <span>Post IRB Meeting Actions</span>
+            </a>
+
+            <a class="nav-link <?php echo ($current_page == 'agenda-records') ? 'active' : ''; ?>" href="/dashboard/agenda-records">
+                <i class="fas fa-book"></i>
+                <span>Agenda Records</span>
+            </a>
+
+            <a class="nav-link <?php echo ($current_page == 'reports') ? 'active' : ''; ?>" href="/dashboard/reports">
+                <i class="fas fa-chart-bar"></i>
+                <span>Reports</span>
+            </a>
+
+            <!-- Task Managers Section -->
+            <?php if ($showAdminSections): ?>
+                <div class="nav-section-title" style="margin-top: 16px;">Administration</div>
+
+                <a class="nav-link <?php echo ($current_page == 'follow-up') ? 'active' : ''; ?>" href="/dashboard/follow-up">
+                    <i class="fas fa-clock"></i>
+                    <span>Follow Up</span>
                 </a>
-            </li>
-        </ul>
 
+                <a class="nav-link <?php echo ($current_page == 'administration') ? 'active' : ''; ?>" href="/dashboard/administration">
+                    <i class="fas fa-toolbox"></i>
+                    <span>Settings</span>
+                </a>
 
-        <div class="sidebar-section mb-3">
-            <h6 class="sidebar-header ms-4">
-                <i class="fas fa-plus-circle me-2"></i>Add or Modify
-            </h6>
-            <ul class="nav flex-column submenu-nav">
-                <li class="nav-item">
-                    <a class="nav-link submenu-link <?php echo ($current_page == 'studies') ? 'active' : ''; ?>" href="/dashboard/studies">
-                        <i class="fas fa-file-medical me-2"></i>Study / Protocol
+                <?php if ($showInstitutionSection): ?>
+                    <a class="nav-link <?php echo ($current_page == 'institutions') ? 'active' : ''; ?>" href="/dashboard/institutions">
+                        <i class="fas fa-building"></i>
+                        <span>Institutions</span>
                     </a>
-                </li>
+                <?php endif; ?>
 
-                <li class="nav-item">
-                    <a class="nav-link submenu-link <?php echo ($current_page == 'preliminary-agenda') ? 'active' : ''; ?>" href="/dashboard/preliminary-agenda">
-                        <i class="fas fa-calendar-alt me-2"></i>Preliminary Agenda Items
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link submenu-link <?php echo ($current_page == 'continue-review') ? 'active' : ''; ?>" href="/dashboard/continue-review">
-                        <i class="fas fa-eye me-2"></i>Due for Continuing Review
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link submenu-link <?php echo ($current_page == 'post-irb-meeting') ? 'active' : ''; ?>" href="#" data-bs-target="#postIrbModal" data-bs-toggle="modal">
-                        <i class="fas fa-clipboard-check me-2"></i>Post IRB Meeting Actions
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link submenu-link <?php echo ($current_page == 'agenda-records') ? 'active' : ''; ?>" href="/dashboard/agenda-records">
-                        <i class="fas fa-book me-2"></i>Agenda Records
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link submenu-link <?php echo ($current_page == 'reports') ? 'active' : ''; ?>" href="/dashboard/reports">
-                        <i class="fas fa-chart-bar me-2"></i>Reports
-                    </a>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Task Managers Section -->
-        <div class="sidebar-section mb-3" style='display: <?php echo $showAdminSections ? 'block' : 'none' ?> '>
-            <h6 class="sidebar-header ms-4">
-                <i class="fas fa-tasks me-2"></i>Task Managers
-            </h6>
-            <ul class="nav flex-column submenu-nav">
-                <li class="nav-item">
-                    <a class="nav-link submenu-link <?php echo ($current_page == 'follow-up') ? 'active' : ''; ?>" href="/dashboard/follow-up">
-                        <i class="fas fa-clock me-2"></i>Follow Up Manager
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link submenu-link <?php echo ($current_page == 'administration') ? 'active' : ''; ?>" href="/dashboard/administration">
-                        <i class="fas fa-toolbox me-2"></i>Administration
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link submenu-link <?php echo ($current_page == 'institutions') ? 'active' : ''; ?>" href="/dashboard/institutions" style='display: <?php echo $showInstitutionSection ? 'block' : 'none' ?> '>
-                        <i class=" fas fa-building me-2"></i>Institutions
-                    </a>
-                </li>
-            </ul>
+            <?php endif; ?>
         </div>
 
 
     </div>
 </div>
-
 
 
 <!-- Post IRB Actions Modal -->

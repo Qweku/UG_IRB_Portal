@@ -19,178 +19,223 @@ if (isset($_SESSION['user_id'])) {
     }
 }
 ?>
+
 <!-- Main Content -->
-<div class="">
-    <!-- Welcome Banner -->
-    <div class="welcome-banner">
-        <h2>Hello, <?php echo $user_name; ?>!</h2>
-        <p class="mb-0">Welcome back to the UG Hares. You have <?php echo $pendingReviews; ?> pending tasks that need your attention.</p>
+<div class="dashboard-premium">
+
+    <!-- Welcome Header -->
+    <div class="welcome-header-admin text-white mb-4 fade-in-up">
+        <div class="welcome-content-admin">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="welcome-title-admin">Welcome back, <?php echo htmlspecialchars($user_name ?? ''); ?>!</h1>
+                    <p class="welcome-subtitle-admin mb-0">You have <?php echo $pendingReviews; ?> pending tasks that need your attention.</p>
+                </div>
+                <div class="d-none d-lg-block" style="font-size: 48px; opacity: 0.3;">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Quick Stats -->
+    <!-- Stats Cards -->
     <div class="row mb-4">
         <div class="col-md-3 mb-3">
-            <div class="stats-card active-studies-card">
-                <div class="stats-card-inner">
-                    <div class="stats-icon">
-                        <i class="fas fa-flask"></i>
-                    </div>
-                    <div class="stats-content">
-                        <div class="stats-number"><?php echo $activeStudies; ?></div>
-                        <div class="stats-label">Active Studies</div>
-                        <div class="stats-trend">
-                            <i class="fas fa-arrow-up"></i> New open studies
+            <div class="stats-card-premium text-white fade-in-up" style="background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="stats-icon" style="background: rgba(255,255,255,0.2);">
+                                <i class="fas fa-flask"></i>
+                            </div>
+                            <div class="stats-label">Active Studies</div>
                         </div>
+
+                        <div>
+                            <div class="stats-number"><?php echo $activeStudies; ?></div>
+                        </div>
+
                     </div>
+
                 </div>
             </div>
         </div>
         <div class="col-md-3 mb-3">
-            <div class="stats-card pending-reviews-card">
-                <div class="stats-card-inner">
-                    <div class="stats-icon">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="stats-content">
-                        <div class="stats-number"><?php echo $pendingReviews; ?></div>
-                        <div class="stats-label">Pending Reviews</div>
-                        <div class="stats-trend">
-                            <i class="fas fa-exclamation-triangle"></i> Requires attention
+            <div class="stats-card-premium text-white fade-in-up" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="stats-icon" style="background: rgba(255,255,255,0.2);">
+                                <i class="fas fa-clock"></i>
+                            </div>
+
+                            <div class="stats-label">Pending Reviews</div>
+                        </div>
+                        <div>
+                            <div class="stats-number"><?php echo $pendingReviews; ?></div>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
         <div class="col-md-3 mb-3">
-            <div class="stats-card overdue-actions-card">
-                <div class="stats-card-inner">
-                    <div class="stats-icon">
-                        <i class="fas fa-exclamation-circle"></i>
-                    </div>
-                    <div class="stats-content">
-                        <div class="stats-number"><?php echo $overdueActions; ?></div>
-                        <div class="stats-label">Overdue Actions</div>
-                        <div class="stats-trend">
-                            <i class="fas fa-arrow-down"></i> Due for review
+            <div class="stats-card-premium text-white fade-in-up" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="stats-icon" style="background: rgba(255,255,255,0.2);">
+                                <i class="fas fa-exclamation-circle"></i>
+                            </div>
+
+                            <div class="stats-label">Overdue Actions</div>
+                        </div>
+                        <div>
+                            <div class="stats-number"><?php echo $overdueActions; ?></div>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
         <div class="col-md-3 mb-3">
-            <div class="stats-card sae-reports-card">
-                <div class="stats-card-inner">
-                    <div class="stats-icon">
-                        <i class="fas fa-file-medical"></i>
-                    </div>
-                    <div class="stats-content">
-                        <div class="stats-number"><?php echo $newSAEReports; ?></div>
-                        <div class="stats-label">New SAE Reports</div>
-                        <div class="stats-trend">
-                            <i class="fas fa-plus"></i> New this week
+            <div class="stats-card-premium text-white fade-in-up" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="stats-icon" style="background: rgba(255,255,255,0.2);">
+                                <i class="fas fa-file-medical"></i>
+                            </div>
+
+                            <div class="stats-label">SAE Reports</div>
                         </div>
+                        <div>
+                            <div class="stats-number"><?php echo $newSAEReports; ?></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="mb-4 fade-in-up">
+        <div class="section-header-premium">
+            <div class="section-icon">
+                <i class="fas fa-bolt"></i>
+            </div>
+            <div>
+                <h4>Quick Actions</h4>
+                <p>Common administrative tasks</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <div class="quick-action-premium bg-white">
+                    <div class="card-body">
+                        <div class="action-icon">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                        <h6>New Study</h6>
+                        <p>Create a new study protocol</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="quick-action-premium bg-white">
+                    <div class="card-body">
+                        <div class="action-icon">
+                            <i class="fas fa-sync"></i>
+                        </div>
+                        <h6>Continuing Review</h6>
+                        <p>Review ongoing studies</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="quick-action-premium bg-white">
+                    <div class="card-body">
+                        <div class="action-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <h6>SAE Reports</h6>
+                        <p>View adverse events</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="quick-action-premium bg-white">
+                    <div class="card-body">
+                        <div class="action-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h6>PI Reports</h6>
+                        <p>Investigator reports</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Search Container -->
-    <div class="search-container mb-4">
-        <h4 class="mb-3">Study Quick Search</h4>
-        <div class="input-group">
-            <input type="text" class="form-control" placeholder="Search by study name, PI, or ID...">
-            <button class="btn btn-primary" type="button">
-                <i class="fas fa-search me-1"></i> Search
-            </button>
-        </div>
-        <div class="mt-2">
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="checkbox" id="openStudies" checked>
-                <label class="form-check-label" for="openStudies">Open Studies</label>
+    <!-- Recent Activities -->
+    <div class="fade-in-up">
+        <div class="section-header-premium">
+            <div class="section-icon">
+                <i class="fas fa-history"></i>
             </div>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="checkbox" id="closedStudies">
-                <label class="form-check-label" for="closedStudies">Closed Studies</label>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Content Area -->
-    <div class="main-content">
-        <h4 class="section-title">Quick Actions</h4>
-        <div class="row mb-4">
-            <div class="col-md-3 mb-3">
-                <div class="quick-action">
-                    <i class="fas fa-plus-circle"></i>
-                    <h6>New Study</h6>
-                    <p class="small">Create a new study protocol</p>
-                </div>
-            </div>
-            <div class="col-md-3 mb-3">
-                <div class="quick-action">
-                    <i class="fas fa-file-medical"></i>
-                    <h6>Continuing Review</h6>
-                    <p class="small">Review ongoing studies</p>
-                </div>
-            </div>
-            <div class="col-md-3 mb-3">
-                <div class="quick-action">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <h6>SAE Reports</h6>
-                    <p class="small">View serious adverse events</p>
-                </div>
-            </div>
-            <div class="col-md-3 mb-3">
-                <div class="quick-action">
-                    <i class="fas fa-user-md"></i>
-                    <h6>PI Reports</h6>
-                    <p class="small">Reports by principal investigator</p>
-                </div>
+            <div>
+                <h4>Recent Activities</h4>
+                <p>Latest study updates and changes</p>
             </div>
         </div>
 
-        <h4 class="section-title">Recent Activities</h4>
         <div class="table-responsive">
-            <table class="table table-hover">
+            <table class="table table-hover table-premium">
                 <thead>
                     <tr>
-                        <th>Study Name</th>
-                        <th>Principal Investigator</th>
-                        <th>Status</th>
-                        <th>Last Activity</th>
-                        <th>Action</th>
+                        <th><i class="fas fa-flask me-2"></i>Study Name</th>
+                        <th><i class="fas fa-user-md me-2"></i>Principal Investigator</th>
+                        <th><i class="fas fa-info-circle me-2"></i>Status</th>
+                        <th><i class="fas fa-clock me-2"></i>Last Activity</th>
+                        <th><i class="fas fa-cog me-2"></i>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php
-                    foreach ($recentActivities as $activity) {
-                        $statusBadge = '';
-                        switch ($activity['study_status']) {
-                            case 'open':
-                                $statusBadge = '<span class="badge bg-success">Open</span>';
-                                break;
-                            case 'pending':
-                                $statusBadge = '<span class="badge bg-warning text-dark">Pending Review</span>';
-                                break;
-                            case 'closed':
-                                $statusBadge = '<span class="badge bg-secondary">Closed</span>';
-                                break;
-                            default:
-                                $statusBadge = '<span class="badge bg-info">' . ucfirst($activity['study_status']) . '</span>';
+                    if (!empty($recentActivities)) {
+                        foreach ($recentActivities as $activity) {
+                            $statusBadge = '';
+                            switch ($activity['study_status']) {
+                                case 'open':
+                                    $statusBadge = '<span class="badge" style="background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); padding: 6px 14px; border-radius: 20px;">Open</span>';
+                                    break;
+                                case 'pending':
+                                    $statusBadge = '<span class="badge" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); padding: 6px 14px; border-radius: 20px;">Pending Review</span>';
+                                    break;
+                                case 'closed':
+                                    $statusBadge = '<span class="badge" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); padding: 6px 14px; border-radius: 20px;">Closed</span>';
+                                    break;
+                                default:
+                                    $statusBadge = '<span class="badge bg-secondary" style="padding: 6px 14px; border-radius: 20px;">' . ucfirst($activity['study_status']) . '</span>';
+                            }
+                            $lastActivity = date('M j, Y', strtotime($activity['updated_at']));
+                            echo "<tr>
+                                <td><strong>" . htmlspecialchars($activity['title']) . "</strong></td>
+                                <td>" . htmlspecialchars($activity['pi']) . "</td>
+                                <td>{$statusBadge}</td>
+                                <td>{$lastActivity}</td>
+                                <td><button class='btn btn-sm btn-outline-primary' style='border-radius: 20px;'><i class='fas fa-eye me-1'></i>View</button></td>
+                            </tr>";
                         }
-                        $lastActivity = date('M j, Y', strtotime($activity['updated_at']));
-                        echo "<tr>
-       <td>{$activity['title']}</td>
-       <td>{$activity['pi']}</td> <!-- Placeholder, as PI not directly in studies table -->
-       <td>{$statusBadge}</td>
-       <td>{$lastActivity}</td>
-       <td><button class='btn btn-sm btn-outline-primary'>View</button></td>
-   </tr>";
+                    } else {
+                        echo "<tr><td colspan='5' class='text-center py-5'><i class='fas fa-inbox fa-3x text-muted mb-3'></i><p class='text-muted'>No recent activities found.</p></td></tr>";
                     }
                     ?>
                 </tbody>
             </table>
         </div>
     </div>
+
 </div>

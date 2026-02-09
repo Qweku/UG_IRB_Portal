@@ -5,7 +5,7 @@ $study_id = isset($_GET['study_id']) ? (int) $_GET['study_id'] : null;
 error_log("Accessing General Letters Content with study_id: " . var_export($study_id, true));
 
 if (!$study_id) {
-    echo '<div class="alert alert-danger">Study ID is missing.</div>';
+    echo '<div class="container-fluid"><div class="alert alert-danger">Study ID is missing.</div></div>';
     return;
 }
 
@@ -30,145 +30,171 @@ $actionLetters = getActionLetters();
 ?>
 
 <!-- Letter Manager Content -->
-<div class="letter-manager p-5">
+<div class="content-wrapper p-4">
     <!-- Page Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">Letter Manager</h2>
-        <div class="badge bg-primary fs-6">From: General</div>
-    </div>
-
-    <!-- Institution Header -->
-    <div class="card mb-4">
-        <div class="card-body text-center bg-light">
-            <h4 class="text-primary mb-0">IRB NOGUCHI MEMORIAL INSTITUTE FOR MEDICAL RESEARCH-IRB</h4>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="main-content">
-        <div class="row">
-            <!-- Left Column - Letter Details -->
-            <div class="col-md-8">
-                <div class="card mb-4">
-                    <div class="card-header bg-light">
-                        <h6 class="mb-0 fw-bold">Letter Details</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Study#</label>
-                                <input type="text" name="study_number" class="form-control" value=<?php echo htmlspecialchars($study_details['protocol_number'] ?? "#") ?> readonly>
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="page-header-card">
+                        <div class="d-flex align-items-center">
+                            <div class="header-icon-wrapper">
+                                <i class="fas fa-envelope"></i>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Meeting Date</label>
-                                <input type="text" class="form-control" readonly value=<?php echo htmlspecialchars($study_details['meeting_date'] ?? "") ?>>
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="responseRequired">
-                                    <label class="form-check-label fw-semibold" for="responseRequired">
-                                        Response Required?
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Date Required for Response</label>
-                                <input type="date" name="follow_up_date" class="form-control" required>
-                            </div>
-                        </div>
-
-
-
-                        <div class="row mb-3">
-                            <div class="col-6">
-                                <label class="form-label fw-semibold">Addressee</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">To:</span>
-                                    <select class="form-select" name="addressee_role" id="addressee_role">
-                                        <option selected disabled>Select Role</option>
-                                        <?php foreach ($staffTypes as $typeName): ?>
-                                            <option value="<?php echo htmlspecialchars($typeName); ?>">
-                                                <?php echo htmlspecialchars($typeName); ?>
-                                            </option>
-                                        <?php endforeach; ?>
-
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label fw-semibold">Addressee Name</label>
-                                <input type="text" class="form-control" name="addressee_name" id="addressee_name" readonly>
-                            </div>
-                        </div>
-
-
-                        <div class="row mb-3">
-                            <div class="col-12">
-                                <label class="form-label fw-semibold">CC (Copy to clipcare)</label>
-                                <textarea type="text" id="cc_field" class="form-control mb-2" placeholder="Enter CC recipients"></textarea>
-                                <button class="btn btn-outline-secondary" onclick="openContactsModal()">(Add/Remove)</button>
+                            <div class="header-content">
+                                <h4 class="page-title">Letter Manager</h4>
+                                <p class="page-subtitle">Generate and send correspondence letters</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <!-- Right Column - Letter Configuration -->
-            <div class="col-md-4">
-                <div class="card mb-4">
-                    <div class="card-header bg-light">
-                        <h6 class="mb-0 fw-bold">Letter Configuration</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold">Date To Follow Up</label>
-                                <input type="date" name="due_by" class="form-control">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold">Letter Date</label>
-                                <input type="text" name="date_sent" class="form-control" value="<?php echo date('Y-m-d'); ?>" readonly>
-                            </div>
-                        </div>
-
-
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Select your Letter</label>
-                            <select id="letterSelect" class="form-select">
-                                <option selected disabled>Choose letter type</option>
-                                <?php foreach ($actionLetters as $letter): ?>
-                                    <option value="<?php echo htmlspecialchars($letter['file_path']); ?>">
-                                        <?php echo htmlspecialchars($letter['letter_name']); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                    </div>
+    <div class="content-body">
+        <div class="container-fluid">
+            <!-- Institution Header -->
+            <div class="premium-card mb-4">
+                <div class="card-body text-center">
+                    <h4 class="text-primary mb-0">IRB NOGUCHI MEMORIAL INSTITUTE FOR MEDICAL RESEARCH-IRB</h4>
                 </div>
-                <!-- Closing and Signatory Section -->
-                <div class="row mb-4">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                                <h6 class="mb-0 fw-bold">Closing and Signatory</h6>
-                                <div>
-                                    <button class="btn btn-sm btn-outline-secondary me-2">
-                                        Reset To Default
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-primary">
-                                        Change Closing
+            </div>
+
+            <!-- Main Content -->
+            <div class="row">
+                <!-- Left Column - Letter Details -->
+                <div class="col-md-8">
+                    <div class="premium-card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0 fw-bold">
+                                <i class="fas fa-file-alt me-2"></i>
+                                Letter Details
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Study#</label>
+                                    <input type="text" name="study_number" class="form-control" value="<?php echo htmlspecialchars($study_details['protocol_number'] ?? '#') ?>" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Meeting Date</label>
+                                    <input type="text" class="form-control" readonly value="<?php echo htmlspecialchars($study_details['meeting_date'] ?? '') ?>">
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="responseRequired">
+                                        <label class="form-check-label fw-semibold" for="responseRequired">
+                                            Response Required?
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Date Required for Response</label>
+                                    <input type="date" name="follow_up_date" class="form-control" required>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <label class="form-label fw-semibold">Addressee</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">To:</span>
+                                        <select class="form-select" name="addressee_role" id="addressee_role">
+                                            <option selected disabled>Select Role</option>
+                                            <?php foreach ($staffTypes as $typeName): ?>
+                                                <option value="<?php echo htmlspecialchars($typeName ?? ''); ?>">
+                                                    <?php echo htmlspecialchars($typeName ?? ''); ?>
+                                                </option>
+                                            <?php endforeach; ?>
+
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label fw-semibold">Addressee Name</label>
+                                    <input type="text" class="form-control" name="addressee_name" id="addressee_name" readonly>
+                                </div>
+                            </div>
+
+
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">CC (Copy to clipcare)</label>
+                                    <textarea type="text" id="cc_field" class="form-control mb-2" placeholder="Enter CC recipients"></textarea>
+                                    <button class="btn btn-outline-primary" onclick="openContactsModal()">
+                                        <i class="fas fa-address-book me-1"></i>Add/Remove
                                     </button>
                                 </div>
                             </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    
-                                    <div class="col-md-12">
-                                        <label class="form-label fw-semibold">Closing and Signatory</label>
-                                        <input type="text" id="signatoryInput" class="form-control mb-2" name="signatoryField">
+                        </div>
+                    </div>
+                </div>
 
+                <!-- Right Column - Letter Configuration -->
+                <div class="col-md-4">
+                    <div class="premium-card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0 fw-bold">
+                                <i class="fas fa-cog me-2"></i>
+                                Letter Configuration
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold">Date To Follow Up</label>
+                                    <input type="date" name="due_by" class="form-control">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold">Letter Date</label>
+                                    <input type="text" name="date_sent" class="form-control" value="<?php echo date('Y-m-d'); ?>" readonly>
+                                </div>
+                            </div>
+
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Select your Letter</label>
+                                <select id="letterSelect" class="form-select">
+                                    <option selected disabled>Choose letter type</option>
+                                    <?php foreach ($actionLetters as $letter): ?>
+                                        <option value="<?php echo htmlspecialchars($letter['file_path'] ?? ''); ?>">
+                                            <?php echo htmlspecialchars($letter['letter_name'] ?? ''); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Closing and Signatory Section -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="premium-card">
+                                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0 fw-bold">
+                                        <i class="fas fa-pen me-2"></i>
+                                        Closing and Signatory
+                                    </h6>
+                                    <div>
+                                        <button class="btn btn-sm btn-outline-secondary me-2">
+                                            <i class="fas fa-undo me-1"></i>Reset To Default
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-edit me-1"></i>Change Closing
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        
+                                        <div class="col-md-12">
+                                            <label class="form-label fw-semibold">Closing and Signatory</label>
+                                            <input type="text" id="signatoryInput" class="form-control mb-2" name="signatoryField">
+
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -176,88 +202,39 @@ $actionLetters = getActionLetters();
                     </div>
                 </div>
             </div>
-        </div>
 
 
 
-        <!-- Action Buttons -->
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-0 fw-bold">Letter Actions</h6>
-                            </div>
-                            <div>
-                                <button class="btn btn-outline-primary me-2">
-                                    <i class="fas fa-eye me-1"></i> Preview
-                                </button>
-                                <button class="btn btn-success me-2">
-                                    <i class="fas fa-paper-plane me-1"></i> Send
-                                </button>
-                                <button id="downloadBtn" class="btn btn-secondary" onclick="downloadLetter()">
-                                    <i class="fas fa-download me-1"></i> Download
-                                </button>
+
+            <!-- Action Buttons -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="premium-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0 fw-bold">
+                                        <i class="fas fa-tasks me-2"></i>
+                                        Letter Actions
+                                    </h6>
+                                </div>
+                                <div>
+                                    <button class="btn btn-outline-primary me-2">
+                                        <i class="fas fa-eye me-1"></i> Preview
+                                    </button>
+                                    <button class="btn btn-success me-2">
+                                        <i class="fas fa-paper-plane me-1"></i> Send
+                                    </button>
+                                    <button id="downloadBtn" class="btn btn-secondary" onclick="downloadLetter()">
+                                        <i class="fas fa-download me-1"></i> Download
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Recent Letters (Optional Section) -->
-        <!-- <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header bg-light">
-                        <h6 class="mb-0 fw-bold">Recent Letters</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-sm table-hover">
-                                <thead class="table-primary">
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Type</th>
-                                        <th>Addressee</th>
-                                        <th>Study#</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>10/25/2023</td>
-                                        <td>Approval Letter</td>
-                                        <td>Dr. Sarah Johnson</td>
-                                        <td>00102-26</td>
-                                        <td><span class="badge bg-success">Sent</span></td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary">
-                                                <i class="fas fa-copy"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>10/20/2023</td>
-                                        <td>Modification Request</td>
-                                        <td>Dr. Michael Chen</td>
-                                        <td>00219-16</td>
-                                        <td><span class="badge bg-warning text-dark">Draft</span></td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary">
-                                                <i class="fas fa-copy"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div> -->
     </div>
 </div>
 
@@ -327,8 +304,9 @@ $actionLetters = getActionLetters();
 
 <style>
     .letter-manager .card {
-        border: 1px solid #e0e0e0;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
 
     .letter-manager .card-header {
@@ -498,120 +476,9 @@ $actionLetters = getActionLetters();
             } else {
                 alert('Contact ' + contact.name + ' does not have an email address and will not be added to CC.');
             }
-            return contact ? contact.email : '';
-        }).filter(email => email !== '').join(', ');
+        }).filter(Boolean);
 
-        if (ccField.value) {
-            ccField.value += ', ' + ccEmails;
-        } else {
-            ccField.value = ccEmails;
-        }
-
+        ccField.value = ccEmails.join(', ');
         bootstrap.Modal.getInstance(document.getElementById('contactsModal')).hide();
     });
-
-    function downloadLetter() {
-    const templatePath = document.getElementById('letterSelect')?.value;
-    // const studyId = document.querySelector('input[name="study_id"]')?.value;
-
-    if (!templatePath) {
-        alert('Please select a letter template.');
-        return;
-    }
-
-    if (!study_id) {
-        alert('Study ID is missing.');
-        return;
-    }
-
-    // Optional fields
-    const payload = {
-        study_id: study_id,
-        template_path: templatePath,
-        study_number: document.querySelector('input[name="study_number"]')?.value || '',
-        follow_up_date: document.querySelector('input[name="follow_up_date"]')?.value || '',
-        due_by: document.querySelector('input[name="due_by"]')?.value || '',
-        date_sent: document.querySelector('input[name="date_sent"]')?.value || '',
-        letter_type: letterType,
-    };
-
-    // Build hidden form
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = '/admin/handlers/download_letter.php';
-    form.style.display = 'none';
-
-    Object.entries(payload).forEach(([key, value]) => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = key;
-        input.value = value;
-        form.appendChild(input);
-    });
-
-    document.body.appendChild(form);
-
-    // Spinner handling
-    const btn = document.getElementById('downloadBtn');
-    const originalHtml = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Generating...';
-
-    // Submit form
-    form.submit();
-
-    // Restore button safely (cannot detect file download)
-    setTimeout(() => {
-        btn.disabled = false;
-        btn.innerHTML = originalHtml;
-        form.remove();
-    }, 2500);
-}
-
-
-    // function downloadLetter() {
-    //     const templatePath = document.getElementById('letterSelect').value;
-    //     const studyNumber = document.querySelector('input[name="study_number"]').value;
-    //     const followUpDate = document.querySelector('input[name="follow_up_date"]').value;
-    //     const sentTo = document.querySelector('input[name="addressee_name"]').value;
-    //     const dueDate = document.querySelector('input[name="due_date"]').value;
-    //     const dateSent = document.querySelector('input[name="date_sent"]').value;
-    //     const letterType = document.querySelector('input[name="letter_type"]').value;
-        
-
-    //     if (!templatePath) {
-    //         alert('Please select a letter type.');
-    //         return;
-    //     }
-
-    //     const form = document.createElement('form');
-    //     form.method = 'POST';
-    //     form.action = '/admin/handlers/download_letter.php';
-    //     form.style.display = 'none';
-
-    //     const studyInput = document.createElement('input');
-    //     studyInput.name = 'study_id';
-    //     studyInput.value = study_id;
-
-    //     const templateInput = document.createElement('input');
-    //     templateInput.name = 'template_path';
-    //     templateInput.value = templatePath;
-
-    //     form.appendChild(studyInput);
-    //     form.appendChild(templateInput);
-    //     document.body.appendChild(form);
-
-    //     // Show spinner
-    //     const btn = document.getElementById('downloadBtn');
-    //     btn.disabled = true;
-    //     btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Downloading...';
-
-    //     form.submit();
-
-    //     // Reset spinner after a delay (assuming download starts quickly)
-    //     setTimeout(() => {
-    //         btn.disabled = false;
-    //         btn.innerHTML = '<i class="fas fa-download me-1"></i> Download';
-    //     }, 3000);
-    // }
 </script>

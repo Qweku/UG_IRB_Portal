@@ -1,0 +1,109 @@
+/**
+ * Letter Manager Styles
+ * Uses unified design system from admin-commons.css
+ */
+
+/* Import Unified Design System */
+@import url('admin-commons.css');
+
+/* ==========================================================================
+   PAGE-SPECIFIC OVERRIDES
+   ========================================================================== */
+
+/* Letter Manager */
+.letter-manager .card {
+    background: var(--admin-white);
+    border: none;
+    border-radius: var(--admin-radius-lg);
+    box-shadow: var(--admin-shadow-md);
+    transition: all var(--admin-transition-base);
+}
+
+.letter-manager .card:hover {
+    box-shadow: var(--admin-shadow-hover);
+}
+
+.letter-manager .card-header {
+    background-color: var(--admin-gray-50) !important;
+    border-bottom: 1px solid var(--admin-border-light);
+    border-radius: var(--admin-radius-lg) var(--admin-radius-lg) 0 0 !important;
+    padding: var(--admin-space-3) var(--admin-space-4);
+    font-weight: 600;
+    color: var(--admin-text-secondary);
+}
+
+.letter-manager .form-label {
+    display: block;
+    margin-bottom: var(--admin-space-2);
+    font-size: var(--admin-font-size-sm);
+    font-weight: 600;
+    color: var(--admin-text-secondary);
+}
+
+.letter-manager .input-group-text {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    font-size: var(--admin-font-size-sm);
+    font-weight: 500;
+    color: var(--admin-text-secondary);
+    background-color: var(--admin-gray-100);
+    border: 1px solid var(--admin-border-color);
+    border-radius: var(--admin-radius-md);
+}
+
+.letter-manager .table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--admin-white);
+    border-radius: var(--admin-radius-lg);
+    overflow: hidden;
+}
+
+.letter-manager .table thead th {
+    background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-primary-dark) 100%);
+    color: var(--admin-white);
+    border: none;
+    padding: var(--admin-space-3) var(--admin-space-4);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: var(--admin-font-size-xs);
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.letter-manager .table tbody tr {
+    transition: all var(--admin-transition-fast);
+    border-bottom: 1px solid var(--admin-border-light);
+}
+
+.letter-manager .table tbody tr:hover {
+    background-color: var(--admin-bg-subtle);
+}
+
+.letter-manager .table tbody td {
+    padding: var(--admin-space-3) var(--admin-space-4);
+    border: none;
+    vertical-align: middle;
+    color: var(--admin-text-secondary);
+}
+
+.letter-manager .form-check-input {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-left: -1.5rem;
+    margin-right: 0.5rem;
+    border: 2px solid var(--admin-border-color);
+    border-radius: var(--admin-radius-sm);
+    transition: all var(--admin-transition-fast);
+}
+
+.letter-manager .form-check-input:checked {
+    background-color: var(--admin-primary);
+    border-color: var(--admin-primary);
+}
+
+.letter-manager .form-check-input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(36, 63, 129, 0.15);
+    border-color: var(--admin-primary);
+}

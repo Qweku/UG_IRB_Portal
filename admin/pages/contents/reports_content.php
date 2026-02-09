@@ -16,8 +16,8 @@ $studySearchColumns = [
     'IRB of Record'              => 'irb_of_record',
     'Renewal Cycle'              => 'renewal_cycle',
     'First IRB Review'           => 'first_irb_review',
-    'Original Approval Date'     => 'approval_date',
-    'Last IRB Renewal Date'      => 'last_irb_review',
+    'Original Approval Date'      => 'approval_date',
+    'Last IRB Renewal Date'       => 'last_irb_review',
     'Last seen by IRB'           => 'on_agenda_date',
     'Approved Patient Enrollment' => 'number_of_subjects',
     'Currently Enrolled'         => 'init_enroll',
@@ -116,170 +116,207 @@ $cpaSearchColumns = [
 ?>
 
 <!-- Reports Content -->
-<div class="reports-section">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">Reports</h2>
-        <!-- <button class="btn btn-secondary">
-            <i class="fas fa-undo me-1"></i> Return
-        </button> -->
+<div class="content-wrapper">
+    <!-- Page Header -->
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="page-header-card">
+                        <div class="d-flex align-items-center">
+                            <div class="header-icon-wrapper">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <div class="header-content">
+                                <h4 class="page-title">Reports</h4>
+                                <p class="page-subtitle">Generate and download comprehensive reports</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Report Generation Panel -->
-    <div class="main-content">
-        <h4 class="section-title">Generate Report</h4>
-
-        <div class="row">
-            <div class="col-md-6">
-                <!-- Available Reports Selection -->
-                <div class="mb-4">
-                    <label class="form-label fw-bold">Available Reports:</label>
-                    <select id="reportType" class="form-select">
-                        <option selected disabled>Select Report</option>
-                        <option>Study Search</option>
-                        <option>SAE Search</option>
-                        <option>CPA Search</option>
-                        <option>Contact Search</option>
-
-                    </select>
+    <div class="content-body">
+        <div class="container-fluid">
+            <!-- Report Generation Panel -->
+            <div class="premium-card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cog me-2"></i>
+                        Generate Report
+                    </h5>
                 </div>
-
-                <!-- Filter Selection -->
-                <div class="mb-4">
-                    <label class="form-label fw-bold">Choose Filter</label>
-                    <p class="text-muted small mb-3">
-                        After selecting from the 'Available Reports' above, choose a filter under the Search Column
-                        and then select a pre-populated filter, then add the filter.
-                    </p>
-
-                    <div class="row mb-3">
+                <div class="card-body">
+                    <div class="row">
                         <div class="col-md-6">
-                            <label class="form-label">Search Column</label>
-                            <select id="searchColumn" class="form-select">
+                            <!-- Available Reports Selection -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Available Reports:</label>
+                                <select id="reportType" class="form-select">
+                                    <option selected disabled>Select Report</option>
+                                    <option>Study Search</option>
+                                    <option>SAE Search</option>
+                                    <option>CPA Search</option>
+                                    <option>Contact Search</option>
 
-                            </select>
+                                </select>
+                            </div>
+
+                            <!-- Filter Selection -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Choose Filter</label>
+                                <p class="text-muted small mb-3">
+                                    After selecting from the 'Available Reports' above, choose a filter under the Search Column
+                                    and then select a pre-populated filter, then add the filter.
+                                </p>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Search Column</label>
+                                        <select id="searchColumn" class="form-select">
+
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Detail Level</label>
+                                        <select id="detailLevel" class="form-select">
+
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Filter Input -->
+                                <div class="row mb-3">
+                                    <button class="btn btn-primary" onclick="addFilter()">
+                                        <i class="fas fa-plus me-1"></i>Add Filter
+                                    </button>
+
+                                </div>
+                            </div>
                         </div>
+
                         <div class="col-md-6">
-                            <label class="form-label">Detail Level</label>
-                            <select id="detailLevel" class="form-select">
+                            <!-- Current Filter Choices -->
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-filter me-2"></i>
+                                        Current Filter Choices
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Filter</th>
+                                                    <th>Set To</th>
+                                                    <th width="80px">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="reportFilterItem">
+                                                <!-- Dynamic filter rows will be added here -->
 
-                            </select>
-                        </div>
-                    </div>
+                                            </tbody>
+                                        </table>
+                                    </div>
 
-                    <!-- Filter Input -->
-                    <div class="row mb-3">
-                        <button class="btn btn-primary" onclick="addFilter()">Add Filter</button>
-
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <!-- Current Filter Choices -->
-                <div class="card h-100">
-                    <div class="card-header">
-                        <h6 class="mb-0">Current Filter Choices</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Filter</th>
-                                        <th>Set To</th>
-                                        <th width="80px">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="reportFilterItem">
-                                    <!-- Dynamic filter rows will be added here -->
-
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div class="mt-3">
-                            <button class="btn btn-outline-danger btn-sm" onclick="clearAllFilters()">
-                                <i class="fas fa-trash me-1"></i> Clear All
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Report Actions -->
-        <div class="row mt-4">
-            <div class="col-md-12">
-                <div class="d-flex justify-content-between align-items-center p-3 border rounded">
-                    <div>
-                        <span class="fw-bold me-3">Output Format:</span>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="outputFormat" id="pdfFormat" checked>
-                            <label class="form-check-label" for="pdfFormat">PDF</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="outputFormat" id="excelFormat">
-                            <label class="form-check-label" for="excelFormat">Excel</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="outputFormat" id="csvFormat">
-                            <label class="form-check-label" for="csvFormat">CSV</label>
-                        </div>
-                    </div>
-                    <div>
-                        <button id="generateReport" class="btn btn-primary me-2">
-                            <i class="fas fa-play me-1"></i> Submit
-                        </button>
-                        <button class="btn btn-outline-secondary">
-                            <i class="fas fa-times me-1"></i> Cancel
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Recently Generated Reports -->
-        <div class="mt-5">
-            <h5 class="section-title">Recently Generated Reports</h5>
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Report Name</th>
-                            <th>Generated Date</th>
-                            <th>Filters Applied</th>
-                            <th>Format</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        $recentReports = getRecentReports();
-                        if (empty($recentReports)) {
-                            // Fallback to static data if no DB data
-                            echo '<tr>
-                                    <td colspan="5" class="text-center text-muted py-3">
-                                    -- No reports generated yet --
-                                    </td>
-                                </tr>';
-                        } else {
-                            foreach ($recentReports as $report) {
-                                echo '<tr >
-                                    <td>' . htmlspecialchars($report['report_name']) . '</td>
-                                    <td>' . htmlspecialchars($report['generated_date']) . '</td>
-                                    <td>' . htmlspecialchars($report['filters_applied']) . '</td>
-                                    <td>' . htmlspecialchars($report['doc_format']) . '</td>
-                                    <td>
-                                        <button data-report-id="' . htmlspecialchars($report['id']) . '" id="downloadReport" class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-download me-1"></i> Download
+                                    <div class="mt-3">
+                                        <button class="btn btn-outline-danger btn-sm" onclick="clearAllFilters()">
+                                            <i class="fas fa-trash me-1"></i> Clear All
                                         </button>
-                                    </td>
-                                </tr>';
-                            }
-                        }
-                        ?>
-                    </tbody>
-                </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Report Actions -->
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <div class="d-flex justify-content-between align-items-center p-3 border rounded bg-light">
+                                <div>
+                                    <span class="fw-bold me-3">Output Format:</span>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="outputFormat" id="pdfFormat" checked>
+                                        <label class="form-check-label" for="pdfFormat">PDF</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="outputFormat" id="excelFormat">
+                                        <label class="form-check-label" for="excelFormat">Excel</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="outputFormat" id="csvFormat">
+                                        <label class="form-check-label" for="csvFormat">CSV</label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <button id="generateReport" class="btn btn-primary me-2">
+                                        <i class="fas fa-play me-1"></i> Submit
+                                    </button>
+                                    <button class="btn btn-outline-secondary">
+                                        <i class="fas fa-times me-1"></i> Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recently Generated Reports -->
+            <div class="premium-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        Recently Generated Reports
+                    </h5>
+                </div>
+                <div class="card-body p-3">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-premium mb-0">
+                            <thead class="table-primary">
+                                <tr>
+                                    <th>Report Name</th>
+                                    <th>Generated Date</th>
+                                    <th>Filters Applied</th>
+                                    <th>Format</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php
+                                $recentReports = getRecentReports();
+                                if (empty($recentReports)) {
+                                    // Fallback to static data if no DB data
+                                    echo '<tr>
+                                            <td colspan="5" class="text-center py-4">
+                                                <i class="fas fa-folder-open fa-3x text-muted mb-3 d-block"></i>
+                                                -- No reports generated yet --
+                                            </td>
+                                        </tr>';
+                                } else {
+                                    foreach ($recentReports as $report) {
+                                        echo '<tr >
+                                            <td>' . htmlspecialchars($report['report_name']) . '</td>
+                                            <td>' . htmlspecialchars($report['generated_date']) . '</td>
+                                            <td>' . htmlspecialchars($report['filters_applied']) . '</td>
+                                            <td>' . htmlspecialchars($report['doc_format']) . '</td>
+                                            <td>
+                                                <button data-report-id="' . htmlspecialchars($report['id']) . '" id="downloadReport" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-download me-1"></i> Download
+                                                </button>
+                                            </td>
+                                        </tr>';
+                                    }
+                                }
+                                ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

@@ -1,0 +1,215 @@
+/**
+ * Premium Header Styles
+ * Uses unified design system from admin-commons.css
+ */
+
+/* Import Unified Design System */
+@import url('admin-commons.css');
+
+/* ==========================================================================
+   PAGE-SPECIFIC OVERRIDES
+   ========================================================================== */
+
+/* Premium Navbar */
+.premium-navbar {
+    background: linear-gradient(135deg, var(--royal-blue-dark) 0%, var(--royal-blue) 100%);
+    box-shadow: var(--admin-shadow-lg);
+    padding: 16px 0;
+    border-bottom: 4px solid var(--admin-accent);
+}
+
+/* Navbar Brand Premium */
+.navbar-brand-premium {
+    display: flex;
+    align-items: center;
+    gap: var(--admin-space-3);
+    text-decoration: none;
+}
+
+/* Brand Logo Image */
+.brand-logo-img {
+    height: 80px;
+    padding: 5px;
+    border-radius: var(--admin-radius-lg);
+    box-shadow: var(--admin-shadow-md);
+    transition: transform var(--admin-transition-slow);
+}
+
+.brand-logo-img:hover {
+    transform: scale(1.05);
+}
+
+/* Brand Text Premium */
+.brand-text-premium {
+    display: flex;
+    flex-direction: column;
+}
+
+.brand-title {
+    font-size: var(--admin-font-size-xl);
+    font-weight: 700;
+    color: var(--admin-white);
+    line-height: 1.2;
+    letter-spacing: 0.5px;
+}
+
+.brand-subtitle {
+    font-size: var(--admin-font-size-xs);
+    color: rgba(255, 255, 255, 0.85);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Nav Actions */
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--admin-space-3);
+}
+
+/* Nav Button */
+.nav-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: var(--admin-radius-lg);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--admin-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.125rem;
+    transition: all var(--admin-transition-base);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.nav-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+}
+
+.nav-btn.logout {
+    border-color: rgba(230, 55, 87, 0.5);
+    background: rgba(230, 55, 87, 0.2);
+}
+
+.nav-btn.logout:hover {
+    background: rgba(230, 55, 87, 0.4);
+    border-color: rgba(230, 55, 87, 0.8);
+}
+
+/* User Info Premium */
+.user-info-premium {
+    display: flex;
+    align-items: center;
+    gap: var(--admin-space-3);
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--admin-radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* User Avatar Nav */
+.user-avatar-nav {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--admin-radius-md);
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: var(--admin-white);
+    flex-shrink: 0;
+}
+
+/* User Text Nav */
+.user-text-nav {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name-nav {
+    font-size: var(--admin-font-size-sm);
+    font-weight: 600;
+    color: var(--admin-white);
+}
+
+.user-role-nav {
+    font-size: var(--admin-font-size-xs);
+    color: rgba(255, 255, 255, 0.8);
+    text-transform: capitalize;
+}
+
+/* Sidebar Toggle */
+.sidebar-toggle {
+    width: 42px;
+    height: 42px;
+    border-radius: var(--admin-radius-lg);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--admin-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.125rem;
+    transition: all var(--admin-transition-base);
+    cursor: pointer;
+}
+
+.sidebar-toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Session Timer */
+#session-timer {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: var(--admin-white);
+    transition: color var(--admin-transition-base);
+}
+
+#session-timer.text-warning {
+    color: var(--admin-accent) !important;
+}
+
+#session-timer.text-danger {
+    color: var(--admin-danger) !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .brand-logo-img {
+        height: 45px;
+    }
+    
+    .brand-title {
+        font-size: var(--admin-font-size-lg);
+    }
+    
+    .user-info-premium {
+        padding: 6px 12px;
+    }
+    
+    .user-avatar-nav {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .user-name-nav {
+        font-size: var(--admin-font-size-xs);
+    }
+    
+    .user-role-nav {
+        font-size: 10px;
+    }
+    
+    .nav-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+    }
+}

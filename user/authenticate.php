@@ -25,6 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_email'] = $user['email'];
             $_SESSION['full_name'] = $user['full_name'];
+            $_SESSION['phone_number'] = $user['phone_number'] ?? 'Not provided';
             $_SESSION['role'] = $user['role'];
             $_SESSION['login_time'] = time();
             $_SESSION['is_first'] = $user['is_first'];
