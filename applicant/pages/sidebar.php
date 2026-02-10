@@ -443,9 +443,9 @@ $stats = getApplicantStats($userId);
                 <span>Dashboard</span>
             </a>
             
-            <a class="nav-link <?php echo ($current_page == 'studies') ? 'active' : ''; ?>" href="/applicant-dashboard/studies">
+            <a class="nav-link <?php echo ($current_page == 'applications') ? 'active' : ''; ?>" href="/applicant-dashboard/applications">
                 <i class="fas fa-clipboard-list"></i>
-                <span>My Studies</span>
+                <span>My Applications</span>
             </a>
             
             <a class="nav-link <?php echo ($current_page == 'profile') ? 'active' : ''; ?>" href="/applicant-dashboard/profile">

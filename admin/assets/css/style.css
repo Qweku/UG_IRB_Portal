@@ -1,14 +1,14 @@
 :root {
     /* Blue Brand - Keep for logos, critical CTAs */
-    --royal-blue: #243f81;
-    --royal-blue-light: #325bc5ff;
-    --royal-blue-dark: #0d3e9e;
+    --royal-blue: #042c5c;
+    --royal-blue-light: rgb(34, 74, 177);
+    --royal-blue-dark: #1a356b;
 
     /* Gold Accents */
-    --primary-gold: #d69e2e;
-    --light-gold: #ecc94b;
-    --light-gold-dark: #cab67bff;
-    --primary-gold-dark: #b7791fff;
+    --primary-gold: #b29762;
+    --light-gold: #ccbd86;
+    --light-gold-dark: rgb(182, 164, 110);
+    --primary-gold-dark: #947840;
 
     /* Dark Gray Theme - Primary replacement for blue */
     --charcoal-slate: #2d3748;
@@ -28,7 +28,7 @@ body {
     background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     position: sticky;
-    border-bottom: 5px solid #d69e2e;
+    border-bottom: 5px solid var(--primary-gold);
     padding: 20px;
     top: 0;
     z-index: 1030;

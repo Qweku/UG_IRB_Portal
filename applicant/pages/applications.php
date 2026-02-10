@@ -9,6 +9,10 @@ if (!is_applicant_logged_in()) {
 $userId = $_SESSION['user_id'] ?? 0;
 $userName = $_SESSION['full_name'] ?? 'Applicant';
 
+// Check for draft application
+$draftApplication = getDraftApplication($userId);
+$hasDraftApplication = $draftApplication !== null;
+
 // Get applicant's studies
 $studies = getApplicantStudies($userId);
 
@@ -21,241 +25,250 @@ if ($status_filter !== 'all') {
 ?>
 
 <style>
-/* Studies Page Specific Styles */
-.page-header-section {
-    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-    border-radius: 16px;
-    padding: 32px;
-    margin-bottom: 24px;
-    box-shadow: 0 10px 40px rgba(44, 62, 80, 0.2);
-}
+    /* Studies Page Specific Styles */
+    .page-header-section {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        border-radius: 16px;
+        padding: 32px;
+        margin-bottom: 24px;
+        box-shadow: 0 10px 40px rgba(44, 62, 80, 0.2);
+    }
 
-.page-header-section h2 {
-    font-weight: 700;
-    margin-bottom: 8px;
-}
+    .page-header-section h2 {
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
 
-.page-header-section p {
-    opacity: 0.9;
-    margin: 0;
-}
+    .page-header-section p {
+        opacity: 0.9;
+        margin: 0;
+    }
 
-/* Stats Cards */
-.stats-card-mini {
-    border: none;
-    border-radius: 12px;
-    overflow: hidden;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-}
+    /* Stats Cards */
+    .stats-card-mini {
+        border: none;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    }
 
-.stats-card-mini:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
-}
+    .stats-card-mini:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    }
 
-.stats-card-mini .card-body {
-    padding: 20px;
-}
+    .stats-card-mini .card-body {
+        padding: 20px;
+    }
 
-/* Filter Card */
-.filter-card {
-    border: none;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    margin-bottom: 24px;
-}
+    /* Filter Card */
+    .filter-card {
+        border: none;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        margin-bottom: 24px;
+    }
 
-.filter-card .card-header {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border: none;
-    padding: 16px 24px;
-}
+    .filter-card .card-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: none;
+        padding: 16px 24px;
+    }
 
-.filter-card .card-header h5 {
-    margin: 0;
-    font-weight: 600;
-    color: #2c3e50;
-}
+    .filter-card .card-header h5 {
+        margin: 0;
+        font-weight: 600;
+        color: #2c3e50;
+    }
 
-.filter-card .card-body {
-    padding: 24px;
-}
+    .filter-card .card-body {
+        padding: 24px;
+    }
 
-/* Modern Table */
-.modern-table {
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-}
+    /* Modern Table */
+    .modern-table {
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    }
 
-.modern-table thead th {
-    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-    color: white;
-    border: none;
-    padding: 16px 20px;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.8rem;
-    letter-spacing: 0.5px;
-}
+    .modern-table thead th {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        border: none;
+        padding: 16px 20px;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+    }
 
-.modern-table tbody tr {
-    transition: all 0.3s ease;
-    border-bottom: 1px solid #f1f3f4;
-}
+    .modern-table tbody tr {
+        transition: all 0.3s ease;
+        border-bottom: 1px solid #f1f3f4;
+    }
 
-.modern-table tbody tr:hover {
-    background-color: rgba(36, 63, 129, 0.03);
-}
+    .modern-table tbody tr:hover {
+        background-color: rgba(36, 63, 129, 0.03);
+    }
 
-.modern-table tbody td {
-    padding: 16px 20px;
-    border: none;
-    vertical-align: middle;
-}
+    .modern-table tbody td {
+        padding: 16px 20px;
+        border: none;
+        vertical-align: middle;
+    }
 
-/* Status Badges */
-.status-badge {
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
+    /* Status Badges */
+    .status-badge {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
 
-/* Action Buttons */
-.action-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    border: none;
-    cursor: pointer;
-}
+    /* Action Buttons */
+    .action-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
 
-.action-btn:hover {
-    transform: scale(1.1);
-}
+    .action-btn:hover {
+        transform: scale(1.1);
+    }
 
-/* Help Card */
-.help-card {
-    border: none;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-}
+    /* Help Card */
+    .help-card {
+        border: none;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    }
 
-.help-card .card-header {
-    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-    color: white;
-    border: none;
-    padding: 16px 24px;
-}
+    .help-card .card-header {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        border: none;
+        padding: 16px 24px;
+    }
 
-.help-card .card-header h5 {
-    margin: 0;
-    font-weight: 600;
-}
+    .help-card .card-header h5 {
+        margin: 0;
+        font-weight: 600;
+    }
 
-.help-card .card-body {
-    padding: 24px;
-}
+    .help-card .card-body {
+        padding: 24px;
+    }
 
-.help-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
-    padding: 16px;
-    background: #f8f9fa;
-    border-radius: 12px;
-    transition: all 0.3s ease;
-}
+    .help-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 16px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
 
-.help-item:hover {
-    background: #e9ecef;
-    transform: translateX(5px);
-}
+    .help-item:hover {
+        background: #e9ecef;
+        transform: translateX(5px);
+    }
 
-.help-item i {
-    font-size: 20px;
-    width: 32px;
-    text-align: center;
-    color: var(--royal-blue);
-}
+    .help-item i {
+        font-size: 20px;
+        width: 32px;
+        text-align: center;
+        color: var(--royal-blue);
+    }
 
-.help-item h6 {
-    margin: 0 0 4px 0;
-    font-weight: 600;
-    color: #2c3e50;
-}
+    .help-item h6 {
+        margin: 0 0 4px 0;
+        font-weight: 600;
+        color: #2c3e50;
+    }
 
-.help-item p {
-    margin: 0;
-    font-size: 14px;
-    color: #6c757d;
-}
+    .help-item p {
+        margin: 0;
+        font-size: 14px;
+        color: #6c757d;
+    }
 
-/* Empty State */
-.empty-state {
-    text-align: center;
-    padding: 60px 40px;
-}
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 40px;
+    }
 
-.empty-state-icon {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 24px;
-}
+    .empty-state-icon {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+    }
 
-.empty-state-icon i {
-    font-size: 48px;
-    color: #adb5bd;
-}
+    .empty-state-icon i {
+        font-size: 48px;
+        color: #adb5bd;
+    }
 
-.empty-state h5 {
-    color: #2c3e50;
-    margin-bottom: 8px;
-}
+    .empty-state h5 {
+        color: #2c3e50;
+        margin-bottom: 8px;
+    }
 
-.empty-state p {
-    color: #6c757d;
-    margin-bottom: 24px;
-}
+    .empty-state p {
+        color: #6c757d;
+        margin-bottom: 24px;
+    }
 
-/* Form Controls */
-.form-select, .form-control {
-    border-radius: 10px;
-    border: 2px solid #e9ecef;
-    padding: 10px 16px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-}
+    /* Form Controls */
+    .form-select,
+    .form-control {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        padding: 10px 16px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
 
-.form-select:focus, .form-control:focus {
-    border-color: var(--royal-blue);
-    box-shadow: 0 0 0 3px rgba(36, 63, 129, 0.1);
-}
+    .form-select:focus,
+    .form-control:focus {
+        border-color: var(--royal-blue);
+        box-shadow: 0 0 0 3px rgba(36, 63, 129, 0.1);
+    }
 
-/* Animations */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+    /* Animations */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
 
-.fade-in {
-    animation: fadeIn 0.5s ease forwards;
-}
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .fade-in {
+        animation: fadeIn 0.5s ease forwards;
+    }
 </style>
 
 <div class="container-fluid">
@@ -264,7 +277,7 @@ if ($status_filter !== 'all') {
 
         <!-- Main Content Area -->
         <div class="content-section col-lg-10 col-md-9 ms-sm-auto px-4 py-3">
-            
+
             <!-- Page Header -->
             <div class="page-header-section text-white fade-in">
                 <div class="row align-items-center">
@@ -273,9 +286,30 @@ if ($status_filter !== 'all') {
                         <p class="mb-0">View and track all your submitted IRB applications</p>
                     </div>
                     <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                        <a href="/applicant-dashboard" class="btn btn-light" style="border-radius: 25px; font-weight: 600;">
-                            <i class="fas fa-plus me-2"></i>New Application
-                        </a>
+                        <?php if (!$hasDraftApplication): ?>
+                            <a href="/applicant-dashboard" class="btn btn-light" style="border-radius: 25px; font-weight: 600;">
+                                <i class="fas fa-plus me-2"></i>New Application
+                            </a>
+                        <?php else: ?>
+                            <?php
+                            $continueUrl = '';
+                            $appType = $draftApplication['application_type'] ?? 'student';
+                            switch ($appType) {
+                                case 'nmimr':
+                                    $continueUrl = '/add-protocol/nmimr-application';
+                                    break;
+                                case 'non_nmimr':
+                                    $continueUrl = '/add-protocol/non-nmimr-application';
+                                    break;
+                                default:
+                                    $continueUrl = '/add-protocol/student-application';
+                            }
+                            $continueUrl .= '?application_id=' . ($draftApplication['id'] ?? '');
+                            ?>
+                            <a href="<?php echo $continueUrl; ?>" class="btn btn-outline-light" style="border-radius: 25px; font-weight: 600;">
+                                <i class="fas fa-edit me-2"></i>Continue Draft
+                            </a>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -357,14 +391,15 @@ if ($status_filter !== 'all') {
                             <?php foreach ($studies as $study): ?>
                                 <tr>
                                     <td>
-                                        <strong><?php echo htmlspecialchars($study['title'] ?? 'Untitled Study'); ?></strong>
+                                        <strong><?php echo htmlspecialchars($study['study_title'] ?? 'Untitled Study'); ?></strong>
                                         <br>
-                                        <small class="text-muted">ID: <?php echo htmlspecialchars($study['id'] ?? 'N/A'); ?></small>
+                                        <!-- <small class="text-muted">ID: <?php //echo htmlspecialchars($study['id'] ?? 'N/A'); 
+                                                                            ?></small> -->
                                     </td>
                                     <td>
-                                        <?php 
-                                        $date = $study['date_received'] ?? null;
-                                        echo $date ? date('M d, Y', strtotime($date)) : 'N/A'; 
+                                        <?php
+                                        $date = $study['created_at'] ?? null;
+                                        echo $date ? date('M d, Y', strtotime($date)) : 'N/A';
                                         ?>
                                     </td>
                                     <td>

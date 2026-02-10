@@ -12,6 +12,14 @@ $userName = $_SESSION['full_name'] ?? 'Applicant';
 // Get applicant stats
 $stats = getApplicantStats($userId);
 
+// Check for draft application
+$draftApplication = getDraftApplication($userId);
+$hasDraftApplication = $draftApplication !== null;
+
+error_log("Applicant ID: $userId, Has Draft Application: " . ($hasDraftApplication ? 'Yes' : 'No'));
+
+$applicant_type = $_SESSION['applicant_type'] ?? 'student';
+
 // Check first login for password modal
 $showPasswordModal = isset($_SESSION['is_first']) && $_SESSION['is_first'] == 1;
 
@@ -121,8 +129,9 @@ $showPasswordModal = isset($_SESSION['is_first']) && $_SESSION['is_first'] == 1;
             </div>
 
             <!-- Application Limit Warning -->
-            <?php if (!$stats['can_submit']): ?>
-                <div class="alert alert-warning alert-custom mb-4 fade-in-up">
+            <?php //if (!$stats['can_submit']): 
+            ?>
+            <!-- <div class="alert alert-warning alert-custom mb-4 fade-in-up">
                     <div class="alert-icon" style="background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%); color: #856404;">
                         <i class="fas fa-exclamation-triangle"></i>
                     </div>
@@ -130,89 +139,183 @@ $showPasswordModal = isset($_SESSION['is_first']) && $_SESSION['is_first'] == 1;
                         <h6 class="mb-1 fw-bold">Maximum Applications Reached</h6>
                         <p class="mb-0 text-muted">You have submitted the maximum of 3 applications. Please contact the IRB office if you need to submit additional applications.</p>
                     </div>
-                </div>
-            <?php endif; ?>
+                </div> -->
+            <?php //endif; 
+            ?>
 
             <!-- Application Types Section -->
-            <div class="mb-4 fade-in-up">
-                <div class="section-header">
-                    <div class="section-icon">
-                        <i class="fas fa-plus-circle"></i>
+            <?php if ($hasDraftApplication): ?>
+                <!-- Ongoing Application Section -->
+                <div class="mb-4 fade-in-up">
+                    <div class="section-header">
+                        <div class="section-icon" style="background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(40, 167, 69, 0.05) 100%); color: #28a745;">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                        <div>
+                            <h4>Continue Your Application</h4>
+                            <p>You have an ongoing application that you can continue working on</p>
+                        </div>
                     </div>
-                    <div>
-                        <h4>Submit New Application</h4>
-                        <p>Select the appropriate application type for your research</p>
+
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <div class="ongoing-application-card bg-white">
+                                <div class="card-body p-4">
+                                    <div class="row align-items-center">
+                                        <div class="col-lg-8">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="card-header-icon me-3">
+                                                    <i class="fas fa-file-signature"></i>
+                                                </div>
+                                                <div>
+                                                    <h5 class="protocol-number mb-0">
+                                                        <?php echo htmlspecialchars($draftApplication['protocol_number'] ?? 'Draft Application'); ?>
+                                                    </h5>
+                                                    <span class="badge bg-<?php 
+                                                        $statusColors = [
+                                                            'draft' => 'secondary',
+                                                            'submitted' => 'info',
+                                                            'under_review' => 'warning'
+                                                        ];
+                                                        echo $statusColors[$draftApplication['status']] ?? 'secondary';
+                                                    ?> status-badge">
+                                                        <?php echo ucfirst(htmlspecialchars($draftApplication['status'] ?? 'Draft')); ?>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <h6 class="study-title">
+                                                <?php echo htmlspecialchars($draftApplication['study_title'] ?? 'Untitled Application'); ?>
+                                            </h6>
+                                            
+                                            <!-- Progress Bar -->
+                                            <div class="mt-4">
+                                                <div class="progress-info">
+                                                    <span class="progress-label">Application Progress</span>
+                                                    <span class="progress-step">
+                                                        <i class="fas fa-tasks me-1"></i>
+                                                        Step <?php echo ($draftApplication['current_step'] ?? 1); ?> of 5
+                                                    </span>
+                                                </div>
+                                                <div class="progress">
+                                                    <div class="progress-bar bg-success" role="progressbar" 
+                                                         style="width: <?php echo getApplicationProgress($draftApplication['current_step'] ?? 1); ?>%">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <p class="last-updated mb-0">
+                                                <i class="fas fa-clock me-2"></i>
+                                                Last updated: <?php echo isset($draftApplication['updated_at']) ? date('M d, Y \a\t g:i A', strtotime($draftApplication['updated_at'])) : 'Recently'; ?>
+                                            </p>
+                                        </div>
+                                        <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                                            <?php
+                                            $continueUrl = '';
+                                            $appType = $draftApplication['application_type'] ?? 'student';
+                                            switch ($appType) {
+                                                case 'nmimr':
+                                                    $continueUrl = '/add-protocol/nmimr-application';
+                                                    break;
+                                                case 'non_nmimr':
+                                                    $continueUrl = '/add-protocol/non-nmimr-application';
+                                                    break;
+                                                default:
+                                                    $continueUrl = '/add-protocol/student-application';
+                                            }
+                                            $continueUrl .= '?application_id=' . ($draftApplication['id'] ?? '');
+                                            ?>
+                                            <a href="<?php echo $continueUrl; ?>" class="btn btn-success continue-btn">
+                                                <i class="fas fa-edit me-2"></i>Continue Application
+                                            </a>
+                                            <div class="mt-3">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-info-circle me-1"></i>
+                                                    Application ID: <?php echo htmlspecialchars($draftApplication['id'] ?? 'N/A'); ?>
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                <div class="row">
-                    <!-- Application Type 1: Students -->
-                    <div class="col-md-4 mb-3">
-                        <div class="application-card bg-white">
-                            <div class="card-icon" style="background: linear-gradient(135deg, rgba(36, 63, 129, 0.1) 0%, rgba(36, 63, 129, 0.05) 100%); color: var(--royal-blue);">
-                                <i class="fas fa-user-graduate"></i>
-                            </div>
-                            <div class="card-body text-center">
-                                <h5 class="card-title">Initial Submission Form A</h5>
-                                <p class="card-subtitle">Students</p>
-                                <?php if ($stats['can_submit']): ?>
-                                    <a href="/applicant-dashboard/new?type=student" class="btn btn-primary mb-3">
-                                        <i class="fas fa-plus me-2"></i>Start Application
-                                    </a>
-                                <?php else: ?>
-                                    <button class="btn btn-secondary" disabled>
-                                        <i class="fas fa-ban me-2"></i>Limit Reached
-                                    </button>
-                                <?php endif; ?>
-                            </div>
+            <?php else: ?>
+                <!-- Normal Submit New Application Section -->
+                <div class="mb-4 fade-in-up">
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="fas fa-plus-circle"></i>
+                        </div>
+                        <div>
+                            <h4>Submit New Application</h4>
+                            <p>Select the appropriate application type for your research</p>
                         </div>
                     </div>
 
-                    <!-- Application Type 2: NMIMR Researchers -->
-                    <div class="col-md-4 mb-3">
-                        <div class="application-card bg-white">
-                            <div class="card-icon" style="background: linear-gradient(135deg, rgba(39, 174, 96, 0.1) 0%, rgba(39, 174, 96, 0.05) 100%); color: #27ae60;">
-                                <i class="fas fa-flask"></i>
-                            </div>
-                            <div class="card-body text-center">
-                                <h5 class="card-title">Initial Submission Form A</h5>
-                                <p class="card-subtitle">NMIMR Researchers</p>
-                                <?php if ($stats['can_submit']): ?>
-                                    <a href="/applicant-dashboard/new?type=nmimr" class="btn btn-success mb-3">
-                                        <i class="fas fa-plus me-2"></i>Start Application
-                                    </a>
-                                <?php else: ?>
-                                    <button class="btn btn-secondary" disabled>
-                                        <i class="fas fa-ban me-2"></i>Limit Reached
-                                    </button>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="row">
+                        <!-- Application Type 1: Students -->
+                        <?php if ($applicant_type === 'student'): ?>
+                            <div class="col-md-12 mb-3">
+                                <div class="application-card bg-white">
+                                    <div class="card-icon" style="background: linear-gradient(135deg, rgba(36, 63, 129, 0.1) 0%, rgba(36, 63, 129, 0.05) 100%); color: var(--royal-blue);">
+                                        <i class="fas fa-user-graduate"></i>
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title">Initial Submission Form A</h5>
+                                        <p class="card-subtitle">Students</p>
 
-                    <!-- Application Type 3: Non-NMIMR Researchers -->
-                    <div class="col-md-4 mb-3">
-                        <div class="application-card bg-white">
-                            <div class="card-icon" style="background: linear-gradient(135deg, rgba(52, 152, 219, 0.1) 0%, rgba(52, 152, 219, 0.05) 100%); color: #3498db;">
-                                <i class="fas fa-university"></i>
+                                        <a href="/add-protocol/student-application" class="btn btn-primary mb-3">
+                                            <i class="fas fa-plus me-2"></i>Start Application
+                                        </a>
+
+                                    </div>
+                                </div>
                             </div>
-                            <div class="card-body text-center">
-                                <h5 class="card-title">Initial Submission Form A</h5>
-                                <p class="card-subtitle">Non-NMIMR Researchers</p>
-                                <?php if ($stats['can_submit']): ?>
-                                    <a href="/applicant-dashboard/new?type=non_nmimr" class="btn mb-3" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white;">
-                                        <i class="fas fa-plus me-2"></i>Start Application
-                                    </a>
-                                <?php else: ?>
-                                    <button class="btn btn-secondary" disabled>
-                                        <i class="fas fa-ban me-2"></i>Limit Reached
-                                    </button>
-                                <?php endif; ?>
+                        <?php endif; ?>
+
+                        <!-- Application Type 2: NMIMR Researchers -->
+                        <?php if ($applicant_type === 'nmimr'): ?>
+                            <div class="col-md-12 mb-3">
+                                <div class="application-card bg-white">
+                                    <div class="card-icon" style="background: linear-gradient(135deg, rgba(39, 174, 96, 0.1) 0%, rgba(39, 174, 96, 0.05) 100%); color: #27ae60;">
+                                        <i class="fas fa-flask"></i>
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title">Initial Submission Form A</h5>
+                                        <p class="card-subtitle">NMIMR Researchers</p>
+
+                                        <a href="/add-protocol/nmimr-application" class="btn btn-success mb-3">
+                                            <i class="fas fa-plus me-2"></i>Start Application
+                                        </a>
+
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        <?php endif; ?>
+
+                        <!-- Application Type 3: Non-NMIMR Researchers -->
+                        <?php if ($applicant_type === 'non_nmimr'): ?>
+                            <div class="col-md-12 mb-3">
+                                <div class="application-card bg-white">
+                                    <div class="card-icon" style="background: linear-gradient(135deg, rgba(52, 152, 219, 0.1) 0%, rgba(52, 152, 219, 0.05) 100%); color: #3498db;">
+                                        <i class="fas fa-university"></i>
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title">Initial Submission Form A</h5>
+                                        <p class="card-subtitle">Non-NMIMR Researchers</p>
+
+                                        <a href="/add-protocol/non-nmimr-application" class="btn mb-3" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white;">
+                                            <i class="fas fa-plus me-2"></i>Start Application
+                                        </a>
+
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
-            </div>
+            <?php endif; ?>
 
             <!-- Quick Links Section -->
             <div class="row">
@@ -224,7 +327,7 @@ $showPasswordModal = isset($_SESSION['is_first']) && $_SESSION['is_first'] == 1;
                             </div>
                             <h5>My Applications</h5>
                             <p>View and track all your submitted IRB applications</p>
-                            <a href="/applicant-dashboard/studies" class="btn btn-outline-primary">
+                            <a href="/applicant-dashboard/applications" class="btn btn-outline-primary">
                                 <i class="fas fa-eye me-2"></i>View Applications
                             </a>
                         </div>

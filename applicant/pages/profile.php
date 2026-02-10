@@ -15,9 +15,19 @@ $userRole = $_SESSION['role'] ?? 'applicant';
 $profile = getApplicantProfile($userId);
 
 // Fallback to session data if not in database
-$fullName = $profile['full_name'] ?? $userName;
+$fullName = $profile['first_name'] . ' ' . $profile['middle_name'] . ' ' . $profile['last_name'] ?? $userName;
 $email = $profile['email'] ?? $userEmail;
 $phone = $profile['phone_number'] ?? ($_SESSION['phone_number'] ?? 'Not provided');
+$applicant_type = $profile['applicant_type'] ?? ($_SESSION['applicant_type'] ?? 'student');
+$institution_id = $profile['institution_id'] ?? ($_SESSION['institution_id'] ?? null);
+$institutionName = 'Not provided';
+
+try{
+    $institution = getInstitutionById($institution_id);
+    $institutionName = $institution['institution_name'] ?? 'Not provided';
+} catch (Exception $e) {
+    $institutionName = 'Not provided';
+}
 $institution = $profile['institution'] ?? ($_SESSION['institution'] ?? 'Not provided');
 
 // Get stats
@@ -135,7 +145,7 @@ $stats = getApplicantStats($userId);
                                 </div>
                                 <div class="info-item-content">
                                     <label>Institution</label>
-                                    <span><?php echo htmlspecialchars($institution); ?></span>
+                                    <span><?php echo htmlspecialchars($institutionName); ?></span>
                                 </div>
                             </div>
                         </div>
@@ -154,8 +164,8 @@ $stats = getApplicantStats($userId);
                                             <i class="fas fa-id-badge"></i>
                                         </div>
                                         <div class="info-item-content">
-                                            <label>User ID</label>
-                                            <span><?php echo htmlspecialchars($userId); ?></span>
+                                            <label>Applicant Type</label>
+                                            <span><?php echo htmlspecialchars($applicant_type); ?></span>
                                         </div>
                                     </div>
                                 </div>

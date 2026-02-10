@@ -39,11 +39,11 @@ $csrf_token = csrf_token();
         <div class="auth-body-content">
             <form id="registerForm" action="/user/handlers/register.php" method="post" class="auth-form">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
-                
+
                 <h5 class="register-section-title">
                     <i class="fas fa-user me-2"></i>Personal Information
                 </h5>
-                
+
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
@@ -83,6 +83,30 @@ $csrf_token = csrf_token();
                         <input type="email" class="form-control" id="email" name="email" placeholder="your.email@example.com" required>
                     </div>
                 </div>
+
+                <div class="mb-3">
+                    <label for="application_type" class="form-label">Application Type <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-file-alt"></i></span>
+                        <select class="form-select" id="application_type" name="application_type" required>
+                            <option class="text-muted" selected disabled>Select Application Type</option>
+                            <option value="student">Student</option>
+                            <option value="nmimr">NMIMR Researchers</option>
+                            <option value="non_nmimr">Non-NMIMR Researchers</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- If Student is selected then show for student id input -->
+                 
+                <div class="mb-3" id="student_id_field" style="display: none;">
+                    <label for="student_id" class="form-label">Student ID <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                        <input type="text" class="form-control" id="student_id" name="student_id" placeholder="Enter your student ID" required>
+                    </div>
+                </div>
+
 
                 <h5 class="register-section-title">
                     <i class="fas fa-lock me-2"></i>Security Information
@@ -135,7 +159,7 @@ $csrf_token = csrf_token();
             <div class="auth-divider">
                 <span>Already have an account?</span>
             </div>
-            
+
             <div class="text-center">
                 <a href="/login" class="auth-link">
                     <i class="fas fa-sign-in-alt me-1"></i>Sign In Here
@@ -144,8 +168,13 @@ $csrf_token = csrf_token();
         </div>
     </div>
 
+    <?php include 'admin/includes/loading_overlay.php'; ?>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Current selected loader
+        let currentLoader = 'spinner';
+
         document.addEventListener('DOMContentLoaded', function() {
             const passwordInput = document.getElementById('password');
             const confirmInput = document.getElementById('confirm_password');
@@ -183,7 +212,7 @@ $csrf_token = csrf_token();
             passwordInput.addEventListener('input', function() {
                 const password = this.value;
                 const strengthBar = document.getElementById('passwordStrength');
-                
+
                 // Check requirements
                 const hasLength = password.length >= 8;
                 const hasUppercase = /[A-Z]/.test(password);
@@ -246,7 +275,7 @@ $csrf_token = csrf_token();
                     confirmInput.classList.remove('is-invalid');
                     return;
                 }
-                
+
                 if (passwordInput.value !== confirmInput.value) {
                     confirmInput.classList.add('is-invalid');
                 } else {
@@ -275,38 +304,46 @@ $csrf_token = csrf_token();
                     return;
                 }
 
+                // Validate student_id if student application type is selected
+                if (applicationTypeSelect.value === 'student' && !studentIdInput.value.trim()) {
+                    showMessage('Student ID is required for student applications.', 'danger');
+                    return;
+                }
+
                 // Submit form via AJAX
                 const formData = new FormData(form);
-                
+
+                showLoadingOverlay();
+
                 fetch('/user/handlers/register.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showMessage(data.message, 'success');
-                        form.reset();
-                        document.getElementById('passwordStrength').className = 'password-strength';
-                        Object.values(requirements).forEach(req => {
-                            req.classList.remove('valid');
-                            req.classList.add('invalid');
-                            req.querySelector('i').classList.remove('fa-check-circle');
-                            req.querySelector('i').classList.add('fa-circle');
-                        });
-                        
-                        // Redirect to login after success
-                        setTimeout(() => {
-                            window.location.href = '/login?registered=1';
-                        }, 2000);
-                    } else {
-                        showMessage(data.message || 'Registration failed. Please try again.', 'danger');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showMessage('An error occurred. Please try again.', 'danger');
-                });
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showMessage(data.message, 'success');
+                            form.reset();
+                            document.getElementById('passwordStrength').className = 'password-strength';
+                            Object.values(requirements).forEach(req => {
+                                req.classList.remove('valid');
+                                req.classList.add('invalid');
+                                req.querySelector('i').classList.remove('fa-check-circle');
+                                req.querySelector('i').classList.add('fa-circle');
+                            });
+
+                            // Redirect to login after success
+                            setTimeout(() => {
+                                window.location.href = '/login?registered=1';
+                            }, 2000);
+                        } else {
+                            showMessage(data.message || 'Registration failed. Please try again.', 'danger');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showMessage('An error occurred. Please try again.', 'danger');
+                    });
             });
 
             function showMessage(message, type) {
@@ -317,6 +354,104 @@ $csrf_token = csrf_token();
                     </div>
                 `;
             }
+
+            // Function to show loading overlay
+            function showLoadingOverlay() {
+                // Scroll to top smoothly
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+
+                // Hide all loader contents
+                document.querySelectorAll('.loader-content').forEach(content => {
+                    content.style.display = 'none';
+                });
+
+                // Show selected loader
+                const loaderElement = document.getElementById(`${currentLoader}Loader`);
+                if (loaderElement) {
+                    loaderElement.style.display = 'block';
+                }
+
+                // Update loading text with user's name
+                const loadingText = document.querySelector('.loading-text');
+                if (loadingText) {
+                    loadingText.textContent = `Processing...`;
+                }
+
+                // Show overlay with animation
+                const overlay = document.getElementById('loadingOverlay');
+                overlay.classList.add('active');
+
+                // Disable body scroll
+                document.body.style.overflow = 'hidden';
+
+                // Simulate processing (3 seconds)
+                setTimeout(() => {
+                    hideLoadingOverlay();
+
+                    // Show success message
+                    setTimeout(() => {
+                        showToast('success', data.message);
+                        // Reset form
+                        // document.getElementById('studyForm').reset();
+                    }, 300);
+                }, 3000);
+            }
+
+            // Function to hide loading overlay
+            function hideLoadingOverlay() {
+                const overlay = document.getElementById('loadingOverlay');
+                overlay.classList.remove('active');
+
+                // Re-enable body scroll
+                document.body.style.overflow = 'auto';
+
+                // Fade out animation
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 300);
+            }
+
+            // Function to show loading programmatically (for other uses)
+            window.showLoading = function(loaderType = 'spinner', duration = 3000, message = 'Processing...') {
+                if (loaderType) currentLoader = loaderType;
+
+                // Update message if provided
+                const loadingText = document.querySelector('.loading-text');
+                if (loadingText && message) {
+                    loadingText.textContent = message;
+                }
+
+                showLoadingOverlay({
+                    firstName: 'User'
+                });
+
+                // Auto-hide after duration if provided
+                if (duration) {
+                    setTimeout(hideLoadingOverlay, duration);
+                }
+            };
+
+            // Function to hide loading programmatically
+            window.hideLoading = hideLoadingOverlay;
+
+            // Application Type - Show/Hide Student ID Field
+            const applicationTypeSelect = document.getElementById('application_type');
+            const studentIdField = document.getElementById('student_id_field');
+            const studentIdInput = document.getElementById('student_id');
+
+            applicationTypeSelect.addEventListener('change', function() {
+                if (this.value === 'student') {
+                    studentIdField.style.display = 'block';
+                    studentIdInput.setAttribute('required', 'required');
+                } else {
+                    studentIdField.style.display = 'none';
+                    studentIdInput.removeAttribute('required');
+                    studentIdInput.value = ''; // Clear the value when hidden
+                }
+            });
         });
     </script>
 </body>

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /* ==========================================================
@@ -88,9 +89,15 @@ $routes = [
 
     /* ---------- APPLICANT ---------- */
     'applicant-dashboard' => [
-        '_'       => ['file' => 'index.php', 'roles' => ['applicant', 'reviewer']],
-        'profile' => ['file' => 'profile.php', 'roles' => ['applicant', 'reviewer']],
-        'studies' => ['file' => 'studies.php', 'roles' => ['applicant', 'reviewer']],
+        '_'       => ['file' => 'index.php', 'roles' => ['applicant']],
+        'profile' => ['file' => 'profile.php', 'roles' => ['applicant']],
+        'applications' => ['file' => 'applications.php', 'roles' => ['applicant']],
+    ],
+
+    'add-protocol' => [
+        'student-application' => ['file' => 'student_application.php', 'roles' => ['applicant']],
+        'nmimr-application' => ['file' => 'nmimr_application.php', 'roles' => ['applicant']],
+        'non-nmimr-application' => ['file' => 'non_nmimr_application.php', 'roles' => ['applicant']],
     ],
 ];
 

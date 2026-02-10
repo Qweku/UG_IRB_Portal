@@ -9,10 +9,10 @@ if (!is_applicant_logged_in()) {
 $userId = $_SESSION['user_id'] ?? 0;
 
 // Check if user can submit new application (max 3)
-if (!canSubmitNewApplication($userId)) {
-    header('Location: /applicant-dashboard?error=max_applications');
-    exit;
-}
+// if (!canSubmitNewApplication($userId)) {
+//     header('Location: /applicant-dashboard?error=max_applications');
+//     exit;
+// }
 
 // Get application type from URL
 $type = $_GET['type'] ?? '';

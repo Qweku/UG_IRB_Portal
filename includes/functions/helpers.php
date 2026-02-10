@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Database Functions for UG IRB Portal
  * Contains helper functions for retrieving data from the database
@@ -1242,7 +1241,7 @@ function getFirstFridayOfMonth($year, $month)
 function getApplicantApplicationsCount($userId)
 {
     return executeCountQuery(
-        "SELECT COUNT(*) as count FROM studies WHERE user_id = ?",
+        "SELECT COUNT(*) as count FROM student_applications WHERE applicant_id = ?",
         [$userId]
     );
 }
@@ -1255,10 +1254,10 @@ function getApplicantApplicationsCount($userId)
 function getApplicantStudies($userId)
 {
     return executeAssocQuery(
-        "SELECT id, title, date_received, status, application_type 
-         FROM studies 
-         WHERE user_id = ? 
-         ORDER BY date_received DESC",
+        "SELECT id, study_title, created_at, status, application_type 
+         FROM student_applications 
+         WHERE applicant_id = ? 
+         ORDER BY created_at DESC",
         [$userId]
     );
 }
@@ -1273,11 +1272,11 @@ function getApplicantProfile($userId)
     $db = new Database();
     $conn = $db->connect();
     if (!$conn) return [];
+
     
     try {
         $stmt = $conn->prepare(
-            "SELECT full_name, email, phone, institution 
-             FROM users WHERE id = ?"
+            "SELECT * FROM applicant_users WHERE user_id = ?"
         );
         $stmt->execute([$userId]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -1287,15 +1286,31 @@ function getApplicantProfile($userId)
     }
 }
 
+
+function getInstitutionById($institutionId){
+ $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) return null;
+
+    try {
+        $stmt = $conn->prepare("SELECT * FROM institutions WHERE id = ?");
+        $stmt->execute([$institutionId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error fetching institution by ID: " . $e->getMessage());
+        return null;
+    }
+}
+
 /**
  * Check if user can submit new application (max 3)
  * @param int $userId
  * @return bool
  */
-function canSubmitNewApplication($userId)
-{
-    return getApplicantApplicationsCount($userId) < 3;
-}
+// function canSubmitNewApplication($userId)
+// {
+//     return getApplicantApplicationsCount($userId) < 3;
+// }
 
 /**
  * Get application type display name
@@ -1363,6 +1378,81 @@ function getApplicantStats($userId)
         'under_review' => $underReview,
         'approved' => $approved,
         'rejected' => $rejected,
-        'can_submit' => canSubmitNewApplication($userId)
     ];
+}
+
+/**
+ * Get draft application
+ * @param int $userId
+ * @return array|null
+ */
+function getDraftApplication(int $userId): ?array
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) {
+        return null;
+    }
+
+    try {
+        $stmt = $conn->prepare(
+            "SELECT *
+             FROM student_applications
+             WHERE applicant_id = :applicant_id
+               AND status = 'draft'
+             ORDER BY created_at DESC
+             LIMIT 1"
+        );
+
+        $stmt->execute(['applicant_id' => $userId]);
+        $draft = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        error_log(
+            $draft
+                ? "Draft application found for user {$userId}"
+                : "No draft application for user {$userId}"
+        );
+
+        return $draft ?: null;
+
+    } catch (PDOException $e) {
+        error_log("Draft fetch error: " . $e->getMessage());
+        return null;
+    }
+}
+
+
+/**
+ * Check if user has ongoing application
+ * @param int $userId
+ * @return bool
+ */
+function hasOngoingApplication($userId) {
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) return false;
+    
+    try {
+        $stmt = $conn->prepare(
+            "SELECT COUNT(*) as count FROM student_applications 
+             WHERE applicant_id = ? AND status IN ('draft', 'submitted', 'under_review')"
+        );
+        $stmt->execute([$userId]);
+        return (int) $stmt->fetchColumn() > 0;
+    } catch (PDOException $e) {
+        error_log("Error checking ongoing application: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Get application progress percentage
+ * @param int $currentStep
+ * @param int $totalSteps
+ * @return int
+ */
+function getApplicationProgress($currentStep, $totalSteps = 5) {
+    if ($currentStep <= 0) return 0;
+    if ($currentStep > $totalSteps) return 100;
+    return (int) (($currentStep / $totalSteps) * 100);
 }

@@ -20,7 +20,7 @@ $pendingReviews = getPendingReviewsCount();
 
 
         <!-- User Card -->
-        <!-- <div class="user-card">
+        <div class="user-card">
             <div class="user-avatar-wrapper">
                 <div class="user-avatar">
                     <?php echo strtoupper(substr($userName, 0, 1)); ?>
@@ -30,7 +30,7 @@ $pendingReviews = getPendingReviewsCount();
                     <div class="user-role"><?php echo htmlspecialchars($userRole); ?></div>
                 </div>
             </div>
-        </div> -->
+        </div>
 
 
 
