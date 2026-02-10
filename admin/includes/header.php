@@ -21,13 +21,14 @@
     <link href="/admin/assets/css/create-contact.css" rel="stylesheet">
     <link href="/admin/assets/css/account-information.css" rel="stylesheet">
     <link href="/admin/assets/css/post-meeting.css" rel="stylesheet">
+    <link href="/admin/assets/css/reviewer-dashboard.css" rel="stylesheet">
 </head>
 
 <body>
     <!-- Premium Navbar -->
     <?php
-    $navbar_display = is_admin_logged_in() || is_applicant_logged_in() ? 'block' : 'none';
-    $home_path = is_applicant_logged_in() ? '/applicant-dashboard' : '/dashboard';
+    $navbar_display = is_admin_logged_in() || is_applicant_logged_in() || is_reviewer_logged_in() ? 'block' : 'none';
+    $home_path = is_applicant_logged_in() ? '/applicant-dashboard' : (is_reviewer_logged_in() ? '/reviewer-dashboard' : '/dashboard');
     $userName = $_SESSION['full_name'] ?? 'User';
     $userRole = $_SESSION['role'] ?? 'admin';
     ?>

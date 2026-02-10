@@ -3,13 +3,7 @@
 require_once __DIR__ . '/../includes/functions/helpers.php';
 require_once __DIR__ . '/../includes/functions/csrf.php';
 
-if (is_admin_logged_in()) {
-    header('Location: /dashboard');
-    exit;
-} elseif (is_applicant_logged_in()) {
-    header('Location: /applicant-dashboard');
-    exit;
-}
+
 
 ?>
 
@@ -60,24 +54,24 @@ if (is_admin_logged_in()) {
                     </button>
                 </div>
             </form>
-            
+
             <?php if (isset($_GET['error'])): ?>
                 <div class="alert auth-alert auth-alert-danger" role="alert">
                     <i class="fas fa-exclamation-circle me-2"></i>
                     Invalid email or password. Please try again.
                 </div>
             <?php endif; ?>
-            
+
             <div class="text-center mt-4">
                 <a href="/forgot-password" class="auth-link">
                     <i class="fas fa-key me-1"></i>Forgot password?
                 </a>
             </div>
-            
+
             <div class="auth-divider">
                 <span>New Applicant?</span>
             </div>
-            
+
             <div class="text-center">
                 <a href="/register" class="btn auth-btn auth-btn-outline">
                     <i class="fas fa-user-plus me-2"></i>Register Here

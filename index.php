@@ -8,9 +8,9 @@ declare(strict_types=1);
 require_once 'config.php';
 require_once 'includes/functions/csrf.php';
 
-define('APP_SESSION_NAME', 'ug_irb_session');
+// define('CSRF_SESSION_NAME', 'ug_irb_session');
 
-session_name(APP_SESSION_NAME);
+// session_name(CSRF_SESSION_NAME);
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -20,6 +20,7 @@ if (session_status() === PHP_SESSION_NONE) {
 ========================================================== */
 $ADMIN_BASE     = 'admin/pages/';
 $APPLICANT_BASE = 'applicant/pages/';
+$REVIEWER_BASE  = 'reviewer/pages/';
 $USER_BASE      = 'user/';
 $ERROR_404      = 'admin/404.php';
 $ERROR_403      = 'admin/403.php';
@@ -35,6 +36,29 @@ $segments = array_values(array_filter(explode('/', $path)));
 
 $section = $segments[0] ?? 'dashboard';
 $subpage = $segments[1] ?? null;
+
+/* ==========================================================
+| AUTH PAGE GUARD (PREVENT LOGIN LOOP)
+========================================================== */
+$authPages = ['login', 'register', 'forgot-password'];
+
+if (in_array($section, $authPages, true) && is_authenticated()) {
+    switch ($_SESSION['role']) {
+        case 'admin':
+        case 'super_admin':
+            header('Location: /dashboard');
+            break;
+        case 'applicant':
+            header('Location: /applicant-dashboard');
+            break;
+        case 'reviewer':
+            header('Location: /reviewer-dashboard');
+            break;
+        default:
+            header('Location: /dashboard');
+    }
+    exit;
+}
 
 /* ==========================================================
 | ROUTE DEFINITIONS
@@ -89,26 +113,78 @@ $routes = [
 
     /* ---------- APPLICANT ---------- */
     'applicant-dashboard' => [
-        '_'       => ['file' => 'index.php', 'roles' => ['applicant']],
-        'profile' => ['file' => 'profile.php', 'roles' => ['applicant']],
-        'applications' => ['file' => 'applications.php', 'roles' => ['applicant']],
+        '_'       => ['file' => 'applicant/pages/index.php', 'roles' => ['applicant']],
+        'profile' => ['file' => 'applicant/pages/profile.php', 'roles' => ['applicant']],
+        'applications' => ['file' => 'applicant/pages/applications.php', 'roles' => ['applicant']],
     ],
 
     'add-protocol' => [
-        'student-application' => ['file' => 'student_application.php', 'roles' => ['applicant']],
-        'nmimr-application' => ['file' => 'nmimr_application.php', 'roles' => ['applicant']],
-        'non-nmimr-application' => ['file' => 'non_nmimr_application.php', 'roles' => ['applicant']],
+        'student-application' => ['file' => 'applicant/pages/student_application.php', 'roles' => ['applicant']],
+        'nmimr-application' => ['file' => 'applicant/pages/nmimr_application.php', 'roles' => ['applicant']],
+        'non-nmimr-application' => ['file' => 'applicant/pages/non_nmimr_application.php', 'roles' => ['applicant']],
+    ],
+
+    /* ---------- REVIEWER ---------- */
+    'reviewer-dashboard' => [
+        '_' => ['file' => 'reviewer/pages/index.php', 'roles' => ['reviewer']],
+        'reviews' => ['file' => 'reviewer/pages/reviews.php', 'roles' => ['reviewer']],
+        'review' => ['file' => 'reviewer/pages/review_detail.php', 'roles' => ['reviewer']],
+        'meetings' => ['file' => 'reviewer/pages/meetings.php', 'roles' => ['reviewer']],
+        'workload' => ['file' => 'reviewer/pages/workload.php', 'roles' => ['reviewer']],
+        'profile' => ['file' => 'reviewer/pages/profile.php', 'roles' => ['reviewer']],
     ],
 ];
+
+
+
 
 /* ==========================================================
 | AUTH HELPERS
 ========================================================== */
-function requireRole(array $roles): bool
+
+/**
+ * Check if user is authenticated (returns boolean without redirect)
+ * @return bool
+ */
+function is_authenticated(): bool
 {
-    return isset($_SESSION['logged_in'], $_SESSION['role'])
-        && in_array($_SESSION['role'], $roles, true);
+    return isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true;
 }
+
+/**
+ * Check if user is authenticated, redirect to login if not
+ * @return bool
+ */
+function require_login(): bool
+{
+    error_log('require_login called - is_authenticated: ' . (is_authenticated() ? 'true' : 'false'));  // DEBUG
+    if (!is_authenticated()) {
+        error_log('User not authenticated, redirecting to login');
+        header('Location: /login');
+        exit;
+    }
+    return true;
+}
+
+/**
+ * Require specific role(s) for access
+ * @param array $roles Required roles
+ * @return bool
+ */
+function requireRole(array $roles): void
+{
+    if (!is_authenticated()) {
+        header('Location: /login');
+        exit;
+    }
+
+    if (!in_array($_SESSION['role'], $roles, true)) {
+        http_response_code(403);
+        require 'admin/403.php';
+        exit;
+    }
+}
+
 
 /* ==========================================================
 | ROUTE RESOLUTION
@@ -133,10 +209,20 @@ if (!$pageConfig) {
 | ROLE CHECK
 ========================================================== */
 $roles = $pageConfig['roles'] ?? [];
-if ($roles && !requireRole($roles)) {
-    http_response_code(403);
-    require $ERROR_403;
-    exit;
+
+if ($roles) {
+    if (!is_authenticated()) {
+        // User not logged in at all, redirect to login
+        header('Location: /login');
+        exit;
+    }
+
+    if (!in_array($_SESSION['role'], $roles, true)) {
+        // User logged in but wrong role, show 403
+        http_response_code(403);
+        require $ERROR_403;
+        exit;
+    }
 }
 
 /* ==========================================================
@@ -146,10 +232,15 @@ $file = $pageConfig['file'];
 
 $resolvedFile = null;
 
-if (file_exists($ADMIN_BASE . $file)) {
+// Check if the file path already exists directly (for routes with full paths like 'reviewer/pages/index.php')
+if (file_exists($file)) {
+    $resolvedFile = $file;
+} elseif (file_exists($ADMIN_BASE . $file)) {
     $resolvedFile = $ADMIN_BASE . $file;
 } elseif (file_exists($APPLICANT_BASE . $file)) {
     $resolvedFile = $APPLICANT_BASE . $file;
+} elseif (file_exists($REVIEWER_BASE . $file)) {
+    $resolvedFile = $REVIEWER_BASE . $file;
 } elseif (file_exists($USER_BASE . $file)) {
     $resolvedFile = $USER_BASE . $file;
 }

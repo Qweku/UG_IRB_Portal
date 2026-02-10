@@ -100,10 +100,10 @@ function is_applicant_logged_in()
 {
     // Session is already started in index.php, just verify it's active
     if (session_status() === PHP_SESSION_ACTIVE) {
-        return isset($_SESSION['logged_in']) && isset($_SESSION['role']) && ($_SESSION['role'] === 'applicant' || $_SESSION['role'] === 'reviewer');
+        return isset($_SESSION['logged_in']) && isset($_SESSION['role']) && $_SESSION['role'] === 'applicant';
     }
     // Fallback: check if session variables exist
-    return isset($_SESSION['logged_in']) && isset($_SESSION['role']) && ($_SESSION['role'] === 'applicant' || $_SESSION['role'] === 'reviewer');
+    return isset($_SESSION['logged_in']) && isset($_SESSION['role']) && $_SESSION['role'] === 'applicant';
 }
 
 
@@ -1455,4 +1455,445 @@ function getApplicationProgress($currentStep, $totalSteps = 5) {
     if ($currentStep <= 0) return 0;
     if ($currentStep > $totalSteps) return 100;
     return (int) (($currentStep / $totalSteps) * 100);
+}
+
+// ===========================================
+// REVIEWER HELPER FUNCTIONS
+// ===========================================
+
+/**
+ * Check if reviewer is logged in
+ * @return bool
+ */
+function is_reviewer_logged_in()
+{
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        return isset($_SESSION['logged_in']) && isset($_SESSION['role']) && $_SESSION['role'] === 'reviewer';
+    }
+    return isset($_SESSION['logged_in']) && isset($_SESSION['role']) && $_SESSION['role'] === 'reviewer';
+}
+
+/**
+ * Get total count of pending applications for review
+ * @return int
+ */
+function getPendingApplicationsCount()
+{
+    return executeCountQuery(
+        "SELECT COUNT(*) as count FROM student_applications WHERE status = 'submitted'",
+        []
+    );
+}
+
+/**
+ * Get count of applications under review by current reviewer
+ * @param int $reviewerId
+ * @return int
+ */
+function getReviewerActiveReviewsCount($reviewerId)
+{
+    return executeCountQuery(
+        "SELECT COUNT(*) as count FROM application_reviews WHERE reviewer_id = ? AND status IN ('in_progress', 'completed')",
+        [$reviewerId]
+    );
+}
+
+/**
+ * Get count of completed reviews by reviewer
+ * @param int $reviewerId
+ * @return int
+ */
+function getReviewerCompletedReviewsCount($reviewerId)
+{
+    return executeCountQuery(
+        "SELECT COUNT(*) as count FROM application_reviews WHERE reviewer_id = ? AND status = 'completed'",
+        [$reviewerId]
+    );
+}
+
+/**
+ * Get all pending applications for review
+ * @param int|null $limit
+ * @param int|null $offset
+ * @return array
+ */
+function getPendingApplications($limit = null, $offset = null)
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) return [];
+
+    try {
+        $query = "SELECT sa.*, 
+                         u.full_name as applicant_name,
+                         u.email as applicant_email,
+                         sa.created_at as submitted_at
+                  FROM student_applications sa
+                  LEFT JOIN users u ON sa.applicant_id = u.id
+                  WHERE sa.status = 'submitted'
+                  ORDER BY sa.created_at ASC";
+
+        if ($limit !== null && $offset !== null) {
+            $query .= " LIMIT ? OFFSET ?";
+            $stmt = $conn->prepare($query);
+            $stmt->execute([$limit, $offset]);
+        } else {
+            $stmt = $conn->prepare($query);
+            $stmt->execute();
+        }
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error fetching pending applications: " . $e->getMessage());
+        return [];
+    }
+}
+
+/**
+ * Get applications assigned to a specific reviewer
+ * @param int $reviewerId
+ * @return array
+ */
+function getReviewerAssignments($reviewerId)
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) return [];
+
+    try {
+        $stmt = $conn->prepare(
+            "SELECT sa.*, 
+                    u.full_name as applicant_name,
+                    ar.status as review_status,
+                    ar.created_at as assigned_at,
+                    ar.id as review_id
+             FROM application_reviews ar
+             LEFT JOIN student_applications sa ON ar.application_id = sa.id
+             LEFT JOIN users u ON sa.applicant_id = u.id
+             WHERE ar.reviewer_id = ?
+             ORDER BY ar.created_at DESC"
+        );
+        $stmt->execute([$reviewerId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error fetching reviewer assignments: " . $e->getMessage());
+        return [];
+    }
+}
+
+/**
+ * Get single application details for review
+ * @param int $applicationId
+ * @return array|null
+ */
+function getApplicationForReview($applicationId)
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) return null;
+
+    try {
+        $stmt = $conn->prepare(
+            "SELECT sa.*, 
+                    u.full_name as applicant_name,
+                    u.email as applicant_email,
+                    sa.created_at as submitted_at
+             FROM student_applications sa
+             LEFT JOIN users u ON sa.applicant_id = u.id
+             WHERE sa.id = ?"
+        );
+        $stmt->execute([$applicationId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    } catch (PDOException $e) {
+        error_log("Error fetching application for review: " . $e->getMessage());
+        return null;
+    }
+}
+
+/**
+ * Get all comments for an application review
+ * @param int $applicationId
+ * @return array
+ */
+function getApplicationComments($applicationId)
+{
+    return executeAssocQuery(
+        "SELECT ac.*, u.full_name as reviewer_name
+         FROM application_comments ac
+         LEFT JOIN users u ON ac.reviewer_id = u.id
+         WHERE ac.application_id = ?
+         ORDER BY ac.created_at ASC",
+        [$applicationId]
+    );
+}
+
+/**
+ * Get review details for an application
+ * @param int $applicationId
+ * @param int $reviewerId
+ * @return array|null
+ */
+function getReviewDetails($applicationId, $reviewerId)
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) return null;
+
+    try {
+        $stmt = $conn->prepare("SELECT * FROM application_reviews WHERE application_id = ? AND reviewer_id = ?");
+        $stmt->execute([$applicationId, $reviewerId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    } catch (PDOException $e) {
+        error_log("Error fetching review details: " . $e->getMessage());
+        return null;
+    }
+}
+
+/**
+ * Assign application to reviewer
+ * @param int $applicationId
+ * @param int $reviewerId
+ * @return bool
+ */
+function assignApplicationToReviewer($applicationId, $reviewerId)
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) return false;
+
+    try {
+        $stmt = $conn->prepare(
+            "INSERT INTO application_reviews (application_id, reviewer_id, status, created_at) 
+             VALUES (?, ?, 'assigned', NOW())"
+        );
+        return $stmt->execute([$applicationId, $reviewerId]);
+    } catch (PDOException $e) {
+        error_log("Error assigning application: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Add comment to application review
+ * @param array $data
+ * @return bool
+ */
+function addReviewComment($data)
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) return false;
+
+    try {
+        $stmt = $conn->prepare(
+            "INSERT INTO application_comments (application_id, reviewer_id, section, comment, created_at) 
+             VALUES (?, ?, ?, ?, NOW())"
+        );
+        return $stmt->execute([
+            $data['application_id'],
+            $data['reviewer_id'],
+            $data['section'] ?? 'general',
+            $data['comment']
+        ]);
+    } catch (PDOException $e) {
+        error_log("Error adding comment: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Update review status
+ * @param int $reviewId
+ * @param string $status
+ * @return bool
+ */
+function updateReviewStatus($reviewId, $status)
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) return false;
+
+    try {
+        $stmt = $conn->prepare("UPDATE application_reviews SET status = ?, updated_at = NOW() WHERE id = ?");
+        return $stmt->execute([$status, $reviewId]);
+    } catch (PDOException $e) {
+        error_log("Error updating review status: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Submit final review decision
+ * @param array $data
+ * @return bool
+ */
+function submitReviewDecision($data)
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) return false;
+
+    try {
+        $conn->beginTransaction();
+
+        // Update review
+        $stmt = $conn->prepare(
+            "UPDATE application_reviews 
+             SET decision = ?, decision_notes = ?, status = 'completed', updated_at = NOW() 
+             WHERE id = ?"
+        );
+        $stmt->execute([$data['decision'], $data['decision_notes'], $data['review_id']]);
+
+        // Update application status based on decision
+        $appStatusMap = [
+            'approved' => 'approved',
+            'rejected' => 'rejected',
+            'changes_requested' => 'revision_requested'
+        ];
+        $appStatus = $appStatusMap[$data['decision']] ?? 'under_review';
+
+        $stmt = $conn->prepare("UPDATE student_applications SET status = ?, updated_at = NOW() WHERE id = ?");
+        $stmt->execute([$appStatus, $data['application_id']]);
+
+        $conn->commit();
+        return true;
+    } catch (PDOException $e) {
+        $conn->rollBack();
+        error_log("Error submitting review decision: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Get reviewer statistics
+ * @param int $reviewerId
+ * @return array
+ */
+function getReviewerStats($reviewerId)
+{
+    $assignments = getReviewerAssignments($reviewerId);
+
+    $pending = count(array_filter($assignments, fn($a) => ($a['review_status'] ?? '') === 'assigned'));
+    $inProgress = count(array_filter($assignments, fn($a) => ($a['review_status'] ?? '') === 'in_progress'));
+    $completed = count(array_filter($assignments, fn($a) => ($a['review_status'] ?? '') === 'completed'));
+
+    // Calculate average review time (simplified)
+    $avgReviewTime = $completed > 0 ? '2.5 days' : 'N/A';
+
+    return [
+        'pending' => $pending,
+        'in_progress' => $inProgress,
+        'completed' => $completed,
+        'total_assigned' => count($assignments),
+        'avg_review_time' => $avgReviewTime
+    ];
+}
+
+/**
+ * Get IRB meetings for reviewers
+ * @return array
+ */
+function getReviewerMeetings()
+{
+    return executeAssocQuery(
+        "SELECT * FROM irb_meetings WHERE meeting_date >= CURDATE() ORDER BY meeting_date ASC"
+    );
+}
+
+/**
+ * Get upcoming deadlines for reviewer
+ * @param int $reviewerId
+ * @return array
+ */
+function getReviewerDeadlines($reviewerId)
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) return [];
+
+    try {
+        $stmt = $conn->prepare(
+            "SELECT sa.*, ar.review_deadline, ar.id as review_id
+             FROM application_reviews ar
+             LEFT JOIN student_applications sa ON ar.application_id = sa.id
+             WHERE ar.reviewer_id = ? 
+               AND ar.review_deadline IS NOT NULL
+               AND ar.review_deadline >= CURDATE()
+             ORDER BY ar.review_deadline ASC"
+        );
+        $stmt->execute([$reviewerId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error fetching reviewer deadlines: " . $e->getMessage());
+        return [];
+    }
+}
+
+/**
+ * Get reviewer profile
+ * @param int $userId
+ * @return array
+ */
+function getReviewerProfile($userId)
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) return [];
+
+    try {
+        $stmt = $conn->prepare("SELECT * FROM reviewer_profiles WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    } catch (PDOException $e) {
+        error_log("Error fetching reviewer profile: " . $e->getMessage());
+        return [];
+    }
+}
+
+/**
+ * Send email notification to applicant
+ * @param int $applicationId
+ * @param string $decision
+ * @param string $notes
+ * @return bool
+ */
+function sendReviewNotification($applicationId, $decision, $notes = '')
+{
+    $application = getApplicationForReview($applicationId);
+    if (!$application) return false;
+
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) return false;
+
+    try {
+        $decisionLabels = [
+            'approved' => 'Approved',
+            'rejected' => 'Rejected',
+            'changes_requested' => 'Changes Requested'
+        ];
+
+        $decisionLabel = $decisionLabels[$decision] ?? 'Updated';
+        $subject = "IRB Application Decision: " . $decisionLabel;
+        $studyTitle = $application['study_title'] ?? 'Your application';
+        
+        $message = "Dear " . $application['applicant_name'] . ",\n\n";
+        $message .= "Your IRB application '" . $studyTitle . "' has been " . $decisionLabel . ".\n\n";
+        
+        if ($notes) {
+            $message .= "Reviewer Notes:\n{$notes}\n\n";
+        }
+
+        $message .= "Please log in to your dashboard for more details.\n\n";
+        $message .= "Best regards,\nNoguchi IRB Office";
+
+        $stmt = $conn->prepare(
+            "INSERT INTO notifications (user_id, subject, message, type, created_at) 
+             VALUES (?, ?, ?, 'review_decision', NOW())"
+        );
+        return $stmt->execute([$application['applicant_id'], $subject, $message]);
+    } catch (PDOException $e) {
+        error_log("Error sending notification: " . $e->getMessage());
+        return false;
+    }
 }

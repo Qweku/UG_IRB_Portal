@@ -1,10 +1,10 @@
 <?php
 
 // Check if applicant is logged in
-if (!is_applicant_logged_in()) {
-    header('Location: /login');
-    exit;
-}
+// if (!is_applicant_logged_in()) {
+//     header('Location: /login');
+//     exit;
+// }
 
 error_log("Accessing student application page for user ID: " . ($_SESSION['user_id'] ?? 'unknown'));
 

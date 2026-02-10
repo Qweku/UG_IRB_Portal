@@ -2,10 +2,10 @@
 
 
 // session_start();
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    header('Location: /login');
-    exit;
-}
+// if (!is_admin_logged_in()) {
+//     header('Location: /login');
+//     exit;
+// }
 
 // Include CSRF protection
 // require_once '../../includes/functions/csrf.php';
@@ -77,63 +77,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['new_password'])) {
 
 </div>
 
-<!-- Password Reset Modal -->
-<div class="modal fade"
-    id="passwordResetModal"
-    tabindex="-1"
-    aria-hidden="true">
-
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content shadow">
-
-            <div class="modal-header">
-                <h5 class="modal-title">Set Your Password</h5>
-                <button type="button"
-                    class="btn-close"
-                    data-bs-dismiss="modal"
-                    aria-label="Close"></button>
-            </div>
-
-            <div class="modal-body">
-                <p class="text-muted">
-                    This is your first login. Please set a secure password to continue.
-                </p>
-
-                <form id="passwordResetForm"
-                    method="post">
-                    <?php echo csrf_field(); ?>
-
-                    <div class="mb-3">
-                        <label class="form-label">New Password</label>
-                        <input type="password"
-                            class="form-control"
-                            id="newPassword"
-                            name="new_password"
-                            minlength="8"
-                            required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Confirm Password</label>
-                        <input type="password"
-                            class="form-control"
-                            id="confirmPassword"
-                            name="confirm_password"
-                            required>
-                    </div>
-
-                    <button type="submit"
-                        class="btn btn-primary w-100"
-                        id="submitBtn">
-                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display: none;"></span>
-                        Update Password
-                    </button>
-
-                </form>
+<!-- Password Reset Modal (for first login) -->
+<?php if ($showPasswordModal): ?>
+    <div class="modal fade" id="passwordResetModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow" style="border-radius: 16px; border: none;">
+                <div class="modal-header" style="background: linear-gradient(135deg, var(--royal-blue) 0%, var(--royal-blue-light) 100%); border-radius: 16px 16px 0 0;">
+                    <h5 class="modal-title text-white">
+                        <i class="fas fa-lock me-2"></i>Set Your Password
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-muted mb-4">This is your first login. Please set a secure password to continue.</p>
+                    <form id="passwordResetForm" method="post">
+                        <?php echo csrf_field(); ?>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">New Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="newPassword" name="new_password" minlength="8" required placeholder="Enter new password">
+                            </div>
+                            <small class="text-muted">Must be at least 8 characters</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Confirm Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="confirmPassword" name="confirm_password" required placeholder="Confirm password">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 py-2" id="submitBtn" style="border-radius: 25px; font-weight: 600;">
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" style="display: none;"></span>
+                            <i class="fas fa-save me-2"></i>Update Password
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-</div>
+<?php endif; ?>
 
 
 

@@ -1,10 +1,10 @@
 <?php
 
-// Check if applicant is logged in
-if (!is_applicant_logged_in()) {
-    header('Location: /login');
-    exit;
-}
+// // Check if applicant is logged in
+// if (!is_applicant_logged_in()) {
+//     header('Location: /login');
+//     exit;
+// }
 
 $userId = $_SESSION['user_id'] ?? 0;
 $userName = $_SESSION['full_name'] ?? 'Applicant';

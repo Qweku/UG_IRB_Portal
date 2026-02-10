@@ -31,7 +31,7 @@ if (is_admin_logged_in()) {
             <div class="auth-header-logo">
                 <img src="/admin/assets/images/ug_logo_white.png" alt="UG Logo" class="d-inline-block align-text-top">
             </div>
-            <h4><i class="fas fa-university"></i> UG HARES Software</h4>
+            <h4></i> UG HARES</h4>
             <p>Reset your password</p>
         </div>
         <div class="auth-body-content">

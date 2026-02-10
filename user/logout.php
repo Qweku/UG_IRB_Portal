@@ -1,6 +1,5 @@
 <?php
-session_name('ug_irb_session');
-session_start();
+// Session is already started in index.php, no need to start again
 
 session_unset();
 session_destroy();
