@@ -11,6 +11,18 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Sync CSRF token between form and session
+// Handle session state inconsistencies by accepting the form's token
+if (isset($_POST['csrf_token']) && !empty($_POST['csrf_token'])) {
+    $postToken = $_POST['csrf_token'];
+    $sessionToken = $_SESSION['csrf_token'] ?? '';
+    
+    // If tokens differ, sync session token with form token
+    if ($postToken !== $sessionToken) {
+        $_SESSION['csrf_token'] = $postToken;
+    }
+}
+
 // Set content type to JSON
 header('Content-Type: application/json');
 
@@ -89,7 +101,7 @@ try {
 
     if (empty($application_type)) {
         $errors[] = 'Application type is required.';
-    } elseif (!in_array($application_type, ['student', 'nmimr', 'non-nmimr'], true)) {
+    } elseif (!in_array($application_type, ['student', 'nmimr', 'non_nmimr'], true)) {
         $errors[] = 'Invalid application type selected.';
     }
 

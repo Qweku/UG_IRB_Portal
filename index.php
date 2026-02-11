@@ -8,9 +8,11 @@ declare(strict_types=1);
 require_once 'config.php';
 require_once 'includes/functions/csrf.php';
 
-// define('CSRF_SESSION_NAME', 'ug_irb_session');
+// Use consistent session name across entire application
+// This must be set BEFORE session_start()
+defined('CSRF_SESSION_NAME') || define('CSRF_SESSION_NAME', 'ug_irb_session');
+session_name(CSRF_SESSION_NAME);
 
-// session_name(CSRF_SESSION_NAME);
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }

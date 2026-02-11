@@ -6,7 +6,7 @@ $userName = $_SESSION['full_name'] ?? 'Applicant';
 $userId = $_SESSION['user_id'] ?? 0;
 
 // Get stats for sidebar
-$stats = getApplicantStats($userId);
+// $stats = getApplicantStats($userId);
 
 ?>
 <style>

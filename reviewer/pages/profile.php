@@ -5,7 +5,7 @@
 
 $userId = $_SESSION['user_id'] ?? 0;
 $userName = $_SESSION['full_name'] ?? 'Reviewer';
-$userEmail = $_SESSION['email'] ?? '';
+$userEmail = $_SESSION['user_email'] ?? '';
 $userRole = $_SESSION['role'] ?? 'reviewer';
 
 // Get reviewer profile
@@ -206,8 +206,8 @@ $stats = getReviewerStats($userId);
                     <div class="profile-avatar">
                         <?php echo strtoupper(substr($userName, 0, 2)); ?>
                     </div>
-                    <h2 class="profile-name"><?php echo htmlspecialchars($userName); ?></h2>
-                    <p class="profile-role">
+                    <h2 class="profile-name text-white"><?php echo htmlspecialchars($userName); ?></h2>
+                    <p class="profile-role text-white-50">
                         <i class="fas fa-id-badge me-2"></i>
                         <?php echo htmlspecialchars($userRole); ?>
                     </p>

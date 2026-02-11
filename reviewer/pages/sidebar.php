@@ -459,23 +459,23 @@ $stats = getReviewerStats($userId);
         </div>
 
         <!-- Quick Stats -->
-        <div class="quick-stats">
+        <!-- <div class="quick-stats">
             <div class="quick-stats-title">Reviewer Stats</div>
             <div class="stats-row">
                 <div class="stat-item" title="Pending Reviews">
-                    <div class="stat-number"><?php echo $stats['pending'] ?? 0; ?></div>
+                    <div class="stat-number"><?php //echo $stats['pending'] ?? 0; ?></div>
                     <div class="stat-label">Pending</div>
                 </div>
                 <div class="stat-item" title="In Progress">
-                    <div class="stat-number"><?php echo $stats['in_progress'] ?? 0; ?></div>
+                    <div class="stat-number"><?php //echo $stats['in_progress'] ?? 0; ?></div>
                     <div class="stat-label">In Progress</div>
                 </div>
                 <div class="stat-item" title="Completed">
-                    <div class="stat-number"><?php echo $stats['completed'] ?? 0; ?></div>
+                    <div class="stat-number"><?php //echo $stats['completed'] ?? 0; ?></div>
                     <div class="stat-label">Done</div>
                 </div>
             </div>
-        </div>
+        </div> -->
 
         <!-- Navigation -->
         <div class="nav-section">

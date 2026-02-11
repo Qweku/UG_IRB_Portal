@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Database Functions for UG IRB Portal
  * Contains helper functions for retrieving data from the database
@@ -100,10 +101,10 @@ function is_applicant_logged_in()
 {
     // Session is already started in index.php, just verify it's active
     if (session_status() === PHP_SESSION_ACTIVE) {
-        return isset($_SESSION['logged_in']) && isset($_SESSION['role']) && $_SESSION['role'] === 'applicant';
+        return isset($_SESSION['logged_in']) && isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role'] === 'applicant';
     }
     // Fallback: check if session variables exist
-    return isset($_SESSION['logged_in']) && isset($_SESSION['role']) && $_SESSION['role'] === 'applicant';
+    return isset($_SESSION['logged_in']) && isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role'] === 'applicant';
 }
 
 
@@ -252,7 +253,7 @@ function getMeetingDates()
 function getConditions()
 {
     return executeListQuery("SELECT condition_name FROM irb_condition ORDER BY condition_name ASC");
-} 
+}
 
 function getIRBActions()
 {
@@ -314,7 +315,7 @@ function getStudies($status = 'all', $review_type = 'all', $pi_name = '', $sort_
         return [];
     }
 
- 
+
 
     try {
         $institutionId = get_user_institution_id();
@@ -351,7 +352,7 @@ function getStudies($status = 'all', $review_type = 'all', $pi_name = '', $sort_
                 $order_by = 's.title';
                 break;
         }
-        
+
         // Whitelist validation for ORDER BY clause
         $allowed_columns = ['s.protocol_number', 's.approval_date', 's.title'];
         if (!in_array($order_by, $allowed_columns, true)) {
@@ -1238,10 +1239,10 @@ function getFirstFridayOfMonth($year, $month)
  * @param int $userId
  * @return int
  */
-function getApplicantApplicationsCount($userId)
+function getApplicantApplicationsCount($userId, $table)
 {
     return executeCountQuery(
-        "SELECT COUNT(*) as count FROM student_applications WHERE applicant_id = ?",
+        "SELECT COUNT(*) as count FROM $table WHERE applicant_id = ?",
         [$userId]
     );
 }
@@ -1251,11 +1252,31 @@ function getApplicantApplicationsCount($userId)
  * @param int $userId
  * @return array
  */
-function getApplicantStudies($userId)
+function getStudentApplicantStudies($userId)
 {
     return executeAssocQuery(
         "SELECT id, study_title, created_at, status, application_type 
          FROM student_applications 
+         WHERE applicant_id = ? 
+         ORDER BY created_at DESC",
+        [$userId]
+    );
+}
+function getNMIMRApplicantStudies($userId)
+{
+    return executeAssocQuery(
+        "SELECT id, proposal_title, created_at, status
+         FROM nmimr_applications 
+         WHERE applicant_id = ? 
+         ORDER BY created_at DESC",
+        [$userId]
+    );
+}
+function getNONNMIMRApplicantStudies($userId)
+{
+    return executeAssocQuery(
+        "SELECT id, study_title, created_at, status, application_type 
+         FROM non_nmimr_applications 
          WHERE applicant_id = ? 
          ORDER BY created_at DESC",
         [$userId]
@@ -1273,7 +1294,7 @@ function getApplicantProfile($userId)
     $conn = $db->connect();
     if (!$conn) return [];
 
-    
+
     try {
         $stmt = $conn->prepare(
             "SELECT * FROM applicant_users WHERE user_id = ?"
@@ -1287,8 +1308,9 @@ function getApplicantProfile($userId)
 }
 
 
-function getInstitutionById($institutionId){
- $db = new Database();
+function getInstitutionById($institutionId)
+{
+    $db = new Database();
     $conn = $db->connect();
     if (!$conn) return null;
 
@@ -1364,15 +1386,15 @@ function getStatusColor($status)
  * @param int $userId
  * @return array
  */
-function getApplicantStats($userId)
+function getApplicantStats($userId, $applicationType)
 {
-    $total = getApplicantApplicationsCount($userId);
-    $studies = getApplicantStudies($userId);
-    
+    $total = $applicationType == "student" ? getApplicantApplicationsCount($userId, "student_applications") : ($applicationType == "nmimr" ? getApplicantApplicationsCount($userId, "nmimr_applications") : getApplicantApplicationsCount($userId, "non_nmimr_applications"));
+    $studies = $applicationType == "student" ? getStudentApplicantStudies($userId) : ($applicationType == "nmimr" ? getNMIMRApplicantStudies($userId) : getNONNMIMRApplicantStudies($userId));
+
     $underReview = count(array_filter($studies, fn($s) => ($s['status'] ?? '') === 'under_review'));
     $approved = count(array_filter($studies, fn($s) => ($s['status'] ?? '') === 'approved'));
     $rejected = count(array_filter($studies, fn($s) => ($s['status'] ?? '') === 'rejected'));
-    
+
     return [
         'total' => $total,
         'under_review' => $underReview,
@@ -1386,7 +1408,7 @@ function getApplicantStats($userId)
  * @param int $userId
  * @return array|null
  */
-function getDraftApplication(int $userId): ?array
+function getDraftApplication(int $userId, $table): ?array
 {
     $db = new Database();
     $conn = $db->connect();
@@ -1397,7 +1419,7 @@ function getDraftApplication(int $userId): ?array
     try {
         $stmt = $conn->prepare(
             "SELECT *
-             FROM student_applications
+             FROM $table
              WHERE applicant_id = :applicant_id
                AND status = 'draft'
              ORDER BY created_at DESC
@@ -1414,7 +1436,6 @@ function getDraftApplication(int $userId): ?array
         );
 
         return $draft ?: null;
-
     } catch (PDOException $e) {
         error_log("Draft fetch error: " . $e->getMessage());
         return null;
@@ -1427,11 +1448,12 @@ function getDraftApplication(int $userId): ?array
  * @param int $userId
  * @return bool
  */
-function hasOngoingApplication($userId) {
+function hasOngoingApplication($userId)
+{
     $db = new Database();
     $conn = $db->connect();
     if (!$conn) return false;
-    
+
     try {
         $stmt = $conn->prepare(
             "SELECT COUNT(*) as count FROM student_applications 
@@ -1451,7 +1473,8 @@ function hasOngoingApplication($userId) {
  * @param int $totalSteps
  * @return int
  */
-function getApplicationProgress($currentStep, $totalSteps = 5) {
+function getApplicationProgress($currentStep, $totalSteps = 5)
+{
     if ($currentStep <= 0) return 0;
     if ($currentStep > $totalSteps) return 100;
     return (int) (($currentStep / $totalSteps) * 100);
@@ -1876,10 +1899,10 @@ function sendReviewNotification($applicationId, $decision, $notes = '')
         $decisionLabel = $decisionLabels[$decision] ?? 'Updated';
         $subject = "IRB Application Decision: " . $decisionLabel;
         $studyTitle = $application['study_title'] ?? 'Your application';
-        
+
         $message = "Dear " . $application['applicant_name'] . ",\n\n";
         $message .= "Your IRB application '" . $studyTitle . "' has been " . $decisionLabel . ".\n\n";
-        
+
         if ($notes) {
             $message .= "Reviewer Notes:\n{$notes}\n\n";
         }

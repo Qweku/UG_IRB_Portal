@@ -12,10 +12,10 @@
 
 /* Premium Navbar */
 .premium-navbar {
-    background: linear-gradient(135deg, var(--royal-blue-dark) 0%, var(--royal-blue) 100%);
+    background: linear-gradient(135deg, var(--royal-blue) 20%, var(--royal-blue-light) 100%);
     box-shadow: var(--admin-shadow-lg);
     padding: 16px 0;
-    border-bottom: 4px solid var(--admin-accent);
+    border-bottom: 4px solid var(--primary-gold);
 }
 
 /* Navbar Brand Premium */

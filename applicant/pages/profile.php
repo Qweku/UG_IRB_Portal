@@ -14,6 +14,18 @@ $userRole = $_SESSION['role'] ?? 'applicant';
 // Get applicant profile from database
 $profile = getApplicantProfile($userId);
 
+$applicant_type = $profile['applicant_type'] ?? ($_SESSION['applicant_type'] ?? 'student');
+
+function getApplicantTypeName($applicant_type){
+    if($applicant_type === 'student'){
+        return 'Student';
+    } elseif($applicant_type === 'nmimr'){
+        return 'NMIMR Researcher';
+    } else {
+        return 'Non-NMIMR Researcher';
+    }
+}
+
 // Fallback to session data if not in database
 $fullName = $profile['first_name'] . ' ' . $profile['middle_name'] . ' ' . $profile['last_name'] ?? $userName;
 $email = $profile['email'] ?? $userEmail;
@@ -31,7 +43,7 @@ try{
 $institution = $profile['institution'] ?? ($_SESSION['institution'] ?? 'Not provided');
 
 // Get stats
-$stats = getApplicantStats($userId);
+$stats = getApplicantStats($userId, $applicant_type);
 
 ?>
 
@@ -165,7 +177,7 @@ $stats = getApplicantStats($userId);
                                         </div>
                                         <div class="info-item-content">
                                             <label>Applicant Type</label>
-                                            <span><?php echo htmlspecialchars($applicant_type); ?></span>
+                                            <span><?php echo getApplicantTypeName($applicant_type); ?></span>
                                         </div>
                                     </div>
                                 </div>

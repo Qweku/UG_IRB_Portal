@@ -195,11 +195,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['new_password'])) {
                                     <table class="table">
                                         <thead>
                                             <tr>
-                                                <th style="font-weight: 600; color: #6c757d; font-size: 12px; text-transform: uppercase;">Study Title</th>
-                                                <th style="font-weight: 600; color: #6c757d; font-size: 12px; text-transform: uppercase;">Applicant</th>
-                                                <th style="font-weight: 600; color: #6c757d; font-size: 12px; text-transform: uppercase;">Type</th>
-                                                <th style="font-weight: 600; color: #6c757d; font-size: 12px; text-transform: uppercase;">Submitted</th>
-                                                <th style="font-weight: 600; color: #6c757d; font-size: 12px; text-transform: uppercase;">Action</th>
+                                                <th style="font-weight: 600; color: #ffffff; font-size: 12px; text-transform: uppercase;">Study Title</th>
+                                                <th style="font-weight: 600; color: #ffffff; font-size: 12px; text-transform: uppercase;">Applicant</th>
+                                                <th style="font-weight: 600; color: #ffffff; font-size: 12px; text-transform: uppercase;">Type</th>
+                                                <th style="font-weight: 600; color: #ffffff; font-size: 12px; text-transform: uppercase;">Submitted</th>
+                                                <th style="font-weight: 600; color: #ffffff; font-size: 12px; text-transform: uppercase;">Action</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -284,7 +284,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['new_password'])) {
                     </div>
 
                     <!-- Upcoming Meetings -->
-                    <div class="card border-0 shadow-sm mb-4 reviewer-fade-in-up" style="border-radius: 16px;">
+                    <!-- <div class="card border-0 shadow-sm mb-4 reviewer-fade-in-up" style="border-radius: 16px;">
                         <div class="card-header bg-white" style="border-radius: 16px 16px 0 0; padding: 16px 20px; border-bottom: 1px solid #e9ecef;">
                             <h5 class="mb-0" style="font-weight: 700; color: #2c3e50;">
                                 <i class="fas fa-calendar-alt me-2" style="color: #3498db;"></i>
@@ -292,37 +292,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['new_password'])) {
                             </h5>
                         </div>
                         <div class="card-body" style="padding: 16px;">
-                            <?php if (!empty($meetings)): ?>
-                                <?php foreach (array_slice($meetings, 0, 5) as $meeting): ?>
+                            <?php //if (!empty($meetings)): ?>
+                                <?php //foreach (array_slice($meetings, 0, 5) as $meeting): ?>
                                     <div class="meeting-card" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; padding: 16px; margin-bottom: 12px;">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
                                                 <div style="font-weight: 600; color: #2c3e50;">
-                                                    <?php echo date('l', strtotime($meeting['meeting_date'])); ?>
+                                                    <?php //echo date('l', strtotime($meeting['meeting_date'])); ?>
                                                 </div>
                                                 <small class="text-muted">First Friday of Month</small>
                                             </div>
                                             <div style="text-align: right;">
                                                 <div style="font-weight: 700; color: #2980b9; font-size: 18px;">
-                                                    <?php echo date('M d', strtotime($meeting['meeting_date'])); ?>
+                                                    <?php //echo date('M d', strtotime($meeting['meeting_date'])); ?>
                                                 </div>
-                                                <small class="text-muted"><?php echo date('Y', strtotime($meeting['meeting_date'])); ?></small>
+                                                <small class="text-muted"><?php //echo date('Y', strtotime($meeting['meeting_date'])); ?></small>
                                             </div>
                                         </div>
                                     </div>
-                                <?php endforeach; ?>
-                            <?php else: ?>
+                                <?php //endforeach; ?>
+                            <?php //else: ?>
                                 <div class="text-center py-4">
                                     <p class="text-muted mb-0">No upcoming meetings scheduled</p>
                                 </div>
-                            <?php endif; ?>
-                            <?php if (count($meetings) > 5): ?>
+                            <?php //endif; ?>
+                            <?php //if (count($meetings) > 5): ?>
                                 <a href="?page=meetings" class="btn btn-outline-primary w-100" style="border-radius: 25px;">
                                     View All Meetings
                                 </a>
-                            <?php endif; ?>
+                            <?php //endif; ?>
                         </div>
-                    </div>
+                    </div> -->
 
                     <!-- Quick Actions -->
                     <div class="card border-0 shadow-sm reviewer-fade-in-up" style="border-radius: 16px;">

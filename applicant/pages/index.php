@@ -1,5 +1,11 @@
 <?php
 
+// Session name and start are already handled in the root index.php
+// Just ensure session is started if not already active
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // // Check if applicant is logged in
 // if (!is_applicant_logged_in()) {
 //     header('Location: /login');
@@ -9,19 +15,37 @@
 $userId = $_SESSION['user_id'] ?? 0;
 $userName = $_SESSION['full_name'] ?? 'Applicant';
 
+$profile = getApplicantProfile($userId);
+$applicant_type = $profile['applicant_type'] ?? 'student';
+
 // Get applicant stats
-$stats = getApplicantStats($userId);
+$stats = getApplicantStats($userId, $applicant_type);
 
-// Check for draft application
-$draftApplication = getDraftApplication($userId);
-$hasDraftApplication = $draftApplication !== null;
 
+if ($applicant_type === 'nmimr') {
+    $draftApplication = getDraftApplication($userId, 'nmimr_applications');
+} elseif ($applicant_type === 'non_nmimr') {
+    $draftApplication = getDraftApplication($userId, 'non_nmimr_applications');
+} else {
+    $draftApplication = getDraftApplication($userId, 'student_applications');
+}
+$hasDraftApplication = !empty($draftApplication);
 error_log("Applicant ID: $userId, Has Draft Application: " . ($hasDraftApplication ? 'Yes' : 'No'));
-
-$applicant_type = $_SESSION['applicant_type'] ?? 'student';
+error_log("Applicant Type: $applicant_type");
 
 // Check first login for password modal
 $showPasswordModal = isset($_SESSION['is_first']) && $_SESSION['is_first'] == 1;
+
+function getTotalSteps($applicant_type) {
+    switch ($applicant_type) {
+        case 'nmimr':
+            return 6; // NMIMR application has 6 steps
+        case 'non_nmimr':
+            return 5; // Non-NMIMR application has 5 steps
+        default:
+            return 5; // Student application has 5 steps
+    }
+}
 
 ?>
 
@@ -171,38 +195,42 @@ $showPasswordModal = isset($_SESSION['is_first']) && $_SESSION['is_first'] == 1;
                                                     <h5 class="protocol-number mb-0">
                                                         <?php echo htmlspecialchars($draftApplication['protocol_number'] ?? 'Draft Application'); ?>
                                                     </h5>
-                                                    <span class="badge bg-<?php 
-                                                        $statusColors = [
-                                                            'draft' => 'secondary',
-                                                            'submitted' => 'info',
-                                                            'under_review' => 'warning'
-                                                        ];
-                                                        echo $statusColors[$draftApplication['status']] ?? 'secondary';
-                                                    ?> status-badge">
+                                                    <span class="badge bg-<?php
+                                                                            $statusColors = [
+                                                                                'draft' => 'secondary',
+                                                                                'submitted' => 'info',
+                                                                                'under_review' => 'warning'
+                                                                            ];
+                                                                            echo $statusColors[$draftApplication['status']] ?? 'secondary';
+                                                                            ?> status-badge">
                                                         <?php echo ucfirst(htmlspecialchars($draftApplication['status'] ?? 'Draft')); ?>
                                                     </span>
                                                 </div>
                                             </div>
                                             <h6 class="study-title">
-                                                <?php echo htmlspecialchars($draftApplication['study_title'] ?? 'Untitled Application'); ?>
+                                                <?php if ($applicant_type == "student" || $applicant_type == "non_nmimr") {
+                                                    echo htmlspecialchars($draftApplication['study_title'] ?? 'Untitled Application');
+                                                } elseif ($applicant_type == "nmimr") {
+                                                    echo htmlspecialchars($draftApplication['proposal_title'] ?? 'Untitled NMIMR Application');
+                                                } ?>
                                             </h6>
-                                            
+
                                             <!-- Progress Bar -->
                                             <div class="mt-4">
                                                 <div class="progress-info">
                                                     <span class="progress-label">Application Progress</span>
                                                     <span class="progress-step">
                                                         <i class="fas fa-tasks me-1"></i>
-                                                        Step <?php echo ($draftApplication['current_step'] ?? 1); ?> of 5
+                                                        Step <?php echo ($draftApplication['current_step'] ?? 1); ?> of <?php echo getTotalSteps($applicant_type); ?>
                                                     </span>
                                                 </div>
                                                 <div class="progress">
-                                                    <div class="progress-bar bg-success" role="progressbar" 
-                                                         style="width: <?php echo getApplicationProgress($draftApplication['current_step'] ?? 1); ?>%">
+                                                    <div class="progress-bar bg-success" role="progressbar"
+                                                        style="width: <?php echo getApplicationProgress($draftApplication['current_step'] ?? 1, getTotalSteps($applicant_type)); ?>%">
                                                     </div>
                                                 </div>
                                             </div>
-                                            
+
                                             <p class="last-updated mb-0">
                                                 <i class="fas fa-clock me-2"></i>
                                                 Last updated: <?php echo isset($draftApplication['updated_at']) ? date('M d, Y \a\t g:i A', strtotime($draftApplication['updated_at'])) : 'Recently'; ?>
@@ -211,7 +239,7 @@ $showPasswordModal = isset($_SESSION['is_first']) && $_SESSION['is_first'] == 1;
                                         <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
                                             <?php
                                             $continueUrl = '';
-                                            $appType = $draftApplication['application_type'] ?? 'student';
+                                            $appType = $applicant_type;
                                             switch ($appType) {
                                                 case 'nmimr':
                                                     $continueUrl = '/add-protocol/nmimr-application';

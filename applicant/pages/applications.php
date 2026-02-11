@@ -9,12 +9,22 @@
 $userId = $_SESSION['user_id'] ?? 0;
 $userName = $_SESSION['full_name'] ?? 'Applicant';
 
+$profile = getApplicantProfile($userId);
+
 // Check for draft application
-$draftApplication = getDraftApplication($userId);
-$hasDraftApplication = $draftApplication !== null;
+$applicant_type = $profile['applicant_type'] ?? 'student';
+
+if ($applicant_type === 'nmimr') {
+    $draftApplication = getDraftApplication($userId, 'nmimr_applications');
+} elseif ($applicant_type === 'non_nmimr') {
+    $draftApplication = getDraftApplication($userId, 'non_nmimr_applications');
+} else {
+    $draftApplication = getDraftApplication($userId, 'student_applications');
+}
+$hasDraftApplication = !empty($draftApplication);
 
 // Get applicant's studies
-$studies = getApplicantStudies($userId);
+$studies = $applicant_type == "student" ? getStudentApplicantStudies($userId) : ($applicant_type == "nmimr" ? getNMIMRApplicantStudies($userId) : getNONNMIMRApplicantStudies($userId));
 
 // Handle status filter
 $status_filter = $_GET['status'] ?? 'all';
@@ -27,7 +37,7 @@ if ($status_filter !== 'all') {
 <style>
     /* Studies Page Specific Styles */
     .page-header-section {
-        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        background:linear-gradient(135deg, #35493d 0%, #445e50 100%);
         border-radius: 16px;
         padding: 32px;
         margin-bottom: 24px;

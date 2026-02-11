@@ -3,6 +3,12 @@
 require_once __DIR__ . '/../includes/functions/helpers.php';
 require_once __DIR__ . '/../includes/functions/csrf.php';
 
+// Start session before generating CSRF token
+if (session_status() === PHP_SESSION_NONE) {
+    session_name('ug_irb_session');
+    session_start();
+}
+
 if (is_admin_logged_in()) {
     header('Location: /dashboard');
     exit;

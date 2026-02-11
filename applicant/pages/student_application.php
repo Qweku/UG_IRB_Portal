@@ -1,5 +1,14 @@
 <?php
 
+// Use consistent session name across entire application
+// defined('CSRF_SESSION_NAME') || define('CSRF_SESSION_NAME', 'ug_irb_session');
+// session_name(CSRF_SESSION_NAME);
+
+// Start session if not already started (for direct access)
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // Check if applicant is logged in
 // if (!is_applicant_logged_in()) {
 //     header('Location: /login');
@@ -102,7 +111,7 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
         color: #6c757d !important;
         cursor: not-allowed;
     }
-    
+
     input[readonly]:focus {
         box-shadow: none !important;
     }
@@ -111,7 +120,7 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
 <div class="add-new-protocol container-fluid mt-4 mb-4 p-4">
     <!-- Header -->
     <div class="welcome-header text-white p-4 rounded mb-4 position-relative overflow-hidden"
-        style="background: linear-gradient(135deg, #2c3e50, #4a6491);">
+        style="background:linear-gradient(135deg, #065c27 0%, #1b9b55 100%);">
         <div class="header-gradient"></div>
         <div class="d-flex align-items-center position-relative z-1">
             <div>
@@ -1124,21 +1133,21 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
         // Populate form with existing application data
         function populateFormFromExistingData() {
             const applicationId = document.getElementById('applicationId').value;
-            
+
             fetch(`/applicant/handlers/get_application_data.php?id=${applicationId}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success && data.application) {
                         const app = data.application;
-                        
+
                         // Populate form using reusable function
                         populateFormWithData(app);
-                        
+
                         // Show file names for existing application
                         if (data.file_names) {
                             displaySavedFileNames(data.file_names);
                         }
-                        
+
                         // Update application ID and current step
                         if (app.current_step) {
                             const appStep = parseInt(app.current_step);
@@ -1147,7 +1156,7 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
                                 document.getElementById('initialStep').value = appStep;
                             }
                         }
-                        
+
                         // Update navigation
                         updateStepNavigation();
                         goToStep(currentStep);
@@ -1161,7 +1170,7 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
         // Fetch and populate draft data on page load
         function fetchAndPopulateDraft() {
             const applicationType = document.querySelector('input[name="application_type"]').value || 'student';
-            
+
             fetch(`/applicant/handlers/get_draft_data.php?type=${applicationType}`)
                 .then(response => response.json())
                 .then(data => {
@@ -1170,7 +1179,7 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
                         if (data.draft.id) {
                             document.getElementById('applicationId').value = data.draft.id;
                         }
-                        
+
                         // Update current step if different
                         if (data.draft.current_step) {
                             const draftStep = parseInt(data.draft.current_step);
@@ -1179,18 +1188,18 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
                                 document.getElementById('initialStep').value = draftStep;
                             }
                         }
-                        
+
                         // Populate form with draft data
                         populateFormWithData(data.draft);
-                        
+
                         // Show file names that have been uploaded
                         if (data.file_names) {
                             displaySavedFileNames(data.file_names);
                         }
-                        
+
                         // Show toast message
                         showToast('info', 'Your saved draft has been loaded.');
-                        
+
                         // Update navigation
                         updateStepNavigation();
                         updateReviewSummary();
@@ -1210,7 +1219,7 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
             }
             document.getElementById('version_number').value = app.version_number || '';
             document.getElementById('study_title').value = app.study_title || '';
-            
+
             // Step 2 - Section A
             document.getElementById('student_department').value = app.student_department || '';
             document.getElementById('student_address').value = app.student_address || '';
@@ -1224,7 +1233,7 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
             document.getElementById('supervisor2_address').value = app.supervisor2_address || '';
             document.getElementById('supervisor2_phone').value = app.supervisor2_phone || '';
             document.getElementById('supervisor2_email').value = app.supervisor2_email || '';
-            
+
             // Show supervisor 2 section if data exists
             if (app.supervisor2_name || app.supervisor2_email) {
                 const supervisor2Section = document.getElementById('supervisor2-section');
@@ -1233,7 +1242,7 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
                     supervisorCount = 2;
                 }
             }
-            
+
             // Research type radio buttons
             const researchTypeRadios = document.getElementsByName('research_type');
             for (const radio of researchTypeRadios) {
@@ -1245,7 +1254,7 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
                     }
                 }
             }
-            
+
             // Student status radio buttons
             const studentStatusRadios = document.getElementsByName('student_status');
             for (const radio of studentStatusRadios) {
@@ -1253,14 +1262,14 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
                     radio.checked = true;
                 }
             }
-            
+
             document.getElementById('study_duration_years').value = app.study_duration_years || '';
             document.getElementById('study_start_date').value = app.study_start_date || '';
             document.getElementById('study_end_date').value = app.study_end_date || '';
             document.getElementById('funding_sources').value = app.funding_sources || '';
             document.getElementById('prior_irb_review').value = app.prior_irb_review || '';
             document.getElementById('collaborating_institutions').value = app.collaborating_institutions || '';
-            
+
             // Step 3 - Section B
             document.getElementById('abstract').value = app.abstract || '';
             document.getElementById('background').value = app.background || '';
@@ -1270,10 +1279,10 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
             document.getElementById('key_references').value = app.key_references || '';
             document.getElementById('work_plan').value = app.work_plan || '';
             document.getElementById('budget').value = app.budget || '';
-            
+
             // Update word counts
             updateWordCounts();
-            
+
             // Step 4 - Section C
             document.getElementById('student_declaration_name').value = app.student_declaration_name || '';
             document.getElementById('student_declaration_date').value = app.student_declaration_date || '';
@@ -1281,7 +1290,7 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
             document.getElementById('supervisor_declaration_name').value = app.supervisor_declaration_name || '';
             document.getElementById('supervisor_declaration_date').value = app.supervisor_declaration_date || '';
             document.getElementById('supervisor_declaration_signature').value = app.supervisor_declaration_signature || '';
-            
+
             // Handle declarations
             if (app.declarations && app.declarations.length > 0) {
                 const declarationCheckboxes = document.querySelectorAll('input[name="declarations[]"]');
@@ -1291,21 +1300,35 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
                     }
                 });
             }
-            
+
             // Update review summary
             updateReviewSummary();
         }
 
         // Display saved file names (for reference, not actual file upload)
         function displaySavedFileNames(fileNames) {
-            const fileFields = [
-                { fieldId: 'approval_letter', label: 'Approval Letter' },
-                { fieldId: 'collaboration_letter', label: 'Collaboration Letter' },
-                { fieldId: 'consent_form', label: 'Consent Form' },
-                { fieldId: 'assent_form', label: 'Assent Form' },
-                { fieldId: 'data_instruments', label: 'Data Instruments' }
+            const fileFields = [{
+                    fieldId: 'approval_letter',
+                    label: 'Approval Letter'
+                },
+                {
+                    fieldId: 'collaboration_letter',
+                    label: 'Collaboration Letter'
+                },
+                {
+                    fieldId: 'consent_form',
+                    label: 'Consent Form'
+                },
+                {
+                    fieldId: 'assent_form',
+                    label: 'Assent Form'
+                },
+                {
+                    fieldId: 'data_instruments',
+                    label: 'Data Instruments'
+                }
             ];
-            
+
             fileFields.forEach(item => {
                 if (fileNames[item.fieldId]) {
                     const input = document.getElementById(item.fieldId);
@@ -1502,26 +1525,26 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
                     reject(new Error('Form not found'));
                     return;
                 }
-                
+
                 const formData = new FormData(form);
                 formData.append('action', 'save_draft');
                 formData.append('current_step', currentStep);
-                
+
                 fetch('/applicant/handlers/student_application_handler.php', {
-                    method: 'POST',
-                    body: formData,
-                    credentials: 'same-origin' // Ensure cookies are sent
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.application_id) {
-                        document.getElementById('applicationId').value = data.application_id;
-                    }
-                    resolve(data);
-                })
-                .catch(error => {
-                    reject(error);
-                });
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'same-origin' // Ensure cookies are sent
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.application_id) {
+                            document.getElementById('applicationId').value = data.application_id;
+                        }
+                        resolve(data);
+                    })
+                    .catch(error => {
+                        reject(error);
+                    });
             });
         }
 
@@ -1686,36 +1709,45 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
 
             // Save draft via AJAX
             fetch('/applicant/handlers/student_application_handler.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                hideLoadingOverlay();
-                if (data.success) {
-                    // Update application_id if returned
-                    if (data.application_id) {
-                        document.getElementById('applicationId').value = data.application_id;
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin' // Ensure cookies are sent
+                })
+                .then(response => response.json())
+                .then(data => {
+                    hideLoadingOverlay();
+                    if (data.success) {
+                        // Update application_id if returned
+                        if (data.application_id) {
+                            document.getElementById('applicationId').value = data.application_id;
+                        }
+                        showToast('success', 'Draft saved successfully!');
+                    } else {
+                        showToast('error', data.message || 'Failed to save draft');
                     }
-                    showToast('success', 'Draft saved successfully!');
-                } else {
-                    showToast('error', data.message || 'Failed to save draft');
-                }
-            })
-            .catch(error => {
-                hideLoadingOverlay();
-                console.error('Error saving draft:', error);
-                showToast('error', 'An error occurred while saving the draft');
-            })
-            .finally(() => {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            });
+                })
+                .catch(error => {
+                    hideLoadingOverlay();
+                    console.error('Error saving draft:', error);
+                    showToast('error', 'An error occurred while saving the draft');
+                })
+                .finally(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                });
         });
 
         // Form submission
+        let isSubmitting = false; // Flag to prevent multiple submissions
         form.addEventListener('submit', function(e) {
             e.preventDefault();
+            
+            // Prevent multiple submissions
+            if (isSubmitting) {
+                console.log('Submission already in progress, ignoring...');
+                return;
+            }
+            isSubmitting = true;
 
             // Validate all steps
             for (let step = 1; step <= totalSteps; step++) {
@@ -1730,7 +1762,10 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
                         const checked = form.querySelectorAll(selector).length > 0;
                         if (!checked) {
                             goToStep(step);
-                            field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            field.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'center'
+                            });
                             field.focus();
                             alert(`Please complete all required fields in Step ${step} before submitting.`);
                             return;
@@ -1766,40 +1801,42 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
             // Prepare form data for submission
             const submitFormData = new FormData(form);
             submitFormData.append('action', 'submit_application');
-            
+
             // Show loading overlay
             showLoadingOverlay();
-            
+
             // Submit form via AJAX
             fetch('/applicant/handlers/student_application_handler.php', {
-                method: 'POST',
-                body: submitFormData
-            })
-            .then(response => response.json())
-            .then(data => {
-                hideLoadingOverlay();
-                if (data.success) {
-                    showToast('success', 'Protocol submitted successfully! Protocol Number: ' + (data.protocol_number || 'Pending'));
-                    // Redirect to confirmation page with protocol number
-                    setTimeout(() => {
-                        window.location.href = 'submission-confirmation.php?protocol=' + encodeURIComponent(data.protocol_number || '');
-                    }, 1500);
-                } else {
-                    showToast('error', data.message || 'Submission failed. Please try again.');
-                    if (data.errors) {
-                        console.error('Validation errors:', data.errors);
+                    method: 'POST',
+                    body: submitFormData,
+                    credentials: 'same-origin' // Ensure cookies are sent
+                })
+                .then(response => response.json())
+                .then(data => {
+                    hideLoadingOverlay();
+                    if (data.success) {
+                        showToast('success', 'Protocol submitted successfully! Protocol Number: ' + (data.protocol_number || 'Pending'));
+                        // Redirect to confirmation page with protocol number
+                        setTimeout(() => {
+                            window.location.href = 'submission-confirmation.php?protocol=' + encodeURIComponent(data.protocol_number || '');
+                        }, 1500);
+                    } else {
+                        showToast('error', data.message || 'Submission failed. Please try again.');
+                        if (data.errors) {
+                            console.error('Validation errors:', data.errors);
+                        }
                     }
-                }
-            })
-            .catch(error => {
-                hideLoadingOverlay();
-                console.error('Error submitting form:', error);
-                showToast('error', 'An error occurred during submission. Please try again.');
-            })
-            .finally(() => {
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-            });
+                })
+                .catch(error => {
+                    hideLoadingOverlay();
+                    console.error('Error submitting form:', error);
+                    showToast('error', 'An error occurred during submission. Please try again.');
+                })
+                .finally(() => {
+                    isSubmitting = false;
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                });
         });
 
         // Set default dates
