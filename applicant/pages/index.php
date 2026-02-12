@@ -22,13 +22,8 @@ $applicant_type = $profile['applicant_type'] ?? 'student';
 $stats = getApplicantStats($userId, $applicant_type);
 
 
-if ($applicant_type === 'nmimr') {
-    $draftApplication = getDraftApplication($userId, 'nmimr_applications');
-} elseif ($applicant_type === 'non_nmimr') {
-    $draftApplication = getDraftApplication($userId, 'non_nmimr_applications');
-} else {
-    $draftApplication = getDraftApplication($userId, 'student_applications');
-}
+$draftApplication = getDraftApplication($userId);
+
 $hasDraftApplication = !empty($draftApplication);
 error_log("Applicant ID: $userId, Has Draft Application: " . ($hasDraftApplication ? 'Yes' : 'No'));
 error_log("Applicant Type: $applicant_type");
@@ -172,7 +167,7 @@ function getTotalSteps($applicant_type) {
                 <!-- Ongoing Application Section -->
                 <div class="mb-4 fade-in-up">
                     <div class="section-header">
-                        <div class="section-icon" style="background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(40, 167, 69, 0.05) 100%); color: #28a745;">
+                        <div class="section-icon" style="background: linear-gradient(135deg, var(--applicant-green-dark) 0%, var(--applicant-green) 100%); color: #ffffff;">
                             <i class="fas fa-spinner fa-spin"></i>
                         </div>
                         <div>
@@ -211,7 +206,7 @@ function getTotalSteps($applicant_type) {
                                                 <?php if ($applicant_type == "student" || $applicant_type == "non_nmimr") {
                                                     echo htmlspecialchars($draftApplication['study_title'] ?? 'Untitled Application');
                                                 } elseif ($applicant_type == "nmimr") {
-                                                    echo htmlspecialchars($draftApplication['proposal_title'] ?? 'Untitled NMIMR Application');
+                                                    echo htmlspecialchars($draftApplication['study_title'] ?? 'Untitled NMIMR Application');
                                                 } ?>
                                             </h6>
 

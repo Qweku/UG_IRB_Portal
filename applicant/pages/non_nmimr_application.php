@@ -38,9 +38,11 @@ if ($applicantData) {
 // Get application type
 $type = $_GET['type'] ?? 'non_nmimr';
 
+$draftData = [];
 // Check if loading existing application
 $existingApplicationId = $_GET['application_id'] ?? 0;
 $existingApplication = null;
+$existingApplicationDetails = null;
 $currentStep = 1;
 
 if ($existingApplicationId > 0) {
@@ -48,13 +50,19 @@ if ($existingApplicationId > 0) {
     $conn = $db->connect();
     if ($conn) {
         try {
-            $stmt = $conn->prepare("SELECT * FROM non_nmimr_applications WHERE id = ? AND applicant_id = ?");
+            $stmt = $conn->prepare("SELECT * FROM applications WHERE id = ? AND applicant_id = ?");
             $stmt->execute([$existingApplicationId, $userId]);
             $existingApplication = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            $stmtDetails = $conn->prepare("SELECT * FROM non_nmimr_application_details WHERE application_id = ?");
+            $stmtDetails->execute([$existingApplicationId]);
+
+            $existingApplicationDetails = $stmtDetails->fetch(PDO::FETCH_ASSOC);
 
             if ($existingApplication) {
                 $currentStep = $existingApplication['current_step'] ?? 1;
                 $type = $existingApplication['application_type'] ?? $type;
+                $draftData = array_merge($existingApplication, $existingApplicationDetails ?? []);
             }
         } catch (PDOException $e) {
             error_log("Error loading existing application: " . $e->getMessage());
@@ -96,7 +104,7 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['non_nmimr'];
 <div class="add-new-protocol container-fluid mt-4 mb-4 p-4">
     <!-- Header -->
     <div class="welcome-header text-white p-4 rounded mb-4 position-relative overflow-hidden"
-        style="background:linear-gradient(135deg, #35493d 0%, #445e50 100%);">
+        style="background:linear-gradient(135deg, var(--applicant-green-dark) 0%, var(--applicant-green) 100%);">
         <div class="header-gradient"></div>
         <div class="d-flex align-items-center position-relative z-1">
             <div>
@@ -290,17 +298,17 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['non_nmimr'];
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
                                         <label for="protocol_number" class="form-label fw-semibold">Protocol Number <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" id="protocol_number" name="protocol_number" value="<?php echo htmlspecialchars($existingApplication['protocol_number'] ?? ''); ?>" required>
+                                        <input type="text" class="form-control" id="protocol_number" name="protocol_number" value="<?php echo htmlspecialchars($draftData['protocol_number'] ?? ''); ?>" required>
                                         <small class="text-muted">Unique identifier for your study</small>
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label for="version_number" class="form-label fw-semibold">Version Number <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" id="version_number" name="version_number" placeholder="e.g., 1.0" value="<?php echo htmlspecialchars($existingApplication['version_number'] ?? ''); ?>" required>
+                                        <input type="text" class="form-control" id="version_number" name="version_number" placeholder="e.g., 1.0" value="<?php echo htmlspecialchars($draftData['version_number'] ?? ''); ?>" required>
                                         <small class="text-muted">Document version (start with 1.0)</small>
                                     </div>
                                     <div class="col-12 mb-3">
                                         <label for="study_title" class="form-label fw-semibold">Title of Study <span class="text-danger">*</span></label>
-                                        <textarea class="form-control" id="study_title" name="study_title" rows="2" required><?php echo htmlspecialchars($existingApplication['study_title'] ?? ''); ?></textarea>
+                                        <textarea class="form-control" id="study_title" name="study_title" rows="2" required><?php echo htmlspecialchars($draftData['study_title'] ?? ''); ?></textarea>
                                         <small class="text-muted">Clear and concise study title</small>
                                     </div>
                                 </div>
@@ -326,27 +334,27 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['non_nmimr'];
                                     <div class="row g-3 mb-3">
                                         <div class="col-md-6">
                                             <label for="pi_name" class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="pi_name" name="pi_name" value="<?php echo htmlspecialchars($existingApplication['pi_name'] ?? ''); ?>" required>
+                                            <input type="text" class="form-control" id="pi_name" name="pi_name" value="<?php echo htmlspecialchars($draftData['pi_name'] ?? ''); ?>" required>
                                         </div>
                                         <div class="col-md-6">
                                             <label for="pi_institution" class="form-label fw-semibold">Institution <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="pi_institution" name="pi_institution" value="<?php echo htmlspecialchars($existingApplication['pi_institution'] ?? ''); ?>" required>
+                                            <input type="text" class="form-control" id="pi_institution" name="pi_institution" value="<?php echo htmlspecialchars($draftData['pi_institution'] ?? ''); ?>" required>
                                         </div>
                                         <div class="col-md-6">
                                             <label for="pi_address" class="form-label fw-semibold">Postal Address <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="pi_address" name="pi_address" value="<?php echo htmlspecialchars($existingApplication['pi_address'] ?? ''); ?>" required>
+                                            <input type="text" class="form-control" id="pi_address" name="pi_address" value="<?php echo htmlspecialchars($draftData['pi_address'] ?? ''); ?>" required>
                                         </div>
                                         <div class="col-md-6">
                                             <label for="pi_phone_number" class="form-label fw-semibold">Telephone <span class="text-danger">*</span></label>
-                                            <input type="tel" class="form-control" id="pi_phone_number" name="pi_phone_number" value="<?php echo htmlspecialchars($existingApplication['pi_phone_number'] ?? ''); ?>" required>
+                                            <input type="tel" class="form-control" id="pi_phone_number" name="pi_phone_number" value="<?php echo htmlspecialchars($draftData['pi_phone_number'] ?? ''); ?>" required>
                                         </div>
                                         <div class="col-md-6">
                                             <label for="pi_fax" class="form-label fw-semibold">Fax Number</label>
-                                            <input type="tel" class="form-control" id="pi_fax" name="pi_fax" value="<?php echo htmlspecialchars($existingApplication['pi_fax'] ?? ''); ?>">
+                                            <input type="tel" class="form-control" id="pi_fax" name="pi_fax" value="<?php echo htmlspecialchars($draftData['pi_fax'] ?? ''); ?>">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="pi_email" class="form-label fw-semibold">Email Address <span class="text-danger">*</span></label>
-                                            <input type="email" class="form-control" id="pi_email" name="pi_email" value="<?php echo htmlspecialchars($existingApplication['pi_email'] ?? ''); ?>" required>
+                                            <input type="email" class="form-control" id="pi_email" name="pi_email" value="<?php echo htmlspecialchars($draftData['pi_email'] ?? ''); ?>" required>
                                         </div>
                                     </div>
                                     <div class="col-12 mb-3">
@@ -355,44 +363,44 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['non_nmimr'];
                                     <div class="row g-3 mb-3">
                                         <div class="col-md-6">
                                             <label for="co_pi_name" class="form-label fw-semibold">Full Name</label>
-                                            <input type="text" class="form-control" id="co_pi_name" name="co_pi_name" value="<?php echo htmlspecialchars($existingApplication['co_pi_name'] ?? ''); ?>">
+                                            <input type="text" class="form-control" id="co_pi_name" name="co_pi_name" value="<?php echo htmlspecialchars($draftData['co_pi_name'] ?? ''); ?>">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="co_pi_qualification" class="form-label fw-semibold">Qualification (Specialty)</label>
-                                            <input type="text" class="form-control" id="co_pi_qualification" name="co_pi_qualification" value="<?php echo htmlspecialchars($existingApplication['co_pi_qualification'] ?? ''); ?>">
+                                            <input type="text" class="form-control" id="co_pi_qualification" name="co_pi_qualification" value="<?php echo htmlspecialchars($draftData['co_pi_qualification'] ?? ''); ?>">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="co_pi_department" class="form-label fw-semibold">Department</label>
-                                            <input type="text" class="form-control" id="co_pi_department" name="co_pi_department" value="<?php echo htmlspecialchars($existingApplication['co_pi_department'] ?? ''); ?>">
+                                            <input type="text" class="form-control" id="co_pi_department" name="co_pi_department" value="<?php echo htmlspecialchars($draftData['co_pi_department'] ?? ''); ?>">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="co_pi_address" class="form-label fw-semibold">Postal Address</label>
-                                            <input type="text" class="form-control" id="co_pi_address" name="co_pi_address" value="<?php echo htmlspecialchars($existingApplication['co_pi_address'] ?? ''); ?>">
+                                            <input type="text" class="form-control" id="co_pi_address" name="co_pi_address" value="<?php echo htmlspecialchars($draftData['co_pi_address'] ?? ''); ?>">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="co_pi_phone_number" class="form-label fw-semibold">Telephone</label>
-                                            <input type="tel" class="form-control" id="co_pi_phone_number" name="co_pi_phone_number" value="<?php echo htmlspecialchars($existingApplication['co_pi_phone_number'] ?? ''); ?>">
+                                            <input type="tel" class="form-control" id="co_pi_phone_number" name="co_pi_phone_number" value="<?php echo htmlspecialchars($draftData['co_pi_phone_number'] ?? ''); ?>">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="co_pi_fax" class="form-label fw-semibold">Fax Number</label>
-                                            <input type="tel" class="form-control" id="co_pi_fax" name="co_pi_fax" value="<?php echo htmlspecialchars($existingApplication['co_pi_fax'] ?? ''); ?>">
+                                            <input type="tel" class="form-control" id="co_pi_fax" name="co_pi_fax" value="<?php echo htmlspecialchars($draftData['co_pi_fax'] ?? ''); ?>">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="co_pi_email" class="form-label fw-semibold">Email Address</label>
-                                            <input type="email" class="form-control" id="co_pi_email" name="co_pi_email" value="<?php echo htmlspecialchars($existingApplication['co_pi_email'] ?? ''); ?>">
+                                            <input type="email" class="form-control" id="co_pi_email" name="co_pi_email" value="<?php echo htmlspecialchars($draftData['co_pi_email'] ?? ''); ?>">
                                         </div>
                                     </div>
                                     <div class="col-12 mb-3">
                                         <label for="prior_scientific_review" class="form-label fw-semibold">Prior Scientific Review</label>
-                                        <textarea class="form-control" id="prior_scientific_review" name="prior_scientific_review" rows="3" placeholder="Provide details of any prior scientific review this proposal has undergone"><?php echo htmlspecialchars($existingApplication['prior_scientific_review'] ?? ''); ?></textarea>
+                                        <textarea class="form-control" id="prior_scientific_review" name="prior_scientific_review" rows="3" placeholder="Provide details of any prior scientific review this proposal has undergone"><?php echo htmlspecialchars($draftData['prior_scientific_review'] ?? ''); ?></textarea>
                                     </div>
                                     <div class="col-12 mb-3">
                                         <label for="prior_irb_review" class="form-label fw-semibold">Prior IRB Review</label>
-                                        <textarea class="form-control" id="prior_irb_review" name="prior_irb_review" rows="3" placeholder="Name any other IRB this proposal has been submitted to and attach approval letter if applicable. In case of rejection, state reasons"><?php echo htmlspecialchars($existingApplication['prior_irb_review'] ?? ''); ?></textarea>
+                                        <textarea class="form-control" id="prior_irb_review" name="prior_irb_review" rows="3" placeholder="Name any other IRB this proposal has been submitted to and attach approval letter if applicable. In case of rejection, state reasons"><?php echo htmlspecialchars($draftData['prior_irb_review'] ?? ''); ?></textarea>
                                     </div>
                                     <div class="col-12 mb-3">
                                         <label for="collaborating_institutions" class="form-label fw-semibold">Collaborating Institutions <span class="text-danger">*</span></label>
-                                        <textarea class="form-control" id="collaborating_institutions" name="collaborating_institutions" rows="2" placeholder="List all collaborating institutions" required><?php echo htmlspecialchars($existingApplication['collaborating_institutions'] ?? ''); ?></textarea>
+                                        <textarea class="form-control" id="collaborating_institutions" name="collaborating_institutions" rows="2" placeholder="List all collaborating institutions" required><?php echo htmlspecialchars($draftData['collaborating_institutions'] ?? ''); ?></textarea>
                                         <small class="text-muted">Attach Letter of Approval for each institution</small>
                                     </div>
                                     <div class="col-12 mb-3">
@@ -402,29 +410,29 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['non_nmimr'];
                                     </div>
                                     <div class="col-12 mb-3">
                                         <label for="funding_source" class="form-label fw-semibold">Source(s) of Funding</label>
-                                        <textarea class="form-control" id="funding_source" name="funding_source" rows="2" placeholder="Name and Address of funding source(s)"><?php echo htmlspecialchars($existingApplication['funding_source'] ?? ''); ?></textarea>
+                                        <textarea class="form-control" id="funding_source" name="funding_source" rows="2" placeholder="Name and Address of funding source(s)"><?php echo htmlspecialchars($draftData['funding_source'] ?? ''); ?></textarea>
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label fw-semibold">Type of Research <span class="text-danger">*</span></label>
                                         <div class="mt-2">
                                             <div class="form-check form-check-inline">
-                                                <input class="form-check-input" type="radio" id="type_biomedical" name="research_type" value="Biomedical" <?php echo (isset($existingApplication['research_type']) && $existingApplication['research_type'] == 'Biomedical') ? 'checked' : ''; ?>>
+                                                <input class="form-check-input" type="radio" id="type_biomedical" name="research_type" value="Biomedical" <?php echo (isset($draftData['research_type']) && $draftData['research_type'] == 'Biomedical') ? 'checked' : ''; ?>>
                                                 <label class="form-check-label" for="type_biomedical">Biomedical</label>
                                             </div>
                                             <div class="form-check form-check-inline">
-                                                <input class="form-check-input" type="radio" id="type_social" name="research_type" value="Social/Behavioural" <?php echo (isset($existingApplication['research_type']) && $existingApplication['research_type'] == 'Social/Behavioural') ? 'checked' : ''; ?>>
+                                                <input class="form-check-input" type="radio" id="type_social" name="research_type" value="Social/Behavioural" <?php echo (isset($draftData['research_type']) && $draftData['research_type'] == 'Social/Behavioural') ? 'checked' : ''; ?>>
                                                 <label class="form-check-label" for="type_social">Social/Behavioural</label>
                                             </div>
                                             <div class="form-check form-check-inline">
-                                                <input class="form-check-input" type="radio" id="type_other" name="research_type" value="Other" <?php echo (isset($existingApplication['research_type']) && $existingApplication['research_type'] == 'Other') ? 'checked' : ''; ?>>
+                                                <input class="form-check-input" type="radio" id="type_other" name="research_type" value="Other" <?php echo (isset($draftData['research_type']) && $draftData['research_type'] == 'Other') ? 'checked' : ''; ?>>
                                                 <label class="form-check-label" for="type_other">Others</label>
                                             </div>
                                         </div>
-                                        <input type="text" class="form-control mt-2" id="research_type_other" name="research_type_other" placeholder="Specify other research type" style="display: <?php echo (isset($existingApplication['research_type']) && $existingApplication['research_type'] == 'Other') ? 'block' : 'none'; ?>;" value="<?php echo htmlspecialchars($existingApplication['research_type_other'] ?? ''); ?>">
+                                        <input type="text" class="form-control mt-2" id="research_type_other" name="research_type_other" placeholder="Specify other research type" style="display: <?php echo (isset($draftData['research_type']) && $draftData['research_type'] == 'Other') ? 'block' : 'none'; ?>;" value="<?php echo htmlspecialchars($draftData['research_type_other'] ?? ''); ?>">
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label for="duration" class="form-label fw-semibold">Duration of Project <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" id="duration" name="duration" placeholder="e.g. 12 months, 24 months" value="<?php echo htmlspecialchars($existingApplication['duration'] ?? ''); ?>" required>
+                                        <input type="text" class="form-control" id="duration" name="duration" placeholder="e.g. 12 months, 24 months" value="<?php echo htmlspecialchars($draftData['duration'] ?? ''); ?>" required>
                                         <small class="text-muted">Expected duration of the research project</small>
                                     </div>
                                 </div>
@@ -446,7 +454,7 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['non_nmimr'];
 
                                 <div class="mb-4">
                                     <label for="abstract" class="form-label fw-semibold">ABSTRACT/EXECUTIVE SUMMARY <span class="text-danger">*</span></label>
-                                    <textarea class="form-control" id="abstract" name="abstract" rows="4" placeholder="Not more than 250 words" required><?php echo htmlspecialchars($existingApplication['abstract'] ?? ''); ?></textarea>
+                                    <textarea class="form-control" id="abstract" name="abstract" rows="4" placeholder="Not more than 250 words" required><?php echo htmlspecialchars($draftData['abstract'] ?? ''); ?></textarea>
                                     <div class="d-flex justify-content-between mt-1">
                                         <small class="text-muted">Use clear and concise language</small>
                                         <small class="text-muted"><span id="abstract-counter">0</span>/250 words</small>
@@ -455,70 +463,73 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['non_nmimr'];
 
                                 <div class="mb-4">
                                     <label for="introduction" class="form-label fw-semibold">INTRODUCTION/RATIONALE</label>
-                                    <textarea class="form-control" id="introduction" name="introduction" rows="6" placeholder="Not more than 5 pages"><?php echo htmlspecialchars($existingApplication['introduction'] ?? ''); ?></textarea>
+                                    <textarea class="form-control" id="introduction" name="introduction" rows="6" placeholder="Not more than 5 pages"><?php echo htmlspecialchars($draftData['introduction'] ?? ''); ?></textarea>
                                     <small class="text-muted">Use font size Times New Roman 11pt/12pt, Arial 11pt, or Calibri 12pt</small>
                                 </div>
 
                                 <div class="mb-4">
                                     <label for="literature_review" class="form-label fw-semibold">LITERATURE REVIEW</label>
-                                    <textarea class="form-control" id="literature_review" name="literature_review" rows="6" placeholder="Not more than 5 pages"><?php echo htmlspecialchars($existingApplication['literature_review'] ?? ''); ?></textarea>
+                                    <textarea class="form-control" id="literature_review" name="literature_review" rows="6" placeholder="Not more than 5 pages"><?php echo htmlspecialchars($draftData['literature_review'] ?? ''); ?></textarea>
                                 </div>
 
                                 <div class="mb-4">
                                     <label for="aims" class="form-label fw-semibold">AIMS OR OBJECTIVES OF STUDY <span class="text-danger">*</span></label>
-                                    <textarea class="form-control" id="aims" name="aims" rows="4" placeholder="State the specific aims or objectives of your study" required><?php echo htmlspecialchars($existingApplication['aims'] ?? ''); ?></textarea>
+                                    <textarea class="form-control" id="aims" name="aims" rows="4" placeholder="State the specific aims or objectives of your study" required><?php echo htmlspecialchars($draftData['aims'] ?? ''); ?></textarea>
                                 </div>
 
                                 <div class="mb-4">
                                     <label for="methodology" class="form-label fw-semibold">METHODOLOGY <span class="text-danger">*</span></label>
-                                    <textarea class="form-control" id="methodology" name="methodology" rows="6" placeholder="Include Inclusion and Exclusion Criteria" required><?php echo htmlspecialchars($existingApplication['methodology'] ?? ''); ?></textarea>
+                                    <textarea class="form-control" id="methodology" name="methodology" rows="6" placeholder="Include Inclusion and Exclusion Criteria" required><?php echo htmlspecialchars($draftData['methodology'] ?? ''); ?></textarea>
                                     <small class="text-muted">Provide detailed methodology including study design, sampling, data collection, and analysis</small>
                                 </div>
 
                                 <div class="mb-4">
                                     <label for="ethical_considerations" class="form-label fw-semibold">ETHICAL CONSIDERATIONS <span class="text-danger">*</span></label>
-                                    <textarea class="form-control" id="ethical_considerations" name="ethical_considerations" rows="6" placeholder="i.e. consent procedures, confidentiality, privacy, risks and benefits, etc." required><?php echo htmlspecialchars($existingApplication['ethical_considerations'] ?? ''); ?></textarea>
+                                    <textarea class="form-control" id="ethical_considerations" name="ethical_considerations" rows="6" placeholder="i.e. consent procedures, confidentiality, privacy, risks and benefits, etc." required><?php echo htmlspecialchars($draftData['ethical_considerations'] ?? ''); ?></textarea>
                                 </div>
 
                                 <div class="mb-4">
                                     <label for="expected_outcomes" class="form-label fw-semibold">EXPECTED OUTCOME/RESULTS</label>
-                                    <textarea class="form-control" id="expected_outcomes" name="expected_outcomes" rows="4" placeholder="Describe the expected outcomes and results"><?php echo htmlspecialchars($existingApplication['expected_outcomes'] ?? ''); ?></textarea>
+                                    <textarea class="form-control" id="expected_outcomes" name="expected_outcomes" rows="4" placeholder="Describe the expected outcomes and results"><?php echo htmlspecialchars($draftData['expected_outcomes'] ?? ''); ?></textarea>
                                 </div>
 
                                 <div class="mb-4">
-                                    <label for="references" class="form-label fw-semibold">REFERENCES</label>
-                                    <textarea class="form-control" id="references" name="references" rows="4" placeholder="List all references using appropriate citation style"><?php echo htmlspecialchars($existingApplication['references'] ?? ''); ?></textarea>
+                                    <label for="application_references" class="form-label fw-semibold">REFERENCES</label>
+                                    <textarea class="form-control" id="application_references" name="application_references" rows="4" placeholder="List all references using appropriate citation style"><?php echo htmlspecialchars($draftData['application_references'] ?? ''); ?></textarea>
                                 </div>
 
                                 <div class="mb-4">
                                     <label for="work_plan" class="form-label fw-semibold">WORK PLAN</label>
-                                    <textarea class="form-control" id="work_plan" name="work_plan" rows="4" placeholder="Provide a detailed work plan/timeline for the project"><?php echo htmlspecialchars($existingApplication['work_plan'] ?? ''); ?></textarea>
+                                    <textarea class="form-control" id="work_plan" name="work_plan" rows="4" placeholder="Provide a detailed work plan/timeline for the project"><?php echo htmlspecialchars($draftData['work_plan'] ?? ''); ?></textarea>
                                 </div>
 
                                 <div class="mb-4">
                                     <label for="budget" class="form-label fw-semibold">BUDGET AND BUDGET JUSTIFICATION</label>
-                                    <textarea class="form-control" id="budget" name="budget" rows="4" placeholder="Provide detailed budget and justification"><?php echo htmlspecialchars($existingApplication['budget'] ?? ''); ?></textarea>
+                                    <textarea class="form-control" id="budget" name="budget" rows="4" placeholder="Provide detailed budget and justification"><?php echo htmlspecialchars($draftData['budget'] ?? ''); ?></textarea>
                                 </div>
 
                                 <div class="mb-4">
                                     <label class="form-label fw-semibold">Required Forms</label>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" id="consent_form" name="consent_form" value="1" <?php echo (isset($existingApplication['consent_form']) && $existingApplication['consent_form']) ? 'checked' : ''; ?>>
-                                        <label class="form-check-label" for="consent_form">
-                                            Consent Form (Download NMIMR-IRB Consent form template)
-                                        </label>
+                                    <div class="mb-3">
+                                        <label for="consent_form" class="form-label">Consent Form (Download NMIMR-IRB Consent form template) <span class="text-danger">*</span></label>
+                                        <input type="file" class="form-control" id="consent_form" name="consent_form" accept=".pdf,.doc,.docx" required>
+                                        <?php if (!empty($draftData['consent_form_filename'])): ?>
+                                            <small class="text-muted">Current file: <?php echo htmlspecialchars($draftData['consent_form_filename']); ?></small>
+                                        <?php endif; ?>
                                     </div>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" id="assent_form" name="assent_form" value="1" <?php echo (isset($existingApplication['assent_form']) && $existingApplication['assent_form']) ? 'checked' : ''; ?>>
-                                        <label class="form-check-label" for="assent_form">
-                                            Assent Form and Parental Consent Form (Only applicable where children of ages 12 to 17 would be recruited as research participants)
-                                        </label>
+                                    <div class="mb-3">
+                                        <label for="assent_form" class="form-label">Assent Form and Parental Consent Form (Only applicable where children of ages 12 to 17 would be recruited as research participants)</label>
+                                        <input type="file" class="form-control" id="assent_form" name="assent_form" accept=".pdf,.doc,.docx">
+                                        <?php if (!empty($draftData['assent_form_filename'])): ?>
+                                            <small class="text-muted">Current file: <?php echo htmlspecialchars($draftData['assent_form_filename']); ?></small>
+                                        <?php endif; ?>
                                     </div>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" id="data_instruments" name="data_instruments" value="1" <?php echo (isset($existingApplication['data_instruments']) && $existingApplication['data_instruments']) ? 'checked' : ''; ?>>
-                                        <label class="form-check-label" for="data_instruments">
-                                            Data Collection Instruments (i.e. Interview Guide, Questionnaire, etc.)
-                                        </label>
+                                    <div class="mb-3">
+                                        <label for="data_instruments" class="form-label">Data Collection Instruments (i.e. Interview Guide, Questionnaire, etc.)</label>
+                                        <input type="file" class="form-control" id="data_instruments" name="data_instruments" accept=".pdf,.doc,.docx">
+                                        <?php if (!empty($draftData['data_instruments_filename'])): ?>
+                                            <small class="text-muted">Current file: <?php echo htmlspecialchars($draftData['data_instruments_filename']); ?></small>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
 
@@ -565,11 +576,11 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['non_nmimr'];
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label for="pi_signature" class="form-label fw-semibold">Signature (Type your name) <span class="text-danger">*</span></label>
-                                                <input type="text" class="form-control" id="pi_signature" name="pi_signature" placeholder="Type your name as signature" value="<?php echo htmlspecialchars($existingApplication['pi_signature'] ?? ''); ?>" required>
+                                                <input type="text" class="form-control" id="pi_signature" name="pi_signature" placeholder="Type your name as signature" value="<?php echo htmlspecialchars($draftData['pi_signature'] ?? ''); ?>" required>
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label for="pi_date" class="form-label fw-semibold">Date <span class="text-danger">*</span></label>
-                                                <input type="date" class="form-control" id="pi_date" name="pi_date" value="<?php echo htmlspecialchars($existingApplication['pi_date'] ?? ''); ?>" required>
+                                                <input type="date" class="form-control" id="pi_date" name="pi_date" value="<?php echo htmlspecialchars($draftData['pi_date'] ?? date('Y-m-d')); ?>" required>
                                             </div>
                                         </div>
                                     </div>
@@ -581,15 +592,15 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['non_nmimr'];
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
                                                 <label for="co_pi_name" class="form-label fw-semibold">Full Name</label>
-                                                <input type="text" class="form-control" id="co_pi_name" name="co_pi_name" placeholder="Full Name" value="<?php echo htmlspecialchars($existingApplication['co_pi_name'] ?? ''); ?>">
+                                                <input type="text" class="form-control" id="co_pi_name" name="co_pi_name" placeholder="Full Name" value="<?php echo htmlspecialchars($draftData['co_pi_name'] ?? ''); ?>">
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label for="co_pi_signature" class="form-label fw-semibold">Signature (Type your name)</label>
-                                                <input type="text" class="form-control" id="co_pi_signature" name="co_pi_signature" placeholder="Type your name as signature" value="<?php echo htmlspecialchars($existingApplication['co_pi_signature'] ?? ''); ?>">
+                                                <input type="text" class="form-control" id="co_pi_signature" name="co_pi_signature" placeholder="Type your name as signature" value="<?php echo htmlspecialchars($draftData['co_pi_signature'] ?? ''); ?>">
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label for="co_pi_date" class="form-label fw-semibold">Date</label>
-                                                <input type="date" class="form-control" id="co_pi_date" name="co_pi_date" value="<?php echo htmlspecialchars($existingApplication['co_pi_date'] ?? ''); ?>">
+                                                <input type="date" class="form-control" id="co_pi_date" name="co_pi_date" value="<?php echo htmlspecialchars($draftData['co_pi_date'] ?? date('Y-m-d')); ?>">
                                             </div>
                                         </div>
                                     </div>
@@ -610,45 +621,87 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['non_nmimr'];
                             </div>
                             <div class="card-body">
 
-                                <div class="alert alert-success mb-4">
-                                    <h6 class="alert-heading"><i class="fas fa-check-circle me-2"></i>Final Submission Checklist</h6>
-                                    <p class="mb-3">Please confirm the following before submitting:</p>
+                                <!-- Application Summary -->
+                                <div class="alert alert-info mb-4">
+                                    <h6 class="alert-heading"><i class="fas fa-file-alt me-2"></i>Application Summary</h6>
+                                    <p class="mb-3">Review all the information you have provided before final submission.</p>
 
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" id="check_complete" name="check_complete" required>
-                                        <label class="form-check-label" for="check_complete">
-                                            All sections of the form have been completed
-                                        </label>
-                                    </div>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" id="check_font" name="check_font">
-                                        <label class="form-check-label" for="check_font">
-                                            All documents use appropriate font size (Times New Roman 11pt/12pt, Arial 11pt, or Calibri 12pt)
-                                        </label>
-                                    </div>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" id="check_consent" name="check_consent">
-                                        <label class="form-check-label" for="check_consent">
-                                            Consent form is paged separately from the proposal
-                                        </label>
-                                    </div>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" id="check_pdf" name="check_pdf">
-                                        <label class="form-check-label" for="check_pdf">
-                                            All documents are compiled into a single PDF file
-                                        </label>
-                                    </div>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" id="check_signed" name="check_signed">
-                                        <label class="form-check-label" for="check_signed">
-                                            PDF file is signed and dated
-                                        </label>
-                                    </div>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" id="check_checklist" name="check_checklist">
-                                        <label class="form-check-label" for="check_checklist">
-                                            NMIMR-IRB Researchers Checklist has been completed
-                                        </label>
+                                    <div class="row">
+                                        <!-- Protocol Information -->
+                                        <div class="col-md-6 mb-3">
+                                            <h6 class="fw-semibold border-bottom pb-2 mb-2"><i class="fas fa-clipboard-list me-2"></i>Protocol Information</h6>
+                                            <p class="mb-1"><strong>Protocol Number:</strong> <span id="summary_protocol_number"><?php echo htmlspecialchars($draftData['protocol_number'] ?? 'Not provided'); ?></span></p>
+                                            <p class="mb-1"><strong>Version:</strong> <span id="summary_version_number"><?php echo htmlspecialchars($draftData['version_number'] ?? 'Not provided'); ?></span></p>
+                                            <p class="mb-1"><strong>Study Title:</strong> <span id="summary_study_title"><?php echo htmlspecialchars($draftData['study_title'] ?? 'Not provided'); ?></span></p>
+                                        </div>
+
+                                        <!-- Research Details -->
+                                        <div class="col-md-6 mb-3">
+                                            <h6 class="fw-semibold border-bottom pb-2 mb-2"><i class="fas fa-flask me-2"></i>Research Details</h6>
+                                            <p class="mb-1"><strong>Research Type:</strong> <span id="summary_research_type"><?php echo htmlspecialchars($draftData['research_type'] ?? 'Not provided'); ?></span></p>
+                                            <p class="mb-1"><strong>Duration:</strong> <span id="summary_duration"><?php echo htmlspecialchars($draftData['duration'] ?? 'Not provided'); ?></span></p>
+                                            <p class="mb-1"><strong>Funding Source:</strong> <span id="summary_funding_source"><?php echo htmlspecialchars($draftData['funding_source'] ?? 'Not provided'); ?></span></p>
+                                        </div>
+
+                                        <!-- Principal Investigator -->
+                                        <div class="col-md-6 mb-3">
+                                            <h6 class="fw-semibold border-bottom pb-2 mb-2"><i class="fas fa-user me-2"></i>Principal Investigator</h6>
+                                            <p class="mb-1"><strong>Name:</strong> <span id="summary_pi_name"><?php echo htmlspecialchars($draftData['pi_name'] ?? 'Not provided'); ?></span></p>
+                                            <p class="mb-1"><strong>Institution:</strong> <span id="summary_pi_institution"><?php echo htmlspecialchars($draftData['pi_institution'] ?? 'Not provided'); ?></span></p>
+                                            <p class="mb-1"><strong>Address:</strong> <span id="summary_pi_address"><?php echo htmlspecialchars($draftData['pi_address'] ?? 'Not provided'); ?></span></p>
+                                            <p class="mb-1"><strong>Phone:</strong> <span id="summary_pi_phone"><?php echo htmlspecialchars($draftData['pi_phone_number'] ?? 'Not provided'); ?></span></p>
+                                            <p class="mb-1"><strong>Email:</strong> <span id="summary_pi_email"><?php echo htmlspecialchars($draftData['pi_email'] ?? 'Not provided'); ?></span></p>
+                                        </div>
+
+                                        <!-- Co-Principal Investigator -->
+                                        <div class="col-md-6 mb-3">
+                                            <h6 class="fw-semibold border-bottom pb-2 mb-2"><i class="fas fa-user-friends me-2"></i>Co-Principal Investigator</h6>
+                                            <p class="mb-1"><strong>Name:</strong> <span id="summary_co_pi_name"><?php echo htmlspecialchars($draftData['co_pi_name'] ?? 'Not provided'); ?></span></p>
+                                            <?php if (!empty($draftData['co_pi_qualification'])): ?>
+                                                <p class="mb-1"><strong>Qualification:</strong> <span id="summary_co_pi_qualification"><?php echo htmlspecialchars($draftData['co_pi_qualification'] ?? ''); ?></span></p>
+                                            <?php endif; ?>
+                                            <?php if (!empty($draftData['co_pi_department'])): ?>
+                                                <p class="mb-1"><strong>Department:</strong> <span id="summary_co_pi_department"><?php echo htmlspecialchars($draftData['co_pi_department'] ?? ''); ?></span></p>
+                                            <?php endif; ?>
+                                            <?php if (!empty($draftData['co_pi_address'])): ?>
+                                                <p class="mb-1"><strong>Address:</strong> <span id="summary_co_pi_address"><?php echo htmlspecialchars($draftData['co_pi_address'] ?? ''); ?></span></p>
+                                            <?php endif; ?>
+                                            <?php if (!empty($draftData['co_pi_phone_number'])): ?>
+                                                <p class="mb-1"><strong>Phone:</strong> <span id="summary_co_pi_phone"><?php echo htmlspecialchars($draftData['co_pi_phone_number'] ?? ''); ?></span></p>
+                                            <?php endif; ?>
+                                            <?php if (!empty($draftData['co_pi_email'])): ?>
+                                                <p class="mb-1"><strong>Email:</strong> <span id="summary_co_pi_email"><?php echo htmlspecialchars($draftData['co_pi_email'] ?? ''); ?></span></p>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <!-- Collaborating Institutions -->
+                                        <div class="col-12 mb-3">
+                                            <h6 class="fw-semibold border-bottom pb-2 mb-2"><i class="fas fa-building me-2"></i>Collaborating Institutions</h6>
+                                            <p id="summary_collaborating_institutions"><?php echo nl2br(htmlspecialchars($draftData['collaborating_institutions'] ?? 'None specified')); ?></p>
+                                        </div>
+
+                                        <!-- Abstract -->
+                                        <div class="col-12 mb-3">
+                                            <h6 class="fw-semibold border-bottom pb-2 mb-2"><i class="fas fa-paragraph me-2"></i>Abstract</h6>
+                                            <p id="summary_abstract" class="text-muted"><?php echo nl2br(htmlspecialchars($draftData['abstract'] ?? 'Not provided')); ?></p>
+                                        </div>
+
+                                        <!-- Signatures -->
+                                        <div class="col-md-6 mb-3">
+                                            <h6 class="fw-semibold border-bottom pb-2 mb-2"><i class="fas fa-edit me-2"></i>PI Signature</h6>
+                                            <p class="mb-1"><strong>Name:</strong> <span id="summary_pi_sig_name"><?php echo htmlspecialchars($draftData['pi_name'] ?? 'Not provided'); ?></span></p>
+                                            <p class="mb-1"><strong>Signature:</strong> <span id="summary_pi_signature"><?php echo htmlspecialchars($draftData['pi_signature'] ?? 'Not provided'); ?></span></p>
+                                            <p class="mb-1"><strong>Date:</strong> <span id="summary_pi_date"><?php echo htmlspecialchars($draftData['pi_date'] ?? 'Not provided'); ?></span></p>
+                                        </div>
+
+                                        <?php if (!empty($draftData['co_pi_signature'])): ?>
+                                            <div class="col-md-6 mb-3">
+                                                <h6 class="fw-semibold border-bottom pb-2 mb-2"><i class="fas fa-edit me-2"></i>Co-PI Signature</h6>
+                                                <p class="mb-1"><strong>Name:</strong> <span id="summary_co_pi_sig_name"><?php echo htmlspecialchars($draftData['co_pi_name'] ?? ''); ?></span></p>
+                                                <p class="mb-1"><strong>Signature:</strong> <span id="summary_co_pi_signature"><?php echo htmlspecialchars($draftData['co_pi_signature'] ?? ''); ?></span></p>
+                                                <p class="mb-1"><strong>Date:</strong> <span id="summary_co_pi_date"><?php echo htmlspecialchars($draftData['co_pi_date'] ?? ''); ?></span></p>
+                                            </div>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
 
@@ -666,7 +719,7 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['non_nmimr'];
 
                                 <div class="mb-4">
                                     <label for="submission_notes" class="form-label fw-semibold">Additional Notes/Comments</label>
-                                    <textarea class="form-control" id="submission_notes" name="submission_notes" rows="3" placeholder="Any additional information for the IRB"><?php echo htmlspecialchars($existingApplication['submission_notes'] ?? ''); ?></textarea>
+                                    <textarea class="form-control" id="submission_notes" name="submission_notes" rows="3" placeholder="Any additional information for the IRB"><?php echo htmlspecialchars($draftData['submission_notes'] ?? ''); ?></textarea>
                                 </div>
                             </div>
                         </div>
@@ -709,21 +762,23 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['non_nmimr'];
                     </div>
                 </form>
 
-                <!-- Submission Confirmation Modal -->
-                <div class="modal fade" id="submitConfirmationModal" tabindex="-1" aria-labelledby="submitConfirmationModalLabel" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="submitConfirmationModalLabel">Confirm Submission</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <p>Are you sure you want to submit this application? Once submitted, you cannot make further changes.</p>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-primary" id="confirmSubmitBtn">Confirm Submit</button>
-                            </div>
+
+            </div>
+
+            <!-- Submission Confirmation Modal -->
+            <div class="modal fade" id="submitConfirmationModal" tabindex="-1" aria-labelledby="submitConfirmationModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="submitConfirmationModalLabel">Confirm Submission</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Are you sure you want to submit this application? Once submitted, you cannot make further changes.</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="confirmSubmitBtn">Confirm Submit</button>
                         </div>
                     </div>
                 </div>
@@ -890,6 +945,18 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['non_nmimr'];
 
             let isSubmitting = false; // Flag to prevent multiple submissions
 
+            // Get initial step from PHP (for resuming drafts)
+            const initialStepEl = document.getElementById('initialStep');
+            if (initialStepEl && parseInt(initialStepEl.value) > 1) {
+                currentStep = parseInt(initialStepEl.value);
+                // Mark all previous steps as completed
+                for (let i = 1; i < currentStep; i++) {
+                    completedSteps.add(i);
+                }
+                // Navigate to the saved step
+                goToStep(currentStep);
+            }
+
             // Initialize steps
             updateSteps();
             updateProgressBar();
@@ -987,6 +1054,59 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['non_nmimr'];
                 });
             }
 
+            // Navigation functions
+            function goToStep(step) {
+                if (step < 1 || step > totalSteps) return;
+
+                currentStep = step;
+
+                // Update step indicators with completed styling
+                const steps = document.querySelectorAll('.step');
+                steps.forEach((stepEl, index) => {
+                    const stepNum = index + 1;
+                    const stepNumber = stepEl.querySelector('.step-number');
+                    const stepTitle = stepEl.querySelector('.step-title h6');
+
+                    if (stepNum === currentStep) {
+                        // Current active step
+                        stepEl.classList.add('active');
+                        stepEl.classList.remove('completed');
+                        stepNumber.classList.remove('bg-light', 'text-muted', 'border');
+                        stepNumber.classList.add('bg-primary', 'text-white');
+                        stepTitle.classList.remove('text-muted');
+                        stepTitle.classList.add('text-dark');
+                    } else if (stepNum < currentStep) {
+                        // Completed steps - green styling
+                        stepEl.classList.remove('active');
+                        stepEl.classList.add('completed');
+                        stepNumber.classList.remove('bg-light', 'text-muted', 'border', 'bg-primary');
+                        stepNumber.classList.add('bg-success', 'text-white');
+                        stepTitle.classList.remove('text-muted');
+                        stepTitle.classList.add('text-success');
+                    } else {
+                        // Future steps
+                        stepEl.classList.remove('active', 'completed');
+                        stepNumber.classList.remove('bg-primary', 'bg-success', 'text-white');
+                        stepNumber.classList.add('bg-light', 'text-muted', 'border');
+                        stepTitle.classList.remove('text-dark', 'text-success');
+                        stepTitle.classList.add('text-muted');
+                    }
+                });
+
+                // Update content visibility
+                const stepContents = document.querySelectorAll('.step-content');
+                stepContents.forEach(content => {
+                    const contentStep = parseInt(content.dataset.step);
+                    content.classList.toggle('active', contentStep === currentStep);
+                });
+
+                updateProgressBar();
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            }
+
             // Form submission function
             function submitForm() {
                 const form = document.getElementById('nonNmimrProtocolForm');
@@ -1020,9 +1140,7 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['non_nmimr'];
                             // alert('Application submitted successfully!');
                             hideLoadingOverlay();
                             // Optionally redirect to dashboard or show success message
-                            if (data.redirect) {
-                                window.location.href = data.redirect;
-                            }
+                            window.location.href = '/applicant-dashboard';
                         } else {
                             hideLoadingOverlay();
                             alert('Error: ' + (data.message || 'An error occurred while submitting the application.'));
@@ -1376,10 +1494,10 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['non_nmimr'];
                         // Response is not JSON - likely a session/auth issue
                         console.error('Unexpected response type:', contentType);
                         console.error('Response text:', await response.text().then(t => t.substring(0, 500)));
-                        
+
                         hideLoading('nextStepBtn', '<span class="button-text">Next <i class="fas fa-arrow-right ms-2"></i></span>');
                         hideLoading('nextStepBtnMobile', '<span class="button-text">Next <i class="fas fa-arrow-right ms-2"></i></span>');
-                        
+
                         // Check for session-related errors
                         if (response.status === 403 || response.status === 401) {
                             alert('Your session may have expired. Please refresh the page and try again.');
@@ -1447,7 +1565,7 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['non_nmimr'];
                         // Response is not JSON - likely a session/auth issue
                         console.error('Unexpected response type:', contentType);
                         console.error('Response text:', await response.text().then(t => t.substring(0, 500)));
-                        
+
                         // Check for session-related errors
                         if (response.status === 403 || response.status === 401) {
                             alert('Your session may have expired. Please refresh the page and try again.');
@@ -1483,10 +1601,19 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['non_nmimr'];
             const confirmSubmitBtn = document.getElementById('confirmSubmitBtn');
             if (confirmSubmitBtn) {
                 confirmSubmitBtn.addEventListener('click', function() {
+
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('submitConfirmationModal'));
+                    if (modal) modal.hide();
+
+                    console.log("Hide confirmation modal. Proceeding with submission...");
+
+                    showLoadingOverlay();
                     // Save draft first, then submit
                     const form = document.getElementById('nonNmimrProtocolForm');
                     const formData = new FormData(form);
                     formData.append('action', 'submit');
+
+
 
                     // Show loading on confirm button
                     confirmSubmitBtn.disabled = true;
@@ -1500,26 +1627,46 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['non_nmimr'];
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
+
                                 // Hide modal
                                 const modal = bootstrap.Modal.getInstance(document.getElementById('submitConfirmationModal'));
                                 if (modal) modal.hide();
 
-                                alert(data.message);
+                                hideLoadingOverlay();
+
+                                window.location.href = '/applicant-dashboard';
+
+                                // alert(data.message);
                                 if (data.redirect) {
                                     window.location.href = data.redirect;
                                 }
                             } else {
+
+                                hideLoadingOverlay();
+
                                 alert(data.message || 'Submission failed. Please try again.');
                             }
                         })
                         .catch(error => {
+                            hideLoadingOverlay();
                             console.error('Submit error:', error);
                             alert('An error occurred. Please try again.');
                         })
                         .finally(() => {
+                            hideLoadingOverlay();
                             confirmSubmitBtn.disabled = false;
                             confirmSubmitBtn.innerHTML = 'Confirm Submit';
                         });
+                });
+            }
+
+            // Handle Submit Protocol button click - open modal explicitly
+            const submitProtocolBtn = document.querySelector('button[data-bs-target="#submitConfirmationModal"]');
+            if (submitProtocolBtn) {
+                submitProtocolBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const modal = new bootstrap.Modal(document.getElementById('submitConfirmationModal'));
+                    modal.show();
                 });
             }
 
@@ -1601,3 +1748,4 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['non_nmimr'];
             }
         });
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

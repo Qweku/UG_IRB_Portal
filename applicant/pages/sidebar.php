@@ -92,7 +92,7 @@ $userId = $_SESSION['user_id'] ?? 0;
     width: 48px;
     height: 48px;
     border-radius: 12px;
-    background: linear-gradient(135deg, var(--royal-blue) 0%, var(--royal-blue-light) 100%);
+    background: linear-gradient(135deg, var(--applicant-green-dark) 0%, var(--applicant-green) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -217,14 +217,14 @@ $userId = $_SESSION['user_id'] ?? 0;
     transform: translateY(-50%);
     width: 4px;
     height: 0;
-    background: linear-gradient(180deg, var(--royal-blue) 0%, var(--royal-blue-light) 100%);
+    background: linear-gradient(135deg, var(--applicant-green-dark) 0%, var(--applicant-green) 100%);
     border-radius: 0 4px 4px 0;
     transition: height 0.3s ease;
 }
 
 .nav-link:hover {
     background: linear-gradient(90deg, rgba(36, 63, 129, 0.06) 0%, rgba(36, 63, 129, 0.02) 100%);
-    color: var(--royal-blue);
+    color: var(--applicant-green);
 }
 
 .nav-link:hover::before {
@@ -233,7 +233,7 @@ $userId = $_SESSION['user_id'] ?? 0;
 
 .nav-link.active {
     background: linear-gradient(90deg, rgba(36, 63, 129, 0.1) 0%, rgba(36, 63, 129, 0.04) 100%);
-    color: var(--royal-blue);
+    color: var(--applicant-green-dark) !important;
     font-weight: 600;
 }
 
@@ -261,7 +261,7 @@ $userId = $_SESSION['user_id'] ?? 0;
 }
 
 .help-card {
-    background: linear-gradient(135deg, var(--royal-blue) 0%, var(--royal-blue-light) 100%);
+    background: linear-gradient(135deg, var(--applicant-green-dark) 0%, var(--applicant-green) 100%);
     border-radius: 14px;
     padding: 20px;
     color: white;

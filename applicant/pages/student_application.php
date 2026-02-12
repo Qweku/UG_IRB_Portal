@@ -53,9 +53,12 @@ error_log("Student Name: $studentName, Phone: $studentPhone, Email: $studentEmai
 // Get application type
 $type = $_GET['type'] ?? 'student';
 
+$draftData = [];
+
 // Check if loading existing application
 $existingApplicationId = $_GET['application_id'] ?? 0;
 $existingApplication = null;
+$existingApplicationDetails = null;
 $currentStep = 1;
 
 error_log("Checking for existing application with ID: $existingApplicationId for user ID: $userId");
@@ -65,14 +68,22 @@ if ($existingApplicationId > 0) {
     $conn = $db->connect();
     if ($conn) {
         try {
-            $stmt = $conn->prepare("SELECT * FROM student_applications WHERE id = ? AND applicant_id = ?");
+            $stmt = $conn->prepare("SELECT * FROM applications WHERE id = ? AND applicant_id = ?");
             $stmt->execute([$existingApplicationId, $userId]);
             $existingApplication = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            $stmtDetails = $conn->prepare("SELECT * FROM student_application_details WHERE application_id = ?");
+            $stmtDetails->execute([$existingApplicationId]);
+            $existingApplicationDetails = $stmtDetails->fetch(PDO::FETCH_ASSOC);
 
             error_log("Existing application data: " . print_r($existingApplication, true));
             if ($existingApplication) {
                 $currentStep = $existingApplication['current_step'] ?? 1;
                 $type = $existingApplication['application_type'] ?? $type;
+                // Merge details into main application array for easier access in form
+                if ($existingApplicationDetails) {
+                    $existingApplication = array_merge($existingApplication, $existingApplicationDetails);
+                }
             }
         } catch (PDOException $e) {
             error_log("Error loading existing application: " . $e->getMessage());
@@ -255,8 +266,12 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
                         <button class="btn btn-outline-secondary w-100 mb-2" id="prevStepBtn" disabled>
                             <i class="fas fa-arrow-left me-2"></i>Previous
                         </button>
-                        <button class="btn btn-primary w-100" id="nextStepBtn">
-                            Next <i class="fas fa-arrow-right ms-2"></i>
+                        <button class="btn btn-primary w-100" id="nextStepBtn" type="button">
+                            <span class="spinner-container" style="display:none;">
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
+                                <span class="button-text">Saving...</span>
+                            </span>
+                            <span class="button-text">Next <i class="fas fa-arrow-right ms-2"></i></span>
                         </button>
                     </div>
                 </div>
@@ -871,8 +886,12 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
                         <button class="btn btn-outline-secondary" id="prevStepBtnMobile" disabled>
                             <i class="fas fa-arrow-left me-2"></i>Previous
                         </button>
-                        <button class="btn btn-primary" id="nextStepBtnMobile">
-                            Next <i class="fas fa-arrow-right ms-2"></i>
+                        <button class="btn btn-primary" id="nextStepBtnMobile" type="button">
+                            <span class="spinner-container" style="display:none;">
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
+                                <span class="button-text">Saving...</span>
+                            </span>
+                            <span class="button-text">Next <i class="fas fa-arrow-right ms-2"></i></span>
                         </button>
                     </div>
                 </div>
@@ -1425,21 +1444,20 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
             const isLastStep = currentStep === totalSteps;
 
             // Update button text for last step
+            const nextButtonTexts = nextStepBtn.querySelectorAll('.button-text');
+            const nextMobileButtonTexts = nextStepBtnMobile.querySelectorAll('.button-text');
+            
             if (isLastStep) {
-                nextStepBtn.textContent = 'Review';
-                nextStepBtnMobile.textContent = 'Review';
+                if (nextButtonTexts[1]) nextButtonTexts[1].innerHTML = 'Review <i class="fas fa-check-circle ms-2"></i>';
+                if (nextMobileButtonTexts[1]) nextMobileButtonTexts[1].innerHTML = 'Review <i class="fas fa-check-circle ms-2"></i>';
             } else {
-                nextStepBtn.textContent = 'Next';
-                nextStepBtnMobile.textContent = 'Next';
+                if (nextButtonTexts[1]) nextButtonTexts[1].innerHTML = 'Next <i class="fas fa-arrow-right ms-2"></i>';
+                if (nextMobileButtonTexts[1]) nextMobileButtonTexts[1].innerHTML = 'Next <i class="fas fa-arrow-right ms-2"></i>';
             }
 
             // Enable/disable buttons
             prevStepBtn.disabled = isFirstStep;
             prevStepBtnMobile.disabled = isFirstStep;
-
-            // Update button icons
-            nextStepBtn.innerHTML = isLastStep ? 'Review <i class="fas fa-check-circle ms-2"></i>' : 'Next <i class="fas fa-arrow-right ms-2"></i>';
-            nextStepBtnMobile.innerHTML = isLastStep ? 'Review <i class="fas fa-check-circle ms-2"></i>' : 'Next <i class="fas fa-arrow-right ms-2"></i>';
         }
 
         function validateCurrentStep() {
@@ -1509,11 +1527,55 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
         nextStepBtnMobile.addEventListener('click', () => handleNextStep());
         prevStepBtnMobile.addEventListener('click', () => goToStep(currentStep - 1));
 
+        // Show loading spinner on button
+        function showLoading(buttonId) {
+            const btn = document.getElementById(buttonId);
+            if (btn) {
+                const spinnerContainer = btn.querySelector('.spinner-container');
+                const buttonText = btn.querySelector('.button-text');
+                if (spinnerContainer) {
+                    spinnerContainer.style.display = 'inline-flex';
+                }
+                if (buttonText) {
+                    buttonText.style.display = 'none';
+                }
+                btn.disabled = true;
+            }
+        }
+
+        // Hide loading spinner on button
+        function hideLoading(buttonId, originalText) {
+            const btn = document.getElementById(buttonId);
+            if (btn) {
+                const spinnerContainer = btn.querySelector('.spinner-container');
+                const buttonText = btn.querySelectorAll('.button-text');
+                if (spinnerContainer) {
+                    spinnerContainer.style.display = 'none';
+                }
+                if (buttonText.length > 1) {
+                    // Second button-text is the original text
+                    buttonText[1].style.display = 'inline';
+                    if (originalText) {
+                        buttonText[1].innerHTML = originalText;
+                    }
+                }
+                btn.disabled = false;
+            }
+        }
+
         // Handle Next step with draft save
         function handleNextStep() {
             // Save draft before proceeding to next step
+            showLoading('nextStepBtn');
+            showLoading('nextStepBtnMobile');
+            
             saveCurrentStepAsDraft().then(() => {
+                hideLoading('nextStepBtn', 'Next <i class="fas fa-arrow-right ms-2"></i>');
+                hideLoading('nextStepBtnMobile', 'Next <i class="fas fa-arrow-right ms-2"></i>');
                 goToStep(currentStep + 1);
+            }).catch(() => {
+                hideLoading('nextStepBtn', 'Next <i class="fas fa-arrow-right ms-2"></i>');
+                hideLoading('nextStepBtnMobile', 'Next <i class="fas fa-arrow-right ms-2"></i>');
             });
         }
 
@@ -1814,11 +1876,12 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
                 .then(response => response.json())
                 .then(data => {
                     hideLoadingOverlay();
+                    window.location.href = '/applicant-dashboard';
                     if (data.success) {
                         showToast('success', 'Protocol submitted successfully! Protocol Number: ' + (data.protocol_number || 'Pending'));
-                        // Redirect to confirmation page with protocol number
+                        // Redirect to dashboard after short delay to allow user to see the toast
                         setTimeout(() => {
-                            window.location.href = 'submission-confirmation.php?protocol=' + encodeURIComponent(data.protocol_number || '');
+                            window.location.href = '/applicant-dashboard';
                         }, 1500);
                     } else {
                         showToast('error', data.message || 'Submission failed. Please try again.');

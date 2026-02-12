@@ -30,7 +30,7 @@ $fieldMapping = [
     'pi_address' => 'pi_address',
     'pi_phone' => 'pi_phone',
     'pi_email' => 'pi_email',
-    'proposal_title' => 'proposal_title',
+    'study_title' => 'study_title',
     'project_duration' => 'project_duration',
     'funding_source' => 'funding_source',
     'prior_irb' => 'prior_irb',
@@ -61,15 +61,29 @@ if ($userId > 0) {
 
         if ($conn) {
             $stmt = $conn->prepare(
-                "SELECT * FROM nmimr_applications 
+                "SELECT * FROM applications 
                  WHERE applicant_id = :user_id AND status = 'draft' 
                  ORDER BY id DESC LIMIT 1"
             );
             $stmt->execute(['user_id' => $userId]);
+            
             $draftData = $stmt->fetch(PDO::FETCH_ASSOC);
 
+            error_log("Draft query executed for user_id $userId: " . ($draftData ? "Draft found with application_id=" . $draftData['id'] : "No draft found"));
+
+            $stmt = $conn->prepare(
+                "SELECT * FROM nmimr_application_details 
+                 WHERE application_id = :application_id 
+                 ORDER BY id DESC LIMIT 1"
+            );
+
+            $stmt->execute(['application_id' => $draftData['id']]);            
+            $draftDataDetails = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            error_log("Draft details query executed for application_id " . ($draftData['id'] ?? 'N/A') . ": " . ($draftData ? "Details found" : "No details found"));
+
             if ($draftData) {
-                $draft = $draftData;
+                $draft = array_merge($draftData, $draftDataDetails);
                 $currentStep = $draft['current_step'] ?? 1;
 
                 error_log("Draft loaded for user_id $userId: application_id=" . $draft['id']);
@@ -104,6 +118,7 @@ if ($userId > 0) {
     }
 }
 
+error_log("Draft Data for user_id $userId: " . print_r($draft, true));
 /**
  * Helper function to get draft value
  */
@@ -201,7 +216,7 @@ function isResearchTypeChecked($value)
 <div class="add-new-protocol container-fluid mt-4 mb-4 p-4">
     <!-- Header -->
     <div class="welcome-header text-white p-4 rounded mb-4 position-relative overflow-hidden"
-        style="background: linear-gradient(135deg, #35493d 0%, #445e50 100%);">
+        style="background: linear-gradient(135deg, var(--applicant-green-dark) 0%, var(--applicant-green) 100%);">
         <div class="header-gradient"></div>
         <div class="d-flex align-items-center position-relative z-1">
             <div>
@@ -396,7 +411,7 @@ function isResearchTypeChecked($value)
                                 </div>
                                 <div class="col-md-12 mb-3">
                                     <label for="submissionDate" class="form-label fw-semibold">Submission Date <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" id="submissionDate" name="submission_date" value="<?php echo getDraftValue('submission_date'); ?>" required>
+                                    <input type="date" class="form-control" id="submissionDate" name="submission_date" value="<?php echo getDraftValue('submission_date') ?: date('Y-m-d'); ?>" required>
                                 </div>
                             </div>
                         </div>
@@ -474,8 +489,8 @@ function isResearchTypeChecked($value)
                                 <h6 class="fw-semibold mb-3"><i class="fas fa-clipboard-list me-2"></i>Project Information</h6>
                                 <div class="row">
                                     <div class="col-md-12 mb-3">
-                                        <label for="proposalTitle" class="form-label fw-semibold">Title of Proposal <span class="text-danger">*</span></label>
-                                        <textarea class="form-control" id="proposalTitle" name="proposal_title" rows="2" required><?php echo getDraftValue('proposal_title'); ?></textarea>
+                                        <label for="studyTitle" class="form-label fw-semibold">Title of Proposal <span class="text-danger">*</span></label>
+                                        <textarea class="form-control" id="studyTitle" name="study_title" rows="2" required><?php echo getDraftValue('study_title'); ?></textarea>
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label fw-semibold">Type of Research <span class="text-danger">*</span></label>
@@ -649,7 +664,7 @@ function isResearchTypeChecked($value)
                                 <!-- Data Collection Instruments -->
                                 <div class="mb-3">
                                     <label for="dataInstruments" class="form-label fw-semibold">DATA COLLECTION INSTRUMENTS <span class="text-danger">*</span></label>
-                                    <input type="file" class="form-control" id="dataInstruments" name="data_instruments" accept=".pdf,.doc,.docx,.xls,.xlsx" multiple required>
+                                    <input type="file" class="form-control" id="dataInstruments" name="data_instruments" accept=".pdf,.doc,.docx,.xls,.xlsx" required>
                                     <small class="text-muted">Interview Guide, Questionnaire, etc.</small>
                                 </div>
 
@@ -725,7 +740,7 @@ function isResearchTypeChecked($value)
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label for="piDate" class="form-label fw-semibold">Date <span class="text-danger">*</span></label>
-                                        <input type="date" class="form-control" id="piDate" name="pi_date" value="<?php echo getDraftValue('pi_date'); ?>" required>
+                                        <input type="date" class="form-control" id="piDate" name="pi_date" value="<?php echo getDraftValue('pi_date') ?: date('Y-m-d'); ?>" required>
                                     </div>
                                 </div>
                             </div>
@@ -741,7 +756,7 @@ function isResearchTypeChecked($value)
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label for="coPiDate" class="form-label fw-semibold">Date</label>
-                                        <input type="date" class="form-control" id="coPiDate" name="copi_date" value="<?php echo getDraftValue('copi_date'); ?>">
+                                        <input type="date" class="form-control" id="coPiDate" name="copi_date" value="<?php echo getDraftValue('copi_date') ?: date('Y-m-d'); ?>">
                                     </div>
                                 </div>
                             </div>
@@ -1459,14 +1474,17 @@ function isResearchTypeChecked($value)
 
             hideLoadingOverlay();
             hideLoading('submitBtn', '<i class="fas fa-paper-plane me-2"></i>Submit Protocol');
+            window.location.href = '/applicant-dashboard';
 
             if (result.success) {
                 // alert(result.message);
-                if (result.redirect) {
-                    window.location.href = result.redirect;
-                }
+                // Redirect to dashboard or another page after successful submission
+
+                
+                    window.location.href = '/applicant-dashboard';
+                
             } else {
-                alert(result.message);
+                alert(result.message || 'An error occurred. Please try again.');
                 if (result.errors) {
                     console.error('Validation errors:', result.errors);
                 }
@@ -1504,13 +1522,13 @@ function isResearchTypeChecked($value)
             hideLoading('saveDraftBtn', '<i class="fas fa-save me-2"></i>Save Draft');
 
             if (result.success) {
-                alert(result.message);
+                alert(result.message || 'Draft saved successfully.');
                 // Update application_id if it's a new draft
                 if (result.application_id) {
                     document.querySelector('input[name="application_id"]').value = result.application_id;
                 }
             } else {
-                alert(result.message);
+                alert(result.message || 'Failed to save draft. Please try again.');
             }
         } catch (error) {
             hideLoading('saveDraftBtn', '<i class="fas fa-save me-2"></i>Save Draft');

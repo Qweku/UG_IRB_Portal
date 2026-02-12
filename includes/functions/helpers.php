@@ -1239,10 +1239,10 @@ function getFirstFridayOfMonth($year, $month)
  * @param int $userId
  * @return int
  */
-function getApplicantApplicationsCount($userId, $table)
+function getApplicantApplicationsCount($userId)
 {
     return executeCountQuery(
-        "SELECT COUNT(*) as count FROM $table WHERE applicant_id = ?",
+        "SELECT COUNT(*) as count FROM applications WHERE applicant_id = ?",
         [$userId]
     );
 }
@@ -1255,8 +1255,9 @@ function getApplicantApplicationsCount($userId, $table)
 function getStudentApplicantStudies($userId)
 {
     return executeAssocQuery(
-        "SELECT id, study_title, created_at, status, application_type 
-         FROM student_applications 
+        "SELECT a.id, a.study_title, a.created_at, a.status, a.application_type 
+         FROM applications a
+            LEFT JOIN student_application_details sa ON a.id = sa.application_id
          WHERE applicant_id = ? 
          ORDER BY created_at DESC",
         [$userId]
@@ -1265,8 +1266,9 @@ function getStudentApplicantStudies($userId)
 function getNMIMRApplicantStudies($userId)
 {
     return executeAssocQuery(
-        "SELECT id, proposal_title, created_at, status
-         FROM nmimr_applications 
+        "SELECT a.id, a.study_title, a.created_at, a.status, a.application_type
+         FROM applications a
+         LEFT JOIN nmimr_application_details na ON a.id = na.application_id
          WHERE applicant_id = ? 
          ORDER BY created_at DESC",
         [$userId]
@@ -1275,8 +1277,9 @@ function getNMIMRApplicantStudies($userId)
 function getNONNMIMRApplicantStudies($userId)
 {
     return executeAssocQuery(
-        "SELECT id, study_title, created_at, status, application_type 
-         FROM non_nmimr_applications 
+        "SELECT a.id, a.study_title, a.created_at, a.status, a.application_type 
+         FROM applications a
+         LEFT JOIN non_nmimr_application_details nna ON a.id = nna.application_id
          WHERE applicant_id = ? 
          ORDER BY created_at DESC",
         [$userId]
@@ -1342,9 +1345,9 @@ function getInstitutionById($institutionId)
 function getApplicationTypeName($type)
 {
     $types = [
-        'student' => 'Students',
-        'nmimr' => 'NMIMR Researchers',
-        'non_nmimr' => 'Non-NMIMR Researchers'
+        'student' => 'Student',
+        'nmimr' => 'NMIMR Researcher',
+        'non_nmimr' => 'Non-NMIMR Researcher'
     ];
     return $types[$type] ?? 'Unknown';
 }
@@ -1388,7 +1391,7 @@ function getStatusColor($status)
  */
 function getApplicantStats($userId, $applicationType)
 {
-    $total = $applicationType == "student" ? getApplicantApplicationsCount($userId, "student_applications") : ($applicationType == "nmimr" ? getApplicantApplicationsCount($userId, "nmimr_applications") : getApplicantApplicationsCount($userId, "non_nmimr_applications"));
+    $total =  getApplicantApplicationsCount($userId);
     $studies = $applicationType == "student" ? getStudentApplicantStudies($userId) : ($applicationType == "nmimr" ? getNMIMRApplicantStudies($userId) : getNONNMIMRApplicantStudies($userId));
 
     $underReview = count(array_filter($studies, fn($s) => ($s['status'] ?? '') === 'under_review'));
@@ -1408,7 +1411,7 @@ function getApplicantStats($userId, $applicationType)
  * @param int $userId
  * @return array|null
  */
-function getDraftApplication(int $userId, $table): ?array
+function getDraftApplication(int $userId): ?array
 {
     $db = new Database();
     $conn = $db->connect();
@@ -1419,7 +1422,7 @@ function getDraftApplication(int $userId, $table): ?array
     try {
         $stmt = $conn->prepare(
             "SELECT *
-             FROM $table
+             FROM applications
              WHERE applicant_id = :applicant_id
                AND status = 'draft'
              ORDER BY created_at DESC
@@ -1547,14 +1550,56 @@ function getPendingApplications($limit = null, $offset = null)
     if (!$conn) return [];
 
     try {
-        $query = "SELECT sa.*, 
-                         u.full_name as applicant_name,
-                         u.email as applicant_email,
-                         sa.created_at as submitted_at
-                  FROM student_applications sa
-                  LEFT JOIN users u ON sa.applicant_id = u.id
-                  WHERE sa.status = 'submitted'
-                  ORDER BY sa.created_at ASC";
+
+        $query = "
+                    SELECT 
+                        sa.id,
+                        sa.applicant_id,
+                        sa.protocol_number,
+                        sa.study_title,
+                        sa.status,
+                        sa.created_at AS submitted_at,
+                        u.full_name AS applicant_name,
+                        u.email AS applicant_email,
+                        'student' AS application_type
+                    FROM student_applications sa
+                    JOIN users u ON u.id = sa.applicant_id
+                    WHERE sa.status = 'submitted'
+
+                    UNION ALL
+
+                    SELECT 
+                        na.id,
+                        na.applicant_id,
+                        na.protocol_number,
+                        na.proposal_title,
+                        na.status,
+                        na.created_at AS submitted_at,
+                        u.full_name AS applicant_name,
+                        u.email AS applicant_email,
+                        'nmimr' AS application_type
+                    FROM nmimr_applications na
+                    JOIN users u ON u.id = na.applicant_id
+                    WHERE na.status = 'submitted'
+
+                    UNION ALL
+
+                    SELECT 
+                        nna.id,
+                        nna.applicant_id,
+                        nna.protocol_number,
+                        nna.study_title,
+                        nna.status,
+                        nna.created_at AS submitted_at,
+                        u.full_name AS applicant_name,
+                        u.email AS applicant_email,
+                        'non_nmimr' AS application_type
+                    FROM non_nmimr_applications nna
+                    JOIN users u ON u.id = nna.applicant_id
+                    WHERE nna.status = 'submitted'
+
+                    ORDER BY submitted_at ASC
+                    ";
 
         if ($limit !== null && $offset !== null) {
             $query .= " LIMIT ? OFFSET ?";
@@ -1587,7 +1632,7 @@ function getReviewerAssignments($reviewerId)
         $stmt = $conn->prepare(
             "SELECT sa.*, 
                     u.full_name as applicant_name,
-                    ar.status as review_status,
+                    ar.review_status as review_status,
                     ar.created_at as assigned_at,
                     ar.id as review_id
              FROM application_reviews ar

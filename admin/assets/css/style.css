@@ -16,6 +16,21 @@
 
     --light-gray: #f8f9fa;
     --dark-gray: #343a40;
+
+    /* Applicant colors */
+    --applicant-green: #2878a7;
+    --applicant-green-light: #d4edda;
+    --applicant-green-dark: #153f57;
+
+    /* Reviewer colors */
+    --reviewer-blue: #17a2b8;
+    --reviewer-blue-light: #d1ecf1;
+    --reviewer-blue-dark: #0c5460;
+
+    /* Admin colors */
+    --admin-yellow: #222222;
+    --admin-yellow-light: #fff3cd;
+    --admin-yellow-dark: #0f0f0f;
 }
 
 body {
