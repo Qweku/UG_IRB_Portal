@@ -44,13 +44,20 @@ function getTotalSteps($applicant_type) {
 
 ?>
 
+<!-- Link Applicant Sidebar CSS -->
+<link href="/applicant/assets/css/sidebar.css" rel="stylesheet">
 
 <div class="container-fluid dashboard-container">
     <div class="row">
         <?php include 'sidebar.php'; ?>
 
         <!-- Main Content Area -->
-        <div class="content-section col-lg-10 col-md-9 ms-sm-auto px-4 py-3">
+        <div class="content-section col-lg-10 col-md-12 col-sm-12 ms-sm-auto px-4 py-3">
+            
+            <!-- Mobile Sidebar Toggle Button -->
+            <!-- <button class="mobile-sidebar-toggle mb-3" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i> Menu -->
+            <!-- </button> -->
 
             <!-- Welcome Header -->
             <div class="welcome-section text-white mb-4 fade-in-up">
@@ -69,7 +76,7 @@ function getTotalSteps($applicant_type) {
 
             <!-- Stats Cards Row -->
             <div class="row mb-4">
-                <div class="col-md-3 mb-3">
+                <div class="col-md-3 col-sm-6 col-xs-12 mb-3">
                     <div class="stats-card-modern text-white bg-primary fade-in-up">
                         <div class="card-body p-4">
                             <div class="d-flex justify-content-between">
@@ -88,7 +95,7 @@ function getTotalSteps($applicant_type) {
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 mb-3">
+                <div class="col-md-3 col-sm-6 col-xs-12 mb-3">
                     <div class="stats-card-modern text-white fade-in-up" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);">
                         <div class="card-body p-4">
                             <div class="d-flex justify-content-between">
@@ -107,7 +114,7 @@ function getTotalSteps($applicant_type) {
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 mb-3">
+                <div class="col-md-3 col-sm-6 col-xs-12 mb-3">
                     <div class="stats-card-modern text-white fade-in-up" style="background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);">
                         <div class="card-body p-4">
                             <div class="d-flex justify-content-between">
@@ -126,7 +133,7 @@ function getTotalSteps($applicant_type) {
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 mb-3">
+                <div class="col-md-3 col-sm-6 col-xs-12 mb-3">
                     <div class="stats-card-modern text-white fade-in-up" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
                         <div class="card-body p-4">
                             <div class="d-flex justify-content-between">
@@ -167,7 +174,7 @@ function getTotalSteps($applicant_type) {
                 <!-- Ongoing Application Section -->
                 <div class="mb-4 fade-in-up">
                     <div class="section-header">
-                        <div class="section-icon" style="background: linear-gradient(135deg, var(--applicant-green-dark) 0%, var(--applicant-green) 100%); color: #ffffff;">
+                        <div class="section-icon" style="background: linear-gradient(135deg, var(--applicant-primary-dark) 0%, var(--applicant-primary) 100%); color: #ffffff;">
                             <i class="fas fa-spinner fa-spin"></i>
                         </div>
                         <div>
@@ -449,4 +456,45 @@ function getTotalSteps($applicant_type) {
             });
         }
     });
+</script>
+
+<script>
+/**
+ * Sidebar Toggle Functions for Mobile Responsiveness
+ */
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.querySelector('.sidebar-backdrop');
+    
+    if (sidebar) {
+        sidebar.classList.toggle('show');
+    }
+    if (backdrop) {
+        backdrop.classList.toggle('show');
+    }
+    
+    // Prevent body scroll when sidebar is open
+    document.body.classList.toggle('sidebar-open');
+}
+
+function closeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.querySelector('.sidebar-backdrop');
+    
+    if (sidebar) {
+        sidebar.classList.remove('show');
+    }
+    if (backdrop) {
+        backdrop.classList.remove('show');
+    }
+    
+    document.body.classList.remove('sidebar-open');
+}
+
+// Close sidebar on Escape key press
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeSidebar();
+    }
+});
 </script>

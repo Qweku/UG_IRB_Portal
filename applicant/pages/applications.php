@@ -37,7 +37,7 @@ if ($status_filter !== 'all') {
 <style>
     /* Studies Page Specific Styles */
     .page-header-section {
-        background:linear-gradient(135deg, var(--applicant-green-dark) 0%, var(--applicant-green) 100%);
+        background:linear-gradient(135deg, var(--applicant-primary-dark) 0%, var(--applicant-primary) 100%);
         border-radius: 16px;
         padding: 32px;
         margin-bottom: 24px;
@@ -281,12 +281,20 @@ if ($status_filter !== 'all') {
     }
 </style>
 
+<!-- Link Applicant Sidebar CSS -->
+<link href="/applicant/assets/css/sidebar.css" rel="stylesheet">
+
 <div class="container-fluid">
     <div class="row">
         <?php include 'sidebar.php'; ?>
 
         <!-- Main Content Area -->
-        <div class="content-section col-lg-10 col-md-9 ms-sm-auto px-4 py-3">
+        <div class="content-section col-lg-10 col-md-12 col-sm-12 ms-sm-auto px-4 py-3">
+            
+            <!-- Mobile Sidebar Toggle Button -->
+            <!-- <button class="mobile-sidebar-toggle mb-3" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i> Menu
+            </button> -->
 
             <!-- Page Header -->
             <div class="page-header-section text-white fade-in">
@@ -334,7 +342,7 @@ if ($status_filter !== 'all') {
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 mb-3">
+                <div class="col-md-3 col-sm-6 col-xs-12 mb-3">
                     <div class="stats-card-mini bg-white border border-info fade-in">
                         <div class="card-body text-center">
                             <h3 class="mb-0 text-info"><?php echo count(array_filter($studies, fn($s) => ($s['status'] ?? '') === 'submitted')); ?></h3>
@@ -342,7 +350,7 @@ if ($status_filter !== 'all') {
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 mb-3">
+                <div class="col-md-3 col-sm-6 col-xs-12 mb-3">
                     <div class="stats-card-mini bg-white border border-warning fade-in">
                         <div class="card-body text-center">
                             <h3 class="mb-0 text-warning"><?php echo count(array_filter($studies, fn($s) => ($s['status'] ?? '') === 'under_review')); ?></h3>
@@ -350,7 +358,7 @@ if ($status_filter !== 'all') {
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 mb-3">
+                <div class="col-md-3 col-sm-6 col-xs-12 mb-3">
                     <div class="stats-card-mini bg-white border border-success fade-in">
                         <div class="card-body text-center">
                             <h3 class="mb-0 text-success"><?php echo count(array_filter($studies, fn($s) => ($s['status'] ?? '') === 'approved')); ?></h3>
@@ -496,3 +504,44 @@ if ($status_filter !== 'all') {
         </div>
     </div>
 </div>
+
+<script>
+/**
+ * Sidebar Toggle Functions for Mobile Responsiveness
+ */
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.querySelector('.sidebar-backdrop');
+    
+    if (sidebar) {
+        sidebar.classList.toggle('show');
+    }
+    if (backdrop) {
+        backdrop.classList.toggle('show');
+    }
+    
+    // Prevent body scroll when sidebar is open
+    document.body.classList.toggle('sidebar-open');
+}
+
+function closeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.querySelector('.sidebar-backdrop');
+    
+    if (sidebar) {
+        sidebar.classList.remove('show');
+    }
+    if (backdrop) {
+        backdrop.classList.remove('show');
+    }
+    
+    document.body.classList.remove('sidebar-open');
+}
+
+// Close sidebar on Escape key press
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeSidebar();
+    }
+});
+</script>

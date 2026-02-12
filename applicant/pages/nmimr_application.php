@@ -213,10 +213,23 @@ function isResearchTypeChecked($value)
     return '';
 }
 ?>
+
+<!-- Link Applicant Sidebar CSS -->
+<link href="/applicant/assets/css/sidebar.css" rel="stylesheet">
+
+<div class="container-fluid dashboard-container">
+    <div class="row">
+        <?php include 'sidebar.php'; ?>
+
+        <!-- Main Content Area -->
+        <div class="content-section col-lg-10 col-md-9 ms-sm-auto px-4 py-3">
+            
+         
+
 <div class="add-new-protocol container-fluid mt-4 mb-4 p-4">
     <!-- Header -->
     <div class="welcome-header text-white p-4 rounded mb-4 position-relative overflow-hidden"
-        style="background: linear-gradient(135deg, var(--applicant-green-dark) 0%, var(--applicant-green) 100%);">
+        style="background: linear-gradient(135deg, var(--applicant-primary-dark) 0%, var(--applicant-primary) 100%);">
         <div class="header-gradient"></div>
         <div class="d-flex align-items-center position-relative z-1">
             <div>
@@ -1539,4 +1552,45 @@ function isResearchTypeChecked($value)
         }
     }
 
+</script>
+
+<!-- Mobile Sidebar Toggle Functions -->
+<script>
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.querySelector('.sidebar-backdrop');
+    
+    if (sidebar) {
+        sidebar.classList.toggle('show');
+    }
+    
+    if (backdrop) {
+        backdrop.classList.toggle('show');
+    }
+    
+    // Prevent body scroll when sidebar is open
+    document.body.classList.toggle('sidebar-open');
+}
+
+function closeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.querySelector('.sidebar-backdrop');
+    
+    if (sidebar) {
+        sidebar.classList.remove('show');
+    }
+    
+    if (backdrop) {
+        backdrop.classList.remove('show');
+    }
+    
+    document.body.classList.remove('sidebar-open');
+}
+
+// Close sidebar on Escape key press
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeSidebar();
+    }
+});
 </script>

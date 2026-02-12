@@ -14,7 +14,10 @@ $pendingReviews = getPendingReviewsCount();
 ?>
 
 
+<div class="sidebar-backdrop" onclick="closeSidebar()"></div>
+
 <div id="sidebar" class="col-lg-2 col-md-3 d-md-block sidebar collapse">
+    <button class="sidebar-close-btn" onclick="closeSidebar()">×</button>
     <div class="sidebar-sticky">
 
 

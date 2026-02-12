@@ -1,5 +1,46 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
+<script>
+/**
+ * Sidebar Toggle Functions for Mobile Responsiveness
+ */
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.querySelector('.sidebar-backdrop');
+    
+    if (sidebar) {
+        sidebar.classList.toggle('show');
+    }
+    if (backdrop) {
+        backdrop.classList.toggle('show');
+    }
+    
+    // Prevent body scroll when sidebar is open
+    document.body.classList.toggle('sidebar-open');
+}
+
+function closeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.querySelector('.sidebar-backdrop');
+    
+    if (sidebar) {
+        sidebar.classList.remove('show');
+    }
+    if (backdrop) {
+        backdrop.classList.remove('show');
+    }
+    
+    document.body.classList.remove('sidebar-open');
+}
+
+// Close sidebar on Escape key press
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeSidebar();
+    }
+});
+</script>
+
   <?php
     // Session timeout calculation for global modal
     // $session_lifetime = ini_get('session.gc_maxlifetime');

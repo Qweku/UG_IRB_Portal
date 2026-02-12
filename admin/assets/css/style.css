@@ -18,9 +18,9 @@
     --dark-gray: #343a40;
 
     /* Applicant colors */
-    --applicant-green: #2878a7;
-    --applicant-green-light: #d4edda;
-    --applicant-green-dark: #153f57;
+    --applicant-primary: #2878a7;
+    --applicant-primary-light: #d4edda;
+    --applicant-primary-dark: #153f57;
 
     /* Reviewer colors */
     --reviewer-blue: #17a2b8;

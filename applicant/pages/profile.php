@@ -47,7 +47,8 @@ $stats = getApplicantStats($userId, $applicant_type);
 
 ?>
 
-
+<!-- Link Applicant Sidebar CSS -->
+<link href="/applicant/assets/css/sidebar.css" rel="stylesheet">
 
 <div class="container-fluid">
     <div class="row">
@@ -55,6 +56,11 @@ $stats = getApplicantStats($userId, $applicant_type);
 
         <!-- Main Content Area -->
         <div class="content-section col-lg-10 col-md-9 ms-sm-auto px-4 py-3">
+            
+            <!-- Mobile Sidebar Toggle Button -->
+            <!-- <button class="mobile-sidebar-toggle mb-3" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i> Menu
+            </button> -->
 
             <!-- Page Header -->
             <div class="profile-header-section text-white fade-in">
@@ -231,3 +237,44 @@ $stats = getApplicantStats($userId, $applicant_type);
         </div>
     </div>
 </div>
+
+<script>
+/**
+ * Sidebar Toggle Functions for Mobile Responsiveness
+ */
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.querySelector('.sidebar-backdrop');
+    
+    if (sidebar) {
+        sidebar.classList.toggle('show');
+    }
+    if (backdrop) {
+        backdrop.classList.toggle('show');
+    }
+    
+    // Prevent body scroll when sidebar is open
+    document.body.classList.toggle('sidebar-open');
+}
+
+function closeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.querySelector('.sidebar-backdrop');
+    
+    if (sidebar) {
+        sidebar.classList.remove('show');
+    }
+    if (backdrop) {
+        backdrop.classList.remove('show');
+    }
+    
+    document.body.classList.remove('sidebar-open');
+}
+
+// Close sidebar on Escape key press
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeSidebar();
+    }
+});
+</script>

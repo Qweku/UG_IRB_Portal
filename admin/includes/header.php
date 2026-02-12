@@ -40,7 +40,7 @@
     <nav class="navbar navbar-expand-lg premium-navbar" style="display: <?= htmlspecialchars($navbar_display); ?>;">
         <div class="container-fluid">
             <!-- Sidebar Toggle (Mobile) -->
-            <button class="sidebar-toggle me-3 d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar">
+            <button class="mobile-sidebar-toggle me-3" type="button" onclick="toggleSidebar()">
                 <i class="fas fa-bars"></i>
             </button>
 
@@ -55,7 +55,7 @@
 
             <!-- Mobile Toggle -->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
+                <span><i class="fa-solid fa-ellipsis-vertical text-white"></i></span>
             </button>
 
             <!-- Navbar Content -->
@@ -67,9 +67,9 @@
                     </a>
 
                     <!-- Settings -->
-                    <a href="#" class="nav-btn" title="Settings">
+                    <!-- <a href="#" class="nav-btn" title="Settings">
                         <i class="fas fa-cog"></i>
-                    </a>
+                    </a> -->
 
                     <!-- User Info -->
                     <!-- <div class="user-info-premium">
