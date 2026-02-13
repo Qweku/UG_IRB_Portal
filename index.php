@@ -38,9 +38,20 @@ require_once 'includes/functions/csrf.php';
 defined('CSRF_SESSION_NAME') || define('CSRF_SESSION_NAME', 'ug_irb_session');
 session_name(CSRF_SESSION_NAME);
 
+// DEBUG: Log session initialization
+error_log("=== INDEX.PHP SESSION INIT ===");
+error_log("Session status before start: " . session_status());
+error_log("Session name: " . session_name());
+
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+    $started = session_start();
+    error_log("session_start() result: " . ($started ? 'SUCCESS' : 'FAILED'));
+} else {
+    error_log("Session already active - skipping session_start()");
 }
+
+error_log("Session ID: " . session_id());
+
 
 /* ==========================================================
  | DATABASE CONNECTION (needed for session validation)
@@ -125,6 +136,7 @@ $routes = [
     /* ---------- DASHBOARD ---------- */
     'dashboard' => [
         '_'          => ['file' => 'dashboard/index.php', 'roles' => ['admin', 'super_admin']],
+        'applications'    => ['file' => 'dashboard/applications_content.php', 'roles' => ['admin', 'super_admin']],
         'studies'    => ['file' => 'dashboard/study_content.php', 'roles' => ['admin', 'super_admin']],
         'preliminary-agenda'  => ['file' => 'dashboard/preliminary_agenda_content.php', 'roles' => ['admin', 'super_admin']],  // /dashboard/preliminary-agenda
         'continue-review'  => ['file' => 'dashboard/due_continue_review_content.php', 'roles' => ['admin', 'super_admin']],  // /dashboard/continue-review

@@ -49,6 +49,11 @@ $pendingReviews = getPendingReviewsCount();
             <!-- Add or Modify Section -->
             <div class="nav-section-title" style="margin-top: 16px;">Management</div>
 
+            <a class="nav-link <?php echo ($current_page == 'applications') ? 'active' : ''; ?>" href="/dashboard/applications">
+                <i class="fas fa-newspaper"></i>
+                <span>Applications</span>
+            </a>
+
             <a class="nav-link <?php echo ($current_page == 'studies') ? 'active' : ''; ?>" href="/dashboard/studies">
                 <i class="fas fa-file-medical"></i>
                 <span>Studies / Protocol</span>

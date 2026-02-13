@@ -14,12 +14,28 @@ use PHPMailer\PHPMailer\Exception;
 
 header('Content-Type: application/json');
 
+// DEBUG: Add diagnostic logging
+error_log("=== GET_USER DEBUG ===");
+error_log("Session logged_in: " . (isset($_SESSION['logged_in']) ? $_SESSION['logged_in'] : 'NOT SET'));
+error_log("Session role: " . (isset($_SESSION['role']) ? $_SESSION['role'] : 'NOT SET'));
+error_log("Session user_id: " . (isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 'NOT SET'));
+error_log("Session session_token: " . (isset($_SESSION['session_token']) ? $_SESSION['session_token'] : 'NOT SET'));
+
 // Check if admin is logged in
 if (!isset($_SESSION['logged_in']) || !isset($_SESSION['role']) || 
     ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'super_admin')) {
+         // DEBUG: Log which condition failed
+    error_log("AUTH FAILURE DETAILS:");
+    error_log("  - logged_in set: " . (isset($_SESSION['logged_in']) ? 'YES' : 'NO'));
+    error_log("  - role set: " . (isset($_SESSION['role']) ? 'YES' : 'NO'));
+     if (isset($_SESSION['role'])) {
+        error_log("  - role value: " . $_SESSION['role']);
+        error_log("  - is admin: " . ($_SESSION['role'] === 'admin' ? 'YES' : 'NO'));
+        error_log("  - is super_admin: " . ($_SESSION['role'] === 'super_admin' ? 'YES' : 'NO'));
+    }
     echo json_encode(['status' => 'error', 'message' => 'Unauthorized access']);
     exit;
-}
+} 
 
 // Validate request method
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -96,11 +112,11 @@ try {
     
     if ($phoneColumnExists) {
         // Insert user with phone
-        $stmt = $conn->prepare("INSERT INTO users (full_name, email, phone_number, password, role, institution_id, status, created_at) VALUES (?, ?, ?, ?, ?, ?, 'active', NOW())");
+        $stmt = $conn->prepare("INSERT INTO users (full_name, email, phone_number, password_hash, role, institution_id, status, created_at) VALUES (?, ?, ?, ?, ?, ?, 'active', NOW())");
         $stmt->execute([$full_name, $email, $phone, $hashed_password, $role, $institution_id]);
     } else {
         // Insert user without phone
-        $stmt = $conn->prepare("INSERT INTO users (full_name, email, password, role, institution_id, status, created_at) VALUES (?, ?, ?, ?, ?, 'active', NOW())");
+        $stmt = $conn->prepare("INSERT INTO users (full_name, email, password_hash, role, institution_id, status, created_at) VALUES (?, ?, ?, ?, ?, 'active', NOW())");
         $stmt->execute([$full_name, $email, $hashed_password, $role, $institution_id]);
     }
 

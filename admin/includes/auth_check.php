@@ -8,8 +8,30 @@
 // Use consistent session name across entire application
 defined('CSRF_SESSION_NAME') || define('CSRF_SESSION_NAME', 'ug_irb_session');
 
+// DEBUG: Log at entry point
+error_log("=== AUTH_CHECK.PHP ENTRY ===");
+error_log("Session status at entry: " . session_status());
+error_log("Current session_name: " . session_name());
+
 // Include database connection
 require_once __DIR__ . '/../../includes/config/database.php';
+
+// Start session if not already started with consistent session name
+$session_started = false;
+if (session_status() === PHP_SESSION_NONE) {
+    session_name(CSRF_SESSION_NAME);
+    $session_started = session_start();
+    error_log("SESSION START RESULT: " . ($session_started ? 'SUCCESS' : 'FAILED'));
+    error_log("SESSION STATUS: " . session_status());
+    error_log("SESSION ID: " . session_id());
+} else {
+    error_log("Session already active - checking if session_name matches");
+    error_log("Active session_name: " . session_name());
+    error_log("Expected session_name: " . CSRF_SESSION_NAME);
+    if (session_name() !== CSRF_SESSION_NAME) {
+        error_log("WARNING: Session name mismatch! Session was started with different name.");
+    }
+}
 
 $db = new Database();
 $conn = $db->connect();
@@ -61,16 +83,23 @@ function validate_admin_session_token($conn): bool {
 
 function require_auth() {
     // Start session if not already started with consistent session name
+    $session_started = false;
     if (session_status() === PHP_SESSION_NONE) {
         session_name(CSRF_SESSION_NAME);
-        session_start();
+        $session_started = session_start();
+        error_log("SESSION START RESULT: " . ($session_started ? 'SUCCESS' : 'FAILED'));
+        error_log("SESSION STATUS: " . session_status());
+        error_log("SESSION ID: " . session_id());
+    } else {
+        error_log("SESSION ALREADY STARTED - STATUS: " . session_status());
+        error_log("SESSION ID: " . session_id());
     }
     
     // DEBUG: Log session info
     error_log("=== AUTH DEBUG ===");
-    error_log("Session ID: " . session_id());
     error_log("Session logged_in: " . (isset($_SESSION['logged_in']) ? $_SESSION['logged_in'] : 'NOT SET'));
     error_log("Session user_id: " . (isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 'NOT SET'));
+    error_log("Session role: " . (isset($_SESSION['role']) ? $_SESSION['role'] : 'NOT SET'));
     error_log("Is AJAX: " . (is_ajax_request() ? 'YES' : 'NO'));
     
     // Check if user is logged in with session validation
