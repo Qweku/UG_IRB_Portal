@@ -989,6 +989,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const xhr = new XMLHttpRequest();
         xhr.open('GET', `/admin/handlers/fetch_contact_documents.php?contact_id=${contactId}`, true);
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         xhr.onload = function() {
             if (xhr.status === 200) {
                 try {
@@ -1023,6 +1024,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const xhr = new XMLHttpRequest();
         xhr.open('POST', '/admin/handlers/delete_contact_document.php', true);
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.onload = function() {
             if (xhr.status === 200) {
@@ -1061,6 +1063,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const xhr = new XMLHttpRequest();
         xhr.open('POST', '/admin/handlers/delete_contacts.php', true);
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.onload = function() {
             if (xhr.status === 200) {
@@ -1179,6 +1182,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const xhr = new XMLHttpRequest();
         xhr.open('POST', '/admin/handlers/send_invite.php', true);
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.onload = function() {
             document.getElementById('confirmInviteBtn').disabled = false;
@@ -1353,7 +1357,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (progressBar) progressBar.remove();
             showToast('error', 'Upload error');
         });
-        xhr.open('POST', '/admin/handlers/add_contacts.php');
+        xhr.open('POST', '/admin/handlers/add_contacts.php', true);
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         xhr.send(formData);
     });
 

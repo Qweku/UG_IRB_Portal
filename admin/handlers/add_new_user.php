@@ -46,6 +46,7 @@ foreach ($required_fields as $field) {
 
 $full_name = trim($data['full_name']);
 $email = trim($data['email']);
+$phone = isset($data['phone']) ? trim($data['phone']) : '';
 $password = $data['password'];
 $role = trim($data['role']);
 $institution_id = isset($data['institution_id']) ? (int)$data['institution_id'] : null;
@@ -57,7 +58,7 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 }
 
 // Validate role
-$valid_roles = ['admin', 'applicant', 'reviewer'];
+$valid_roles = ['admin', 'super_admin', 'applicant', 'reviewer'];
 if (!in_array($role, $valid_roles)) {
     echo json_encode(['status' => 'error', 'message' => 'Invalid role']);
     exit;
@@ -89,9 +90,19 @@ try {
     // Hash password
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-    // Insert user into database
-    $stmt = $conn->prepare("INSERT INTO users (full_name, email, password, role, institution_id, status, created_at) VALUES (?, ?, ?, ?, ?, 'active', NOW())");
-    $stmt->execute([$full_name, $email, $hashed_password, $role, $institution_id]);
+    // Check if phone column exists
+    $stmt = $conn->query("SHOW COLUMNS FROM users LIKE 'phone'");
+    $phoneColumnExists = $stmt->fetch();
+    
+    if ($phoneColumnExists) {
+        // Insert user with phone
+        $stmt = $conn->prepare("INSERT INTO users (full_name, email, phone_number, password, role, institution_id, status, created_at) VALUES (?, ?, ?, ?, ?, ?, 'active', NOW())");
+        $stmt->execute([$full_name, $email, $phone, $hashed_password, $role, $institution_id]);
+    } else {
+        // Insert user without phone
+        $stmt = $conn->prepare("INSERT INTO users (full_name, email, password, role, institution_id, status, created_at) VALUES (?, ?, ?, ?, ?, 'active', NOW())");
+        $stmt->execute([$full_name, $email, $hashed_password, $role, $institution_id]);
+    }
 
     if ($stmt->rowCount() > 0) {
         $user_id = $conn->lastInsertId();

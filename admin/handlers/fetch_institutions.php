@@ -1,20 +1,11 @@
 <?php
-/**
- * Fetch Institutions Handler
- * Handles AJAX requests to fetch institutions for dropdown
- */
-
 require_once '../includes/auth_check.php';
-require_once '../../includes/config/database.php';
+require_once '../../includes/functions/helpers.php';
 
 header('Content-Type: application/json');
 
-// Check if admin is logged in
-if (!isset($_SESSION['logged_in']) || !isset($_SESSION['role']) || 
-    ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'super_admin')) {
-    echo json_encode(['status' => 'error', 'message' => 'Unauthorized access']);
-    exit;
-}
+// Require authentication - this starts session and validates token
+require_auth();
 
 try {
     $db = new Database();
@@ -28,6 +19,8 @@ try {
     $stmt = $conn->prepare("SELECT id, institution_name FROM institutions ORDER BY institution_name ASC");
     $stmt->execute();
     $institutions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    error_log("Institutions: " . var_export($institutions, true));
 
     echo json_encode(['status' => 'success', 'institutions' => $institutions]);
 

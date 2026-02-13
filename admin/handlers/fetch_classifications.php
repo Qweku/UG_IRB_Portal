@@ -2,18 +2,30 @@
 require_once '../includes/auth_check.php';
 require_once '../../includes/functions/helpers.php';
 
-$classifications = [];
+header('Content-Type: application/json');
 
-// Fetch all classifications
-$classifications = executeAssocQuery("SELECT id, classification_type FROM classifications ORDER BY id ASC");
+// Require authentication
+require_auth();
 
-echo '<div class="table-responsive" style="height:300px;"><table class="table table-striped">';
-echo '<thead><tr><th>Name</th><th>Actions</th></tr></thead><tbody>';
-foreach ( $classifications as $row) {
-    echo "<tr><td>{$row['classification_type']}</td><td><button class='btn btn-sm btn-outline-success' onclick='editItem({$row['id']}, \"{$row['classification_type']}\")'><i class='fas fa-edit'></i></button><button class='btn btn-sm btn-outline-danger' onclick='deleteItem({$row['id']})'><i class='fas fa-trash'></i></button></td></tr>";
+try {
+    $db = new Database();
+    $conn = $db->connect();
+
+    if (!$conn) {
+        echo json_encode(['status' => 'error', 'message' => 'Database connection failed']);
+        exit;
+    }
+
+    // Fetch all classifications
+    $stmt = $conn->prepare("SELECT id, classification_type FROM classifications ORDER BY id ASC");
+    $stmt->execute();
+    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    error_log(__FILE__ . ": Fetched " . count($results) . " records");
+
+    echo json_encode(['status' => 'success', 'data' => $results]);
+
+} catch (PDOException $e) {
+    error_log(__FILE__ . " - Database error: " . $e->getMessage());
+    echo json_encode(['status' => 'error', 'message' => 'Database error']);
 }
-echo '</tbody></table></div>';
-
-?>
-
-

@@ -2,24 +2,45 @@
 require_once '../includes/auth_check.php';
 require_once '../../includes/functions/helpers.php';
 
-if (isset($_GET['id'])) {
-    $id = $_GET['id'];
-    $exempt = executeAssocQuery("SELECT id, exempt_cite, exempt_description FROM exempt_codes WHERE id = ?", [$id]);
-    if ($exempt) {
-        header('Content-Type: application/json');
-        echo json_encode($exempt[0]);
-    } else {
-        http_response_code(404);
-        echo json_encode(['error' => 'Not found']);
-    }
-    exit;
-}
+header('Content-Type: application/json');
 
-// Fetch all exempts
-$exempts = executeAssocQuery("SELECT id, exempt_cite, exempt_description FROM exempt_codes ORDER BY id ASC");
-echo '<div class="table-responsive" style="height:300px;"><table class="table table-striped">';
-echo '<thead><tr><th>Cite</th><th>Description</th><th>Actions</th></tr></thead><tbody>';
-foreach ( $exempts as $row) {
-    echo "<tr><td>{$row['exempt_cite']}</td><td>{$row['exempt_description']}</td><td><button class='btn btn-sm btn-outline-success' onclick='editItem({$row['id']}, \"{$row['exempt_cite']}\")'><i class='fas fa-edit'></i></button><button class='btn btn-sm btn-outline-danger' onclick='deleteItem({$row['id']})'><i class='fas fa-trash'></i></button></td></tr>";
-}   
-echo '</tbody></table></div>';
+// Require authentication
+require_auth();
+
+try {
+    $db = new Database();
+    $conn = $db->connect();
+
+    if (!$conn) {
+        echo json_encode(['status' => 'error', 'message' => 'Database connection failed']);
+        exit;
+    }
+
+    // Check if fetching single record by ID
+    if (isset($_GET['id'])) {
+        $id = $_GET['id'];
+        $stmt = $conn->prepare("SELECT id, exempt_cite, exempt_description FROM exempt_codes WHERE id = ?");
+        $stmt->execute([$id]);
+        $exempt = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($exempt) {
+            echo json_encode(['status' => 'success', 'data' => $exempt]);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Not found']);
+        }
+        exit;
+    }
+
+    // Fetch all exempts
+    $stmt = $conn->prepare("SELECT id, exempt_cite, exempt_description FROM exempt_codes ORDER BY id ASC");
+    $stmt->execute();
+    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    error_log(__FILE__ . ": Fetched " . count($results) . " records");
+
+    echo json_encode(['status' => 'success', 'data' => $results]);
+
+} catch (PDOException $e) {
+    error_log(__FILE__ . " - Database error: " . $e->getMessage());
+    echo json_encode(['status' => 'error', 'message' => 'Database error']);
+}

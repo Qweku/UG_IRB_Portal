@@ -1,7 +1,11 @@
 <?php
-require_once '../../includes/functions/helpers.php';
 require_once '../includes/auth_check.php';
+require_once '../../includes/functions/helpers.php';
+
 header('Content-Type: application/json');
+
+// Require authentication
+require_auth();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);
@@ -17,20 +21,20 @@ if (!$name) {
     exit;
 }
 
-$db = new Database();
-$conn = $db->connect();
-
-if (!$conn) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Database connection failed']);
-    exit;
-}
-
 try {
+    $db = new Database();
+    $conn = $db->connect();
+
+    if (!$conn) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Database connection failed']);
+        exit;
+    }
+
     // Split the name into last and first
     $nameParts = explode(' ', trim($name), 2);
     if (count($nameParts) < 2) {
-        echo json_encode(['email' => '']);
+        echo json_encode(['email' => '', 'title' => '']);
         exit;
     }
     $lastName = $nameParts[0];
@@ -43,10 +47,11 @@ try {
     $email = $contact ? $contact['email'] : '';
     $title = $contact ? $contact['title'] : '';
 
+    error_log(__FILE__ . ": Fetched contact email for " . $firstName . " " . $lastName);
+
     echo json_encode(['email' => $email, 'title' => $title]);
 } catch (PDOException $e) {
-    error_log("Database error: " . $e->getMessage());
+    error_log(__FILE__ . " - Database error: " . $e->getMessage());
     http_response_code(500);
     echo json_encode(['error' => 'Internal server error']);
 }
-?>

@@ -362,6 +362,95 @@ function buildUsersQueryString($exclude = []) {
                      </div>
                 </div>
 
+                <!-- Add User Modal -->
+                <div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header bg-primary text-white">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-user-plus me-2"></i>
+                                    Add New User
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="addUserForm">
+                                    <?php echo csrf_field(); ?>
+                                    <div class="row mb-3">
+                                        <div class="col-md-12">
+                                            <label for="userFullName" class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="userFullName" name="full_name" placeholder="Enter full name" required>
+                                            <div class="invalid-feedback" id="userFullNameError"></div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="userEmail" class="form-label fw-semibold">Email Address <span class="text-danger">*</span></label>
+                                            <input type="email" class="form-control" id="userEmail" name="email" placeholder="Enter email address" required>
+                                            <div class="invalid-feedback" id="userEmailError"></div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="userPhone" class="form-label fw-semibold">Phone Number</label>
+                                            <input type="tel" class="form-control" id="userPhone" name="phone" placeholder="Enter phone number">
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="userRole" class="form-label fw-semibold">Role <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="userRole" name="role" required>
+                                                <option value="">Select Role</option>
+                                                <option value="admin">Admin</option>
+                                                <option value="super_admin">Super Admin</option>
+                                                <option value="applicant">Applicant</option>
+                                                <option value="reviewer">Reviewer</option>
+                                            </select>
+                                            <div class="invalid-feedback" id="userRoleError"></div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="userInstitution" class="form-label fw-semibold">Institution <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="userInstitution" name="institution_id" required>
+                                                <option value="">Loading institutions...</option>
+                                            </select>
+                                            <div class="invalid-feedback" id="userInstitutionError"></div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="userPassword" class="form-label fw-semibold">Password <span class="text-danger">*</span></label>
+                                            <div class="input-group">
+                                                <input type="password" class="form-control" id="userPassword" name="password" placeholder="Minimum 8 characters" required minlength="8">
+                                                <button class="btn btn-outline-secondary toggle-password" type="button" data-target="userPassword">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </div>
+                                            <div class="invalid-feedback" id="userPasswordError"></div>
+                                            <div class="form-text">Password must be at least 8 characters long</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="userConfirmPassword" class="form-label fw-semibold">Confirm Password <span class="text-danger">*</span></label>
+                                            <div class="input-group">
+                                                <input type="password" class="form-control" id="userConfirmPassword" name="confirm_password" placeholder="Confirm password" required>
+                                                <button class="btn btn-outline-secondary toggle-password" type="button" data-target="userConfirmPassword">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </div>
+                                            <div class="invalid-feedback" id="userConfirmPasswordError"></div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="fas fa-times me-1"></i> Cancel
+                                </button>
+                                <button type="submit" form="addUserForm" class="btn btn-primary" id="addUserSubmitBtn">
+                                    <i class="fas fa-user-plus me-1"></i> Add User
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Right Column - Study Groupings & Codes -->
                 <div class="col-md-6">
                     <!-- Study Groupings Card -->
@@ -905,6 +994,112 @@ function buildUsersQueryString($exclude = []) {
 </div>
 
 <script>
+    // Handle open-modal button clicks for admin categories
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle clicks on open-modal buttons
+        document.addEventListener('click', function(e) {
+            const button = e.target.closest('.open-modal');
+            if (!button) return;
+            
+            // Get data attributes
+            const title = button.dataset.title;
+            const endpoint = button.dataset.endpoint;
+            const type = button.dataset.type;
+            
+            if (!endpoint) return;
+            
+            // Store current type for addItem function
+            window.currentType = type;
+            
+            // Set modal title
+            document.getElementById('adminModalLabel').textContent = title;
+            
+            // Fetch and display data
+            const contentArea = document.getElementById('contentArea');
+            contentArea.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2">Loading data...</p></div>';
+            
+            fetch(endpoint, {
+                credentials: 'same-origin',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers.get('content-type'));
+                return response.text();
+            })
+            .then(text => {
+                console.log('Response text:', text.substring(0, 200));
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    throw new Error('Invalid JSON response: ' + e.message);
+                }
+            })
+            .then(data => {
+                console.log('Parsed data:', data);
+                if (data.status === 'success' || data.data) {
+                    // Determine which key contains the data
+                    const items = data.data || data.classifications || data.divisions || 
+                                  data.departments || data.sites || data.benefits || 
+                                  data.drugs || data.exempts || data.expedited || 
+                                  data.grants || data.devices || data.risks || 
+                                  data.children || data.vulnerables || data.cpa_types ||
+                                  data.investigators || data.irb_meetings || data.irb_actions ||
+                                  data.sae_types || data.cpa_actions || data.study_codes ||
+                                  data.agenda_categories || data.irb_conditions || [];
+                    
+                    // Generate table HTML
+                    let html = '';
+                    if (items.length > 0) {
+                        html = '<div class="table-responsive"><table class="table table-striped">';
+                        html += '<thead><tr>';
+                        
+                        // Get column headers from first item
+                        Object.keys(items[0]).forEach(key => {
+                            html += '<th>' + key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) + '</th>';
+                        });
+                        html += '<th>Actions</th></tr></thead><tbody>';
+                        
+                        items.forEach((item, index) => {
+                            html += '<tr>';
+                            Object.keys(item).forEach(key => {
+                                const value = item[key] !== null && item[key] !== undefined ? String(item[key]) : '';
+                                html += '<td>' + value + '</td>';
+                            });
+                            // Add action buttons
+                            const itemId = item.id || (index + 1);
+                            const firstValue = Object.values(item)[0] ? String(Object.values(item)[0]).replace(/'/g, "\\'") : '';
+                            html += '<td>';
+                            html += '<button class="btn btn-sm btn-primary me-1" onclick="editItem(\'' + itemId + '\', \'' + firstValue + '\')"><i class="fas fa-edit"></i></button>';
+                            html += '<button class="btn btn-sm btn-danger" onclick="deleteItem(\'' + itemId + '\')"><i class="fas fa-trash"></i></button>';
+                            html += '</td>';
+                            html += '</tr>';
+                        });
+                        html += '</tbody></table></div>';
+                    } else {
+                        html = '<div class="alert alert-info">No records found. Click "Add" to create a new record.</div>';
+                    }
+                    
+                    contentArea.innerHTML = html;
+                } else {
+                    contentArea.innerHTML = '<div class="alert alert-danger">Error loading data: ' + (data.message || 'Unknown error') + '</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                contentArea.innerHTML = '<div class="alert alert-danger p-3">' +
+                    '<p><strong>Error loading data</strong></p>' +
+                    '<p class="mb-2">' + error.message + '</p>' +
+                    '<button class="btn btn-primary btn-sm" onclick="location.reload()">' +
+                        '<i class="fas fa-redo"></i> Retry' +
+                    '</button>' +
+                '</div>';
+            });
+        });
+    });
+
     // Configuration for different form types
     const formConfigs = {
         // Simple single-field forms
@@ -1249,7 +1444,11 @@ function buildUsersQueryString($exclude = []) {
 
         if (multiFieldTypes.includes(type)) {
             try {
-                const response = await fetch(window.currentEndpoint + '?id=' + id);
+                const response = await fetch(window.currentEndpoint + '?id=' + id, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
                 const result = await response.json();
                 if (result.success) {
                     data = result.data;
@@ -1312,6 +1511,7 @@ function buildUsersQueryString($exclude = []) {
                 method: method,
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
                 body: JSON.stringify(formData)
             });
@@ -1343,7 +1543,10 @@ function buildUsersQueryString($exclude = []) {
 
         try {
             const response = await fetch(window.currentDeleteEndpoint + '?id=' + id, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
             });
 
             const result = await response.json();
@@ -1654,10 +1857,34 @@ function buildUsersQueryString($exclude = []) {
         });
     }
 
+    // Toggle password visibility
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('toggle-password') || e.target.closest('.toggle-password')) {
+            const btn = e.target.classList.contains('toggle-password') ? e.target : e.target.closest('.toggle-password');
+            const targetId = btn.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            const icon = btn.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+    });
+
     // Fetch institutions for dropdown
     async function fetchInstitutions() {
         try {
-            const response = await fetch('/admin/handlers/fetch_institutions.php');
+            const response = await fetch('/admin/handlers/fetch_institutions.php', {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
             const data = await response.json();
             
             if (data.status === 'success') {
@@ -1709,6 +1936,7 @@ function buildUsersQueryString($exclude = []) {
             const formData = {
                 full_name: document.getElementById('userFullName').value.trim(),
                 email: document.getElementById('userEmail').value.trim(),
+                phone: document.getElementById('userPhone').value.trim(),
                 password: document.getElementById('userPassword').value,
                 confirm_password: document.getElementById('userConfirmPassword').value,
                 role: document.getElementById('userRole').value,
@@ -1809,3 +2037,5 @@ function buildUsersQueryString($exclude = []) {
     }
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  

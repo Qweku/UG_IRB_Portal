@@ -292,7 +292,11 @@ The plan assumes a parallel and logical approach on August 4th, 2023. The follow
             updateCorrespondenceLink();
 
             // Fetch and populate agenda item details
-            fetch('/admin/handlers/fetch_agenda_details.php?id=' + agendaId)
+            fetch('/admin/handlers/fetch_agenda_details.php?id=' + agendaId, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
                 .then(response => response.json())
                 .then(data => {
                     if (data) {
@@ -354,7 +358,8 @@ The plan assumes a parallel and logical approach on August 4th, 2023. The follow
         fetch('/admin/handlers/update_agenda_item.php', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
                 body: JSON.stringify({
                     id: agendaItemId,

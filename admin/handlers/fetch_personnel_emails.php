@@ -1,7 +1,11 @@
 <?php
 require_once '../includes/auth_check.php';
 require_once '../../includes/functions/helpers.php';
+
 header('Content-Type: application/json');
+
+// Require authentication
+require_auth();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);
@@ -17,7 +21,23 @@ if (!$study_id || !is_numeric($study_id)) {
     exit;
 }
 
-$emails = getPersonnelEmails((int)$study_id);
+try {
+    $db = new Database();
+    $conn = $db->connect();
 
-echo json_encode(['emails' => $emails]);
-?>
+    if (!$conn) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Database connection failed']);
+        exit;
+    }
+
+    $emails = getPersonnelEmails((int)$study_id);
+
+    error_log(__FILE__ . ": Fetched " . count($emails) . " emails for study_id " . $study_id);
+
+    echo json_encode(['status' => 'success', 'data' => $emails]);
+} catch (PDOException $e) {
+    error_log(__FILE__ . " - Database error: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['error' => 'Internal server error']);
+}

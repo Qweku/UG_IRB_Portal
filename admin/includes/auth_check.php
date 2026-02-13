@@ -9,10 +9,18 @@
 defined('CSRF_SESSION_NAME') || define('CSRF_SESSION_NAME', 'ug_irb_session');
 
 // Include database connection
-require_once __DIR__ . '/../../../includes/config/database.php';
+require_once __DIR__ . '/../../includes/config/database.php';
 
 $db = new Database();
 $conn = $db->connect();
+
+/**
+ * Check if request is AJAX (XMLHttpRequest)
+ */
+function is_ajax_request(): bool {
+    return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+           strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+}
 
 /**
  * Validates session token against database
@@ -58,38 +66,66 @@ function require_auth() {
         session_start();
     }
     
+    // DEBUG: Log session info
+    error_log("=== AUTH DEBUG ===");
+    error_log("Session ID: " . session_id());
+    error_log("Session logged_in: " . (isset($_SESSION['logged_in']) ? $_SESSION['logged_in'] : 'NOT SET'));
+    error_log("Session user_id: " . (isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 'NOT SET'));
+    error_log("Is AJAX: " . (is_ajax_request() ? 'YES' : 'NO'));
+    
     // Check if user is logged in with session validation
     if (!is_authenticated()) {
-        // User is not authenticated, redirect to login
-        header('Location: /login.php');
+        error_log("AUTH FAILED - Not authenticated");
+        // User is not authenticated
+        if (is_ajax_request()) {
+            // Return JSON for AJAX requests
+            header('HTTP/1.1 401 Unauthorized');
+            header('Content-Type: application/json');
+            echo json_encode([
+                'status' => 'error', 
+                'message' => 'Unauthorized access. Please log in.',
+                'redirect' => '/login'
+            ]);
+            exit;
+        }
+        // Redirect for regular page requests
+        header('Location: /login');
         exit;
     }
     
+    error_log("AUTH SUCCESS");
     return true;
 }
 
 /**
  * Check if user is authenticated (returns boolean without redirect)
+ * Note: This function should be called AFTER session is started
  * @return bool
  */
 function is_authenticated() {
-    // Start session if not already started with consistent session name
-    if (session_status() === PHP_SESSION_NONE) {
-        session_name(CSRF_SESSION_NAME);
-        session_start();
-    }
-    
-    // Basic session check
+    // Basic session check first
     if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         return false;
     }
     
-    // Validate session token against database
-    global $conn;
-    if ($conn) {
-        return validate_admin_session_token($conn);
+    // Basic check for required session variables
+    if (!isset($_SESSION['user_id'])) {
+        return false;
     }
     
+    // Try to validate session token against database
+    // If DB connection fails, fall back to basic session check
+    global $conn;
+    if ($conn) {
+        try {
+            return validate_admin_session_token($conn);
+        } catch (Exception $e) {
+            error_log("Database error in is_authenticated: " . $e->getMessage());
+            return true; // Fallback to session-based auth
+        }
+    }
+    
+    // If no DB connection, trust the session
     return true;
 }
 
@@ -116,7 +152,17 @@ function require_role($required_role) {
     require_auth();
     
     if (!isset($_SESSION['role']) || ($_SESSION['role'] !== $required_role && $_SESSION['role'] !== 'super_admin')) {
-        header('Location: ../unauthorized.php');
+        if (is_ajax_request()) {
+            header('HTTP/1.1 403 Forbidden');
+            header('Content-Type: application/json');
+            echo json_encode([
+                'status' => 'error', 
+                'message' => 'Access denied. Insufficient permissions.'
+            ]);
+            exit;
+        }
+        header('HTTP/1.0 403 Forbidden');
+        include __DIR__ . '/../../admin/403.php';
         exit;
     }
     

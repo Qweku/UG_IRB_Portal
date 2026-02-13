@@ -4,6 +4,9 @@ require_once '../../includes/functions/helpers.php';
 
 header('Content-Type: application/json');
 
+// Require authentication
+require_auth();
+
 // Validate input
 if (!isset($_GET['table']) || !isset($_GET['column'])) {
     echo json_encode(["error" => "Missing table or column"]);
@@ -36,6 +39,11 @@ try {
     $db = new Database();
     $conn = $db->connect();
 
+    if (!$conn) {
+        echo json_encode(['status' => 'error', 'message' => 'Database connection failed']);
+        exit;
+    }
+
     // Build query: select distinct column values
     $sql = "SELECT DISTINCT `$column` FROM `$table` WHERE `$column` IS NOT NULL ORDER BY `$column` ASC";
 
@@ -44,9 +52,11 @@ try {
 
     $results = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-    echo json_encode($results);
+    error_log(__FILE__ . ": Fetched " . count($results) . " distinct values for column " . $column . " from table " . $table);
+
+    echo json_encode(['status' => 'success', 'data' => $results]);
 
 } catch (PDOException $e) {
-    echo json_encode(["error" => $e->getMessage()]);
+    error_log(__FILE__ . " - Database error: " . $e->getMessage());
+    echo json_encode(["error" => "Database error"]);
 }
-?>
