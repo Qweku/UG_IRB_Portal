@@ -38,20 +38,9 @@ require_once 'includes/functions/csrf.php';
 defined('CSRF_SESSION_NAME') || define('CSRF_SESSION_NAME', 'ug_irb_session');
 session_name(CSRF_SESSION_NAME);
 
-// DEBUG: Log session initialization
-error_log("=== INDEX.PHP SESSION INIT ===");
-error_log("Session status before start: " . session_status());
-error_log("Session name: " . session_name());
-
 if (session_status() === PHP_SESSION_NONE) {
-    $started = session_start();
-    error_log("session_start() result: " . ($started ? 'SUCCESS' : 'FAILED'));
-} else {
-    error_log("Session already active - skipping session_start()");
+    session_start();
 }
-
-error_log("Session ID: " . session_id());
-
 
 /* ==========================================================
  | DATABASE CONNECTION (needed for session validation)

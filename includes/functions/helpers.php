@@ -245,13 +245,11 @@ function getNewReportsCount()
 {
     $institutionId = get_user_institution_id();
 
-    if($institutionId){
+    if ($institutionId) {
         return executeCountQuery("SELECT COUNT(*) as count FROM reports WHERE institution_id = ?", [$institutionId]);
     }
 
     return executeCountQuery("SELECT COUNT(*) as count FROM reports");
-    
-   
 }
 
 /**
@@ -1562,7 +1560,7 @@ function getReviewerCompletedReviewsCount($reviewerId)
  * @param int|null $offset
  * @return array
  */
-function getPendingApplications($limit = null, $offset = null)
+function getAllApplications($limit = null, $offset = null)
 {
     $db = new Database();
     $conn = $db->connect();
@@ -1571,54 +1569,21 @@ function getPendingApplications($limit = null, $offset = null)
     try {
 
         $query = "
-                    SELECT 
-                        sa.id,
-                        sa.applicant_id,
-                        sa.protocol_number,
-                        sa.study_title,
-                        sa.status,
-                        sa.created_at AS submitted_at,
+                   SELECT 
+                        a.id,
+                        a.applicant_id,
+                        a.application_type,
+                        a.protocol_number,
+                        a.study_title,
+                        a.status,
+                        a.created_at AS submitted_at,
                         u.full_name AS applicant_name,
-                        u.email AS applicant_email,
-                        'student' AS application_type
-                    FROM student_applications sa
-                    JOIN users u ON u.id = sa.applicant_id
-                    WHERE sa.status = 'submitted'
+                        u.email AS applicant_email
+                    FROM applications a
+                    JOIN users u ON u.id = a.applicant_id
+                    WHERE a.status IN ('under_review','submitted')
+                    ORDER BY a.created_at ASC";
 
-                    UNION ALL
-
-                    SELECT 
-                        na.id,
-                        na.applicant_id,
-                        na.protocol_number,
-                        na.proposal_title,
-                        na.status,
-                        na.created_at AS submitted_at,
-                        u.full_name AS applicant_name,
-                        u.email AS applicant_email,
-                        'nmimr' AS application_type
-                    FROM nmimr_applications na
-                    JOIN users u ON u.id = na.applicant_id
-                    WHERE na.status = 'submitted'
-
-                    UNION ALL
-
-                    SELECT 
-                        nna.id,
-                        nna.applicant_id,
-                        nna.protocol_number,
-                        nna.study_title,
-                        nna.status,
-                        nna.created_at AS submitted_at,
-                        u.full_name AS applicant_name,
-                        u.email AS applicant_email,
-                        'non_nmimr' AS application_type
-                    FROM non_nmimr_applications nna
-                    JOIN users u ON u.id = nna.applicant_id
-                    WHERE nna.status = 'submitted'
-
-                    ORDER BY submitted_at ASC
-                    ";
 
         if ($limit !== null && $offset !== null) {
             $query .= " LIMIT ? OFFSET ?";
@@ -1635,6 +1600,66 @@ function getPendingApplications($limit = null, $offset = null)
         return [];
     }
 }
+
+function getPendingApplications($userId, $limit = null, $offset = null)
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) return [];
+
+    try {
+
+        $query = "
+            SELECT
+                a.id,
+                a.protocol_number,
+                a.study_title,
+                a.application_type,
+                a.status,
+                a.created_at AS submitted_at,
+
+                ar.review_status,
+                ar.assigned_at,
+
+                u.full_name AS applicant_name,
+                u.email AS applicant_email
+
+            FROM application_reviews ar
+
+            INNER JOIN applications a 
+                ON a.id = ar.application_id
+
+            INNER JOIN users u 
+                ON u.id = a.applicant_id
+
+            WHERE ar.reviewer_id = :reviewer_id
+            AND ar.review_status = 'assigned'
+
+            ORDER BY ar.assigned_at DESC
+        ";
+
+        if ($limit !== null && $offset !== null) {
+            $query .= " LIMIT :limit OFFSET :offset";
+        }
+
+        $stmt = $conn->prepare($query);
+
+        $stmt->bindValue(':reviewer_id', $userId, PDO::PARAM_INT);
+
+        if ($limit !== null && $offset !== null) {
+            $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+        }
+
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error fetching pending applications: " . $e->getMessage());
+        return [];
+    }
+}
+
 
 /**
  * Get applications assigned to a specific reviewer

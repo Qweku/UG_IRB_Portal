@@ -12,7 +12,7 @@ $userName = $_SESSION['full_name'] ?? 'Reviewer';
 $stats = getReviewerStats($userId);
 
 // Get pending applications
-$pendingApplications = getPendingApplications(5);
+$pendingApplications = getAllApplications(5);
 
 // Get upcoming deadlines
 $deadlines = getReviewerDeadlines($userId);

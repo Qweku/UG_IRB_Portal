@@ -1,6 +1,7 @@
 <?php
 require_once '../includes/auth_check.php';
 require_once '../../includes/config/database.php';
+require_once '../../includes/functions/notification_functions.php';
 
 header('Content-Type: application/json');
 
@@ -50,6 +51,55 @@ try {
     $stmt->execute();
 
     if ($stmt->rowCount() > 0) {
+        // Get application details for notification
+        $appSql = "SELECT ap.user_id, ap.study_title, ap.applicant_id, u.full_name as applicant_name 
+                   FROM agenda_items ai 
+                   JOIN applications ap ON ai.application_id = ap.id 
+                   JOIN users u ON ap.applicant_id = u.id 
+                   WHERE ai.id = :id";
+        $appStmt = $conn->prepare($appSql);
+        $appStmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $appStmt->execute();
+        $application = $appStmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($application) {
+            // Map action_taken to status
+            $statusMap = [
+                'Approved' => 'approved',
+                'Rejected' => 'rejected',
+                'Revisions Required' => 'revisions_required',
+                'Deferred' => 'pending'
+            ];
+            
+            $status = $statusMap[$action_taken] ?? 'pending';
+            $statusMessage = !empty($action_explanation) ? $action_explanation : 
+                             (isset($condition_1) && !empty($condition_1) ? $condition_1 : 
+                             (isset($condition_2) && !empty($condition_2) ? $condition_2 : 
+                             "Your application has been processed by the IRB."));
+            
+            // Send notification to applicant
+            createApplicationStatusNotification(
+                $application['applicant_id'],
+                $id,
+                $application['study_title'],
+                $status,
+                $statusMessage
+            );
+
+            // If revisions are required, send follow-up notification
+            if ($action_taken === 'Revisions Required') {
+                // Get follow-up date if provided
+                $followUpDate = !empty($data['follow_up_date']) ? $data['follow_up_date'] : date('Y-m-d', strtotime('+30 days'));
+                
+                createFollowUpRequiredNotification(
+                    $application['applicant_id'],
+                    $id,
+                    $application['study_title'],
+                    $followUpDate
+                );
+            }
+        }
+        
         echo json_encode(['success' => true]);
     } else {
         echo json_encode(['success' => false, 'message' => 'No changes made or record not found']);

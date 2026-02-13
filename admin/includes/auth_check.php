@@ -8,30 +8,47 @@
 // Use consistent session name across entire application
 defined('CSRF_SESSION_NAME') || define('CSRF_SESSION_NAME', 'ug_irb_session');
 
-// DEBUG: Log at entry point
-error_log("=== AUTH_CHECK.PHP ENTRY ===");
-error_log("Session status at entry: " . session_status());
-error_log("Current session_name: " . session_name());
-
 // Include database connection
 require_once __DIR__ . '/../../includes/config/database.php';
 
-// Start session if not already started with consistent session name
-$session_started = false;
+// DEBUG: Add session diagnostic logging
+error_log("[AUTH_CHECK] Request URI: " . ($_SERVER['REQUEST_URI'] ?? 'unknown'));
+error_log("[AUTH_CHECK] HTTP_X_REQUESTED_WITH: " . ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? 'not set'));
+
+// Start session with consistent session name
+// This must be done BEFORE any output and with the correct session name
+session_name(CSRF_SESSION_NAME);
+
+// Check if session is already active
 if (session_status() === PHP_SESSION_NONE) {
-    session_name(CSRF_SESSION_NAME);
-    $session_started = session_start();
-    error_log("SESSION START RESULT: " . ($session_started ? 'SUCCESS' : 'FAILED'));
-    error_log("SESSION STATUS: " . session_status());
-    error_log("SESSION ID: " . session_id());
-} else {
-    error_log("Session already active - checking if session_name matches");
-    error_log("Active session_name: " . session_name());
-    error_log("Expected session_name: " . CSRF_SESSION_NAME);
+    // Configure session cookie for better AJAX compatibility
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/',
+        'domain' => '',
+        'secure' => isset($_SERVER['HTTPS']),
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+    session_start();
+} elseif (session_status() === PHP_SESSION_ACTIVE) {
+    // Session already started - ensure we're using the correct session name
     if (session_name() !== CSRF_SESSION_NAME) {
-        error_log("WARNING: Session name mismatch! Session was started with different name.");
+        // Session was started with a different name, try to preserve it
+        $previous_session_data = $_SESSION;
+        session_write_close();
+        session_name(CSRF_SESSION_NAME);
+        session_start();
+        $_SESSION = array_merge($_SESSION, $previous_session_data);
     }
 }
+
+error_log("[AUTH_CHECK] session_status after start: " . session_status());
+error_log("[AUTH_CHECK] session_id: " . session_id());
+error_log("[AUTH_CHECK] session_name: " . session_name());
+error_log("[AUTH_CHECK] logged_in: " . (isset($_SESSION['logged_in']) ? $_SESSION['logged_in'] : 'NOT SET'));
+error_log("[AUTH_CHECK] user_id: " . (isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 'NOT SET'));
+error_log("[AUTH_CHECK] role: " . (isset($_SESSION['role']) ? $_SESSION['role'] : 'NOT SET'));
 
 $db = new Database();
 $conn = $db->connect();
@@ -82,29 +99,28 @@ function validate_admin_session_token($conn): bool {
 }
 
 function require_auth() {
-    // Start session if not already started with consistent session name
-    $session_started = false;
+    // Ensure session is started with consistent session name (idempotent)
+    session_name(CSRF_SESSION_NAME);
     if (session_status() === PHP_SESSION_NONE) {
+        session_set_cookie_params([
+            'lifetime' => 0,
+            'path' => '/',
+            'domain' => '',
+            'secure' => isset($_SERVER['HTTPS']),
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ]);
+        session_start();
+    } elseif (session_status() === PHP_SESSION_ACTIVE && session_name() !== CSRF_SESSION_NAME) {
+        $previous_session_data = $_SESSION;
+        session_write_close();
         session_name(CSRF_SESSION_NAME);
-        $session_started = session_start();
-        error_log("SESSION START RESULT: " . ($session_started ? 'SUCCESS' : 'FAILED'));
-        error_log("SESSION STATUS: " . session_status());
-        error_log("SESSION ID: " . session_id());
-    } else {
-        error_log("SESSION ALREADY STARTED - STATUS: " . session_status());
-        error_log("SESSION ID: " . session_id());
+        session_start();
+        $_SESSION = array_merge($_SESSION, $previous_session_data);
     }
-    
-    // DEBUG: Log session info
-    error_log("=== AUTH DEBUG ===");
-    error_log("Session logged_in: " . (isset($_SESSION['logged_in']) ? $_SESSION['logged_in'] : 'NOT SET'));
-    error_log("Session user_id: " . (isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 'NOT SET'));
-    error_log("Session role: " . (isset($_SESSION['role']) ? $_SESSION['role'] : 'NOT SET'));
-    error_log("Is AJAX: " . (is_ajax_request() ? 'YES' : 'NO'));
     
     // Check if user is logged in with session validation
     if (!is_authenticated()) {
-        error_log("AUTH FAILED - Not authenticated");
         // User is not authenticated
         if (is_ajax_request()) {
             // Return JSON for AJAX requests
@@ -122,7 +138,6 @@ function require_auth() {
         exit;
     }
     
-    error_log("AUTH SUCCESS");
     return true;
 }
 
@@ -163,10 +178,24 @@ function is_authenticated() {
  * @return int|null
  */
 function get_current_user_id() {
-    // Start session if not already started with consistent session name
+    // Ensure session is started with consistent session name (idempotent)
+    session_name(CSRF_SESSION_NAME);
     if (session_status() === PHP_SESSION_NONE) {
+        session_set_cookie_params([
+            'lifetime' => 0,
+            'path' => '/',
+            'domain' => '',
+            'secure' => isset($_SERVER['HTTPS']),
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ]);
+        session_start();
+    } elseif (session_status() === PHP_SESSION_ACTIVE && session_name() !== CSRF_SESSION_NAME) {
+        $previous_session_data = $_SESSION;
+        session_write_close();
         session_name(CSRF_SESSION_NAME);
         session_start();
+        $_SESSION = array_merge($_SESSION, $previous_session_data);
     }
     
     return isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;

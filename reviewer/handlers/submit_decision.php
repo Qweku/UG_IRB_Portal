@@ -13,6 +13,7 @@ if (session_status() === PHP_SESSION_NONE) {
 // Include required files
 require_once __DIR__ . '/../../includes/functions/helpers.php';
 require_once __DIR__ . '/../../includes/functions/csrf.php';
+require_once __DIR__ . '/../../includes/functions/notification_functions.php';
 
 // Set response headers
 header('Content-Type: application/json');
@@ -127,8 +128,44 @@ $decisionData = [
 
 // Submit the decision
 if (submitReviewDecision($decisionData)) {
-    // Send notification to applicant
-    sendReviewNotification($applicationId, $decision, $decisionNotes);
+    // Get application details for notifications
+    $db = new Database();
+    $conn = $db->connect();
+    
+    $appSql = "SELECT ap.id, ap.user_id, ap.applicant_id, ap.study_title, u.full_name as applicant_name 
+               FROM applications ap 
+               JOIN users u ON ap.applicant_id = u.id 
+               WHERE ap.id = ?";
+    $appStmt = $conn->prepare($appSql);
+    $appStmt->execute([$applicationId]);
+    $application = $appStmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($application) {
+        // Send notification to applicant using the new notification function
+        createReviewSubmittedNotification(
+            $application['applicant_id'],
+            $applicationId,
+            $application['study_title']
+        );
+        
+        // Get reviewer name for admin notification
+        $reviewerName = $_SESSION['full_name'] ?? 'Reviewer';
+        
+        // Notify admins about completed review
+        $adminSql = "SELECT id FROM users WHERE role IN ('admin', 'super_admin') ORDER BY id LIMIT 1";
+        $adminStmt = $conn->prepare($adminSql);
+        $adminStmt->execute();
+        $admin = $adminStmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($admin) {
+            createReviewCompletedNotification(
+                $admin['id'],
+                $applicationId,
+                $application['study_title'],
+                $reviewerName
+            );
+        }
+    }
     
     // Log the decision
     $logMessage = 'Review decision submitted for application ' . $applicationId . ': ' . $decision . ' by reviewer ' . $reviewerId;

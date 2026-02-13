@@ -18,6 +18,9 @@ use UGIRB\SubmissionEngine\Services\FileUploadService;
 use UGIRB\SubmissionEngine\Services\ProtocolNumberGenerator;
 use UGIRB\SubmissionEngine\Services\EmailService;
 
+// Include notification functions for admin/chair notifications
+require_once __DIR__ . '/../../../functions/notification_functions.php';
+
 abstract class BaseAbstractHandler implements IApplicationHandler
 {
     /** @var \PDO Database connection */
@@ -171,6 +174,9 @@ abstract class BaseAbstractHandler implements IApplicationHandler
 
             // Step 10: Send confirmation email
             $this->sendConfirmation();
+
+            // Step 11: Send notification to admin/chair about new application
+            $this->sendNewApplicationNotification($saveResult);
 
             return $saveResult;
 
@@ -872,6 +878,36 @@ abstract class BaseAbstractHandler implements IApplicationHandler
             $this->sanitizedData['protocol_number'],
             $this->getType()
         );
+    }
+
+    /**
+     * Send notification to admin/chair about new application submission
+     *
+     * @param array $saveResult Result from saveToDatabase containing application_id and study_title
+     */
+    protected function sendNewApplicationNotification(array $saveResult): void
+    {
+        $applicationId = $saveResult['application_id'] ?? 0;
+        $studyTitle = $this->sanitizedData['study_title'] ?? 'Untitled Study';
+        $piName = $this->getPiName();
+
+        if ($applicationId > 0) {
+            createChairNewApplicationNotification($applicationId, $studyTitle, $piName);
+        }
+    }
+
+    /**
+     * Get PI name from form data
+     *
+     * @return string PI name
+     */
+    protected function getPiName(): string
+    {
+        // Try various PI name fields
+        return $this->sanitizedData['pi_name'] 
+            ?? $this->sanitizedData['supervisor1_name'] 
+            ?? $this->session->get('full_name', 'Unknown PI')
+            ?? 'Principal Investigator';
     }
 
     /**

@@ -4,12 +4,8 @@ require_once '../../includes/functions/helpers.php';
 
 header('Content-Type: application/json');
 
-// Admin-only access check
-if (!isset($_SESSION['logged_in']) || !isset($_SESSION['role']) || 
-    ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'super_admin')) {
-    echo json_encode(['status' => 'error', 'message' => 'Unauthorized access']);
-    exit;
-}
+// Use centralized role check
+require_role('admin');
 
 try {
     $db = new Database();

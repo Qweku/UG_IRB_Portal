@@ -1,15 +1,12 @@
 <?php
 require_once '../includes/auth_check.php';
 require_once '../../includes/functions/helpers.php';
+require_once '../../includes/functions/notification_functions.php';
 
 header('Content-Type: application/json');
 
-// Admin-only access check
-if (!isset($_SESSION['logged_in']) || !isset($_SESSION['role']) || 
-    ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'super_admin')) {
-    echo json_encode(['status' => 'error', 'message' => 'Unauthorized access']);
-    exit;
-}
+// Use the centralized role check from auth_check.php
+require_role('admin');
 
 /**
  * Log activity function
@@ -78,11 +75,53 @@ try {
     }
     
     // Update application status
-    $newStatus = $assignedCount > 0 ? 'assigned' : $application['status'];
+    $newStatus = $assignedCount > 0 ? 'under_review' : $application['status'];
     $stmt = $conn->prepare("UPDATE applications SET status = ?, updated_at = NOW() WHERE id = ?");
     $stmt->execute([$newStatus, $applicationId]);
     
     $conn->commit();
+    
+    // Create notifications for assigned reviewers
+    $assignedReviewerNames = [];
+    foreach ($reviewers as $reviewerId) {
+        // Get reviewer name
+        $stmt = $conn->prepare("SELECT full_name FROM users WHERE id = ?");
+        $stmt->execute([$reviewerId]);
+        $reviewer = $stmt->fetch(PDO::FETCH_ASSOC);
+        $reviewerName = $reviewer['full_name'] ?? 'Unknown Reviewer';
+        $assignedReviewerNames[] = $reviewerName;
+        
+        // Create notification for reviewer
+        createReviewerAssignmentNotification(
+            $reviewerId,
+            $applicationId,
+            $application['study_title'] ?? 'Unknown Study',
+            $_SESSION['full_name'] ?? 'Admin'
+        );
+    }
+    
+    // Create notification for admins about the assignment
+    $reviewerNamesStr = implode(', ', $assignedReviewerNames);
+    createAdminAssignmentNotification(
+        $applicationId,
+        $application['study_title'] ?? 'Unknown Study',
+        $reviewerNamesStr,
+        $_SESSION['user_id'] ?? 0
+    );
+    
+    // Create notification for the applicant that their application is under review
+    // First, get the applicant_id from the application record
+    $stmt = $conn->prepare("SELECT user_id, study_title FROM applications WHERE id = ?");
+    $stmt->execute([$applicationId]);
+    $applicationDetails = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($applicationDetails && !empty($applicationDetails['user_id'])) {
+        createApplicationUnderReviewNotification(
+            $applicationDetails['user_id'],
+            $applicationId,
+            $applicationDetails['study_title'] ?? 'Unknown Study'
+        );
+    }
     
     // Log activity
     logActivity("Assigned $assignedCount reviewer(s) to application ID: $applicationId");

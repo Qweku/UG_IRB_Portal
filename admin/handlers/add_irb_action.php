@@ -2,19 +2,16 @@
 require_once '../includes/auth_check.php';
 require_once '../../includes/config/database.php';
 require_once '../../includes/functions/helpers.php';
+require_once '../../includes/functions/notification_functions.php';
 
 header('Content-Type: application/json');
 
-// Start session with consistent session name
-if (session_status() === PHP_SESSION_NONE) {
-    defined('CSRF_SESSION_NAME') || define('CSRF_SESSION_NAME', 'ug_irb_session');
-    session_name(CSRF_SESSION_NAME);
-    session_start();
-}
+// Use centralized auth check (any logged-in user can access this)
+require_auth();
 
-// Check if user is logged in
-if (!isset($_SESSION['logged_in']) || !isset($_SESSION['role'])) {
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+// Verify user has admin or super_admin role
+if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'super_admin')) {
+    echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
     exit;
 }
 
@@ -47,6 +44,11 @@ try {
     $stmt->execute([$irb_action, $study_status, $user_name, $sort_sequence]);
 
     if ($stmt->rowCount() > 0) {
+        // Note: This file manages IRB action codes (lookup table).
+        // For actual IRB decisions on applications (approved, rejected, revisions_required),
+        // notifications should be added to the handler that updates application status.
+        // See: update_agenda_item.php for IRB decision recording.
+        
         echo json_encode(['success' => true]);
     } else {
         echo json_encode(['success' => false, 'message' => 'Failed to add IRB action']);

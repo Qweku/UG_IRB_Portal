@@ -10,7 +10,7 @@ $userName = $_SESSION['full_name'] ?? 'Reviewer';
 $status_filter = $_GET['status'] ?? 'all';
 
 // Get pending applications
-$applications = getPendingApplications();
+$applications = getPendingApplications($userId);
 
 // Get reviewer's assignments
 $assignments = getReviewerAssignments($userId);

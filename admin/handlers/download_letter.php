@@ -1,6 +1,7 @@
 <?php
 require_once '../../vendor/autoload.php'; // Assuming composer autoload
 require_once '../../includes/config/database.php';
+require_once '../../includes/functions/notification_functions.php';
 require_once '../includes/auth_check.php';
 
 use PhpOffice\PhpWord\TemplateProcessor;
@@ -102,6 +103,9 @@ try {
         $dueBy,
         $studyId
     ]);
+
+    // Send follow-up notification to applicant
+    notifyFollowUpRequired($conn, $studyId, $dueBy);
 
 
 

@@ -4,24 +4,17 @@
  * Handles AJAX requests to toggle user active/inactive status
  */
 
-// Start session if not already started
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-// Include required files
-require_once __DIR__ . '/../../config/database.php';
+// Include required files - auth_check.php handles session start with consistent session name
+require_once __DIR__ . '/../../includes/config/database.php';
 require_once __DIR__ . '/../../includes/functions/csrf.php';
+require_once __DIR__ . '/../../includes/functions/notification_functions.php';
+require_once __DIR__ . '/../includes/auth_check.php';
 
 // Set JSON header
 header('Content-Type: application/json');
 
-// Check if admin is logged in
-if (!isset($_SESSION['logged_in']) || !isset($_SESSION['role']) || 
-    ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'super_admin')) {
-    echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
-    exit;
-}
+// Use centralized role check
+require_role('admin');
 
 // Validate request method
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -80,6 +73,21 @@ try {
     // Update user status
     $stmt = $conn->prepare("UPDATE users SET status = ? WHERE id = ?");
     $stmt->execute([$new_status, $user_id]);
+    
+    // Get user details for notification
+    $stmt = $conn->prepare("SELECT full_name, role FROM users WHERE id = ?");
+    $stmt->execute([$user_id]);
+    $userDetails = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    // Create notification for the user about their account status change
+    $isActive = ($new_status === 'active');
+    $reason = $_POST['reason'] ?? '';
+    createAccountStatusNotification(
+        $user_id,
+        $userDetails['role'] ?? 'user',
+        $isActive,
+        $reason
+    );
     
     echo json_encode([
         'success' => true, 
