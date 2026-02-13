@@ -1,0 +1,451 @@
+/* ==========================================================================
+   UG IRB Portal - Maintenance Page Styles
+   ========================================================================== */
+
+/* CSS Custom Properties */
+:root {
+    --primary-blue: #042c5c;
+    --primary-blue-light: #325bc5;
+    --gold-accent: #b29762;
+    --gold-light: #d69e2e;
+    --background: #f5f7fb;
+    --text-primary: #212529;
+    --text-secondary: #495057;
+    --white: #ffffff;
+}
+
+/* ==========================================================================
+   Page Container
+   ========================================================================== */
+
+.maintenance-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f5f7fb 0%, #e8ecf4 100%);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ==========================================================================
+   Header Section
+   ========================================================================== */
+
+.maintenance-header {
+    width: 100%;
+    background: linear-gradient(135deg, #042c5c 0%, #2d3748 100%);
+    padding: 20px 0;
+    border-bottom: 4px solid #b29762;
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.maintenance-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    color: #ffffff;
+}
+
+.maintenance-logo img {
+    height: 60px;
+    width: auto;
+}
+
+.maintenance-logo-text {
+    text-align: left;
+}
+
+.maintenance-logo-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.2;
+    letter-spacing: 1px;
+}
+
+.maintenance-logo-subtitle {
+    font-size: 14px;
+    font-weight: 400;
+    margin: 0;
+    opacity: 0.9;
+    letter-spacing: 0.5px;
+}
+
+/* ==========================================================================
+   Main Content Card
+   ========================================================================== */
+
+.maintenance-card {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    padding: 60px 40px;
+    text-align: center;
+    max-width: 550px;
+    width: 90%;
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Staggered animations for card elements */
+.maintenance-card > *:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.maintenance-card > *:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.maintenance-card > *:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+.maintenance-card > *:nth-child(4) {
+    animation-delay: 0.4s;
+}
+
+.maintenance-card > *:nth-child(5) {
+    animation-delay: 0.5s;
+}
+
+/* ==========================================================================
+   Animated Icon Container
+   ========================================================================== */
+
+.maintenance-icon-container {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f0f4ff 0%, #e8ecf4 100%);
+    border-radius: 50%;
+    border: 3px solid #042c5c;
+}
+
+.maintenance-icon {
+    font-size: 60px;
+    color: #042c5c;
+    animation: rotate 3s linear infinite;
+}
+
+/* Optional pulse effect on icon */
+.maintenance-icon-pulse {
+    animation: rotate 3s linear infinite, pulse 2s ease-in-out infinite;
+}
+
+/* ==========================================================================
+   Typography
+   ========================================================================== */
+
+.maintenance-title {
+    font-size: 36px;
+    font-weight: 800;
+    color: #042c5c;
+    margin: 0 0 20px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+.maintenance-message {
+    font-size: 18px;
+    color: #495057;
+    line-height: 1.7;
+    margin: 0 0 40px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* ==========================================================================
+   Action Button
+   ========================================================================== */
+
+.maintenance-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 28px;
+    background: linear-gradient(135deg, #042c5c 0%, #325bc5 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(4, 44, 92, 0.3);
+}
+
+.maintenance-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(4, 44, 92, 0.4);
+    color: #ffffff;
+}
+
+.maintenance-btn:active {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(4, 44, 92, 0.3);
+}
+
+.maintenance-btn i {
+    transition: transform 0.3s ease;
+}
+
+.maintenance-btn:hover i {
+    transform: rotate(180deg);
+}
+
+/* ==========================================================================
+   Footer Section
+   ========================================================================== */
+
+.maintenance-footer {
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 1px solid #e9ecef;
+    font-size: 14px;
+    color: #6c757d;
+}
+
+.maintenance-footer-title {
+    font-weight: 600;
+    color: #042c5c;
+    margin-bottom: 5px;
+}
+
+.maintenance-footer-text {
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* ==========================================================================
+   CSS Animations
+   ========================================================================== */
+
+/* FadeIn Animation - Page Load */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Rotate Animation - Icon */
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Pulse Animation - Icon Glow Effect */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(4, 44, 92, 0.2);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 20px 10px rgba(4, 44, 92, 0);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(4, 44, 92, 0);
+    }
+}
+
+/* Float Animation - Button Hover */
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+/* Spin Reverse Animation - For refresh icon */
+@keyframes spinReverse {
+    from {
+        transform: rotate(360deg);
+    }
+    to {
+        transform: rotate(0deg);
+    }
+}
+
+/* ==========================================================================
+   Accessibility - Reduced Motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    .maintenance-card {
+        animation: none;
+    }
+
+    .maintenance-icon {
+        animation: none;
+    }
+
+    .maintenance-icon-pulse {
+        animation: none;
+    }
+
+    .maintenance-btn {
+        transition: none;
+    }
+
+    .maintenance-btn:hover {
+        transform: none;
+    }
+
+    .maintenance-btn:hover i {
+        transform: none;
+    }
+}
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+
+/* Tablet */
+@media (max-width: 992px) {
+    .maintenance-card {
+        padding: 50px 35px;
+        max-width: 500px;
+    }
+
+    .maintenance-title {
+        font-size: 32px;
+    }
+
+    .maintenance-icon-container {
+        width: 100px;
+        height: 100px;
+    }
+
+    .maintenance-icon {
+        font-size: 50px;
+    }
+}
+
+/* Mobile */
+@media (max-width: 576px) {
+    .maintenance-header {
+        padding: 15px 0;
+        margin-bottom: 30px;
+    }
+
+    .maintenance-logo {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .maintenance-logo img {
+        height: 50px;
+    }
+
+    .maintenance-logo-text {
+        text-align: center;
+    }
+
+    .maintenance-card {
+        padding: 40px 25px;
+        margin: 15px;
+        width: calc(100% - 30px);
+    }
+
+    .maintenance-icon-container {
+        width: 90px;
+        height: 90px;
+        margin-bottom: 25px;
+    }
+
+    .maintenance-icon {
+        font-size: 45px;
+    }
+
+    .maintenance-title {
+        font-size: 26px;
+        letter-spacing: 2px;
+    }
+
+    .maintenance-message {
+        font-size: 16px;
+        margin-bottom: 30px;
+    }
+
+    .maintenance-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 14px 20px;
+    }
+
+    .maintenance-footer {
+        margin-top: 30px;
+        padding-top: 25px;
+    }
+}
+
+/* Small Mobile */
+@media (max-width: 400px) {
+    .maintenance-title {
+        font-size: 22px;
+    }
+
+    .maintenance-message {
+        font-size: 15px;
+    }
+
+    .maintenance-logo-title {
+        font-size: 20px;
+    }
+
+    .maintenance-logo-subtitle {
+        font-size: 12px;
+    }
+}
+
+/* ==========================================================================
+   High Contrast Mode Support
+   ========================================================================== */
+
+@media (prefers-contrast: high) {
+    .maintenance-card {
+        border: 2px solid #042c5c;
+    }
+
+    .maintenance-title {
+        text-decoration: underline;
+    }
+
+    .maintenance-btn {
+        border: 2px solid #ffffff;
+    }
+}
+
+/* Focus States for Accessibility */
+.maintenance-btn:focus {
+    outline: 3px solid #b29762;
+    outline-offset: 2px;
+}
+
+.maintenance-btn:focus:not(:focus-visible) {
+    outline: none;
+}
+
+.maintenance-btn:focus-visible {
+    outline: 3px solid #b29762;
+    outline-offset: 2px;
+}

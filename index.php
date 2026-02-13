@@ -3,9 +3,34 @@
 declare(strict_types=1);
 
 /* ==========================================================
-| BOOTSTRAP
-========================================================== */
+ | MAINTENANCE MODE CHECK (must be at top before any output)
+ ========================================================== */
 require_once 'config.php';
+
+// Check if maintenance mode is enabled and we're NOT on the maintenance page
+$maintenance_mode = getenv('MAINTENANCE_MODE') === 'true';
+if ($maintenance_mode) {
+    $current_uri = $_SERVER['REQUEST_URI'] ?? '';
+    $maintenance_page = '/maintenance';
+    
+    // If we're on the maintenance page, continue normally
+    if (strpos($current_uri, $maintenance_page) !== false) {
+        // Allow access to maintenance page - continue rendering
+    } else {
+        // Destroy all sessions to log out users
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            $_SESSION = array();
+            session_destroy();
+        }
+        // Redirect to maintenance page
+        header('Location: ' . $maintenance_page);
+        exit;
+    }
+}
+
+/* ==========================================================
+ | BOOTSTRAP
+ ========================================================== */
 require_once 'includes/functions/csrf.php';
 
 // Use consistent session name across entire application
@@ -18,18 +43,19 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 /* ==========================================================
-| BASE PATHS
-========================================================== */
+ | BASE PATHS
+ ========================================================== */
 $ADMIN_BASE     = 'admin/pages/';
 $APPLICANT_BASE = 'applicant/pages/';
 $REVIEWER_BASE  = 'reviewer/pages/';
 $USER_BASE      = 'user/';
 $ERROR_404      = 'admin/404.php';
 $ERROR_403      = 'admin/403.php';
+$MAINTENANCE_PAGE = 'admin/pages/maintenance.php';
 
 /* ==========================================================
-| REQUEST PARSING
-========================================================== */
+ | REQUEST PARSING
+ ========================================================== */
 $requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $scriptDir   = dirname($_SERVER['SCRIPT_NAME']);
 
@@ -40,8 +66,8 @@ $section = $segments[0] ?? 'dashboard';
 $subpage = $segments[1] ?? null;
 
 /* ==========================================================
-| AUTH PAGE GUARD (PREVENT LOGIN LOOP)
-========================================================== */
+ | AUTH PAGE GUARD (PREVENT LOGIN LOOP)
+ ========================================================== */
 $authPages = ['login', 'register', 'forgot-password'];
 
 if (in_array($section, $authPages, true) && is_authenticated()) {
@@ -63,9 +89,14 @@ if (in_array($section, $authPages, true) && is_authenticated()) {
 }
 
 /* ==========================================================
-| ROUTE DEFINITIONS
-========================================================== */
+ | ROUTE DEFINITIONS
+ ========================================================== */
 $routes = [
+
+    /* ----------- MAINTENANCE ROUTE -------------- */
+    'maintenance' => [
+        '_' => ['file' => $MAINTENANCE_PAGE, 'roles' => [], 'type' => '']
+    ],
 
     /* ---------- AUTH / ACTION ROUTES (NO HEADER) ---------- */
     'login' => [
@@ -141,8 +172,8 @@ $routes = [
 
 
 /* ==========================================================
-| AUTH HELPERS
-========================================================== */
+ | AUTH HELPERS
+ ========================================================== */
 
 /**
  * Check if user is authenticated (returns boolean without redirect)
@@ -189,8 +220,8 @@ function requireRole(array $roles): void
 
 
 /* ==========================================================
-| ROUTE RESOLUTION
-========================================================== */
+ | ROUTE RESOLUTION
+ ========================================================== */
 $pageConfig = null;
 
 if (isset($routes[$section])) {
@@ -208,8 +239,8 @@ if (!$pageConfig) {
 }
 
 /* ==========================================================
-| ROLE CHECK
-========================================================== */
+ | ROLE CHECK
+ ========================================================== */
 $roles = $pageConfig['roles'] ?? [];
 
 if ($roles) {
@@ -228,8 +259,8 @@ if ($roles) {
 }
 
 /* ==========================================================
-| FILE RESOLUTION
-========================================================== */
+ | FILE RESOLUTION
+ ========================================================== */
 $file = $pageConfig['file'];
 
 $resolvedFile = null;
@@ -254,8 +285,8 @@ if (!$resolvedFile) {
 }
 
 /* ==========================================================
-| RENDER (SAFE HEADER HANDLING)
-========================================================== */
+ | RENDER (SAFE HEADER HANDLING)
+ ========================================================== */
 $type = $pageConfig['type'] ?? 'page';
 
 if ($type === 'page') {

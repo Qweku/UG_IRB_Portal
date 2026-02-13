@@ -62,9 +62,36 @@
             <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
                 <div class="nav-actions">
                     <!-- Notifications -->
-                    <a href="#" class="nav-btn" title="Notifications">
-                        <i class="fas fa-bell"></i>
-                    </a>
+                    <div class="notification-container">
+                        <button class="notification-btn" id="notificationBtn" title="Notifications">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge" id="notificationBadge">0</span>
+                        </button>
+                        
+                        <!-- Notification Overlay -->
+                        <div class="notification-overlay" id="notificationOverlay"></div>
+                        
+                        <!-- Notification Panel -->
+                        <div class="notification-panel" id="notificationPanel">
+                            <div class="notification-header">
+                                <h3>Notifications</h3>
+                                <div class="notification-header-actions">
+                                    <button class="mark-all-read-btn" id="markAllReadBtn" title="Mark all as read">
+                                        <i class="fas fa-check-double"></i> Mark all read
+                                    </button>
+                                    <button class="close-notification" id="closeNotification" title="Close">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <ul class="notification-list" id="notificationList">
+                                <!-- Notifications will be dynamically inserted here -->
+                            </ul>
+                            <div class="notification-footer">
+                                <a href="/admin/notifications" class="view-all-notifications">View All Notifications</a>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- Settings -->
                     <!-- <a href="#" class="nav-btn" title="Settings">

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Environment Configuration
  * Load environment variables from .env file if available
@@ -17,6 +18,41 @@ if (file_exists($env_file)) {
             }
         }
     }
+}
+
+/**
+ * MAINTENANCE MODE CONFIGURATION
+ * 
+ * To enable maintenance mode:
+ * 1. Set MAINTENANCE_MODE=true in the .env file
+ * 2. All non-admin requests will be redirected to the maintenance page
+ * 
+ * The maintenance page (admin/pages/maintenance.php) remains accessible
+ * even when maintenance mode is enabled.
+ */
+$maintenance_mode = getenv('MAINTENANCE_MODE') === 'true';
+
+// Get the current request URI to check if we're on the maintenance page
+$current_uri = $_SERVER['REQUEST_URI'] ?? '';
+$maintenance_page = '/maintenance'; // Path to the maintenance page
+
+// If maintenance mode is enabled and we're NOT on the maintenance page, redirect
+if ($maintenance_mode) {
+    // Allow access to the maintenance page itself
+    if (strpos($current_uri, $maintenance_page) !== false) {
+        // We're on the maintenance page, allow access
+        return;
+    }
+
+    // Destroy all sessions to log out users
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        $_SESSION = array();
+        session_destroy();
+    }
+
+    // Perform the redirect
+    header('Location: ' . $maintenance_page);
+    exit;
 }
 
 /**
@@ -53,4 +89,3 @@ define('FROM_NAME', getenv('FROM_NAME') ?: 'UG IRB Portal');
 // Include required files
 require_once 'includes/config/database.php';
 require_once 'includes/functions/helpers.php';
-?>

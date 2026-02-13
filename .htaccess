@@ -1,0 +1,5 @@
+# Enable URL rewriting
+RewriteEngine On
+
+# Rewrite /maintenance to admin/pages/maintenance.php
+RewriteRule ^maintenance/?$ admin/pages/maintenance.php [L]
