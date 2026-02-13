@@ -38,7 +38,7 @@ if (!$user || !password_verify($password, $user['password_hash'])) {
     exit;
 }
 
-// ✅ Set session values WITHOUT clearing
+// Set session values WITHOUT clearing
 $_SESSION['logged_in']     = true;
 $_SESSION['user_id']       = (int)$user['id'];
 $_SESSION['user_email']    = $user['email'];
@@ -48,10 +48,34 @@ $_SESSION['is_first']      = (int)$user['is_first'];
 $_SESSION['institution_id'] = $user['institution_id'];
 $_SESSION['login_time']    = time();
 
-// 🔐 Regenerate session ID (security)
+// ===========================================================
+// SINGLE SESSION PER USER - Generate and store session token
+// ===========================================================
+try {
+    // Generate unique session token
+    $session_token = bin2hex(random_bytes(32));
+    $session_expires = date('Y-m-d H:i:s', strtotime('+2 hours'));
+
+    // Invalidate any existing session for this user (single-session enforcement)
+    $stmt = $conn->prepare("UPDATE users SET session_token = NULL, session_expires_at = NULL, last_activity = NULL WHERE id = ?");
+    $stmt->execute([$user['id']]);
+
+    // Store new token
+    $stmt = $conn->prepare("UPDATE users SET session_token = ?, session_expires_at = ?, last_activity = NOW() WHERE id = ?");
+    $stmt->execute([$session_token, $session_expires, $user['id']]);
+
+    // Add to session variables
+    $_SESSION['session_token'] = $session_token;
+    $_SESSION['last_activity'] = time();
+} catch (Exception $e) {
+    // Log error but don't block login - session token generation failed
+    error_log('Session token generation failed: ' . $e->getMessage());
+}
+
+// Regenerate session ID (security)
 session_regenerate_id(true);
 
-// 🔀 Redirect by role
+// Redirect by role
 switch ($user['role']) {
     case 'admin':
     case 'super_admin':

@@ -43,6 +43,13 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 /* ==========================================================
+ | DATABASE CONNECTION (needed for session validation)
+ ========================================================== */
+require_once 'includes/config/database.php';
+$db = new Database();
+$conn = $db->connect();
+
+/* ==========================================================
  | BASE PATHS
  ========================================================== */
 $ADMIN_BASE     = 'admin/pages/';
@@ -176,12 +183,60 @@ $routes = [
  ========================================================== */
 
 /**
+ * Validate session token against database
+ * @param PDO $conn Database connection
+ * @return bool
+ */
+function validate_session_token($conn): bool {
+    if (!isset($_SESSION['user_id']) || !isset($_SESSION['session_token'])) {
+        return false;
+    }
+    
+    try {
+        $stmt = $conn->prepare("SELECT session_token, session_expires_at FROM users WHERE id = ?");
+        $stmt->execute([$_SESSION['user_id']]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // Check if token matches and hasn't expired
+        if (!$user || empty($user['session_token']) || $user['session_token'] !== $_SESSION['session_token']) {
+            return false;
+        }
+        
+        if ($user['session_expires_at'] && strtotime($user['session_expires_at']) < time()) {
+            return false;
+        }
+        
+        // Update last_activity periodically (every 5 minutes)
+        if (time() - ($_SESSION['last_activity'] ?? 0) > 300) {
+            $stmt = $conn->prepare("UPDATE users SET last_activity = NOW() WHERE id = ?");
+            $stmt->execute([$_SESSION['user_id']]);
+            $_SESSION['last_activity'] = time();
+        }
+        
+        return true;
+    } catch (Exception $e) {
+        error_log('Session validation error: ' . $e->getMessage());
+        return false;
+    }
+}
+
+/**
  * Check if user is authenticated (returns boolean without redirect)
  * @return bool
  */
 function is_authenticated(): bool
 {
-    return isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true;
+    if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+        return false;
+    }
+    
+    // Validate session token against database
+    global $conn;
+    if ($conn) {
+        return validate_session_token($conn);
+    }
+    
+    return true;
 }
 
 /**
@@ -202,7 +257,7 @@ function require_login(): bool
 /**
  * Require specific role(s) for access
  * @param array $roles Required roles
- * @return bool
+ * @return void
  */
 function requireRole(array $roles): void
 {

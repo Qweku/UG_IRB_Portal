@@ -3,6 +3,11 @@
 // Include CSRF protection
 // require_once '../../includes/functions/csrf.php';
 
+// Pagination parameters for users
+$usersLimit = 10;
+$usersPage = isset($_GET['users_page']) ? max(1, (int)$_GET['users_page']) : 1;
+$usersOffset = ($usersPage - 1) * $usersLimit;
+
 $cpaTypes = getCPATypesCount();
 $investigators = getInvestigatorCount();
 $irbMeetings = getIRBMeetingsCount();
@@ -25,6 +30,18 @@ $contactsCount = getContactsCount();
 $usersCount = getUsersCount();
 $templatesCount = getTemplatesCount();
 
+// Fetch paginated users
+$users = getUsers($usersLimit, $usersOffset);
+$totalUsersPages = ceil($usersCount / $usersLimit);
+
+// Build query string for pagination links
+function buildUsersQueryString($exclude = []) {
+    $params = $_GET;
+    foreach ($exclude as $key) {
+        unset($params[$key]);
+    }
+    return http_build_query($params);
+}
 
 ?>
 <!-- Administration Content -->
@@ -191,13 +208,13 @@ $templatesCount = getTemplatesCount();
                     </div>
 
                     <!-- Templates Card -->
-                    <div class="premium-card">
+                    <div class="premium-card mb-4">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">
                                 <i class="fas fa-file-alt me-2"></i>
                                 Templates
                             </h5>
-                            <span class="badge bg-info">Weekly</span>
+                            <span class="badge bg-info">Docs</span>
                         </div>
                         <div class="card-body p-3">
                             <div class="admin-list">
@@ -215,6 +232,134 @@ $templatesCount = getTemplatesCount();
                             </div>
                         </div>
                     </div>
+
+                    <!-- Users Table -->
+                     <div class="premium-card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-file-alt me-2"></i>
+                                Users
+                            </h5>
+                            <div>
+                                <button type="button" id="addUserBtn" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal"><i class="fas fa-user-plus me-2"></i>Add User</button>
+                                <!-- <span class="badge bg-danger">Info</span> -->
+
+                            </div>
+                            
+                        </div>
+                        <div class="card-body p-3">
+                            <!-- Users Table -->
+                            <div class="table-responsive">
+                                <table class="table table-hover table-premium">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Email</th>
+                                            <th>Role</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php if (!empty($users)): ?>
+                                            <?php foreach ($users as $user): ?>
+                                                <tr>
+                                                    <td><?php echo htmlspecialchars($user['full_name'] ?? ''); ?></td>
+                                                    <td><?php echo htmlspecialchars($user['email'] ?? ''); ?></td>
+                                                    <td>
+                                                        <span class="badge bg-<?php echo $user['role'] == 'admin' || $user['role'] == 'super_admin' ? 'primary' : 'secondary'; ?>">
+                                                            <?php echo ucfirst(htmlspecialchars($user['role'] ?? '')); ?>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <div class="form-check form-switch">
+                                                            <input class="form-check-input status-toggle" 
+                                                                   type="checkbox" 
+                                                                   id="status_<?php echo $user['id']; ?>" 
+                                                                   data-user-id="<?php echo $user['id']; ?>"
+                                                                   <?php echo ($user['status'] ?? '') === 'active' ? 'checked' : ''; ?>
+                                                                   onchange="toggleUserStatus(<?php echo $user['id']; ?>, this.checked)">
+                                                            <label class="form-check-label" for="status_<?php echo $user['id']; ?>">
+                                                                <span class="badge bg-<?php echo $user['status'] == 'active' ? 'success' : 'danger'; ?>" id="status-badge-<?php echo $user['id']; ?>">
+                                                                    <?php echo ucfirst(htmlspecialchars($user['status'] ?? '')); ?>
+                                                                </span>
+                                                            </label>
+                                                            <span class="status-loading" id="status-loading-<?php echo $user['id']; ?>" style="display: none; margin-left: 8px;">
+                                                                <i class="fas fa-spinner fa-spin text-muted"></i>
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-sm">
+                                                           
+                                                            <button type="button" class="btn btn-outline-danger" title="Delete" onclick="deleteUser(<?php echo $user['id']; ?>")">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <tr>
+                                                <td colspan="6" class="text-center py-4">No users found.</td>
+                                            </tr>
+                                        <?php endif; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Pagination Controls -->
+                            <?php if ($totalUsersPages > 1): ?>
+                                <nav aria-label="Users pagination" class="mt-3">
+                                    <ul class="pagination justify-content-center mb-0">
+                                        <!-- Previous Button -->
+                                        <li class="page-item <?php echo $usersPage <= 1 ? 'disabled' : ''; ?>">
+                                            <a class="page-link" href="?<?php echo buildUsersQueryString(['users_page']); ?>&users_page=<?php echo $usersPage - 1; ?>" tabindex="-1" aria-disabled="<?php echo $usersPage <= 1 ? 'true' : 'false'; ?>">
+                                                <i class="fas fa-chevron-left"></i> Previous
+                                            </a>
+                                        </li>
+                                        
+                                        <!-- Page Numbers -->
+                                        <?php
+                                        $startPage = max(1, $usersPage - 2);
+                                        $endPage = min($totalUsersPages, $usersPage + 2);
+                                        
+                                        // Adjust if near edges
+                                        if ($usersPage <= 3) {
+                                            $endPage = min(5, $totalUsersPages);
+                                        }
+                                        if ($usersPage >= $totalUsersPages - 2) {
+                                            $startPage = max(1, $totalUsersPages - 4);
+                                        }
+                                        
+                                        for ($i = $startPage; $i <= $endPage; $i++):
+                                        ?>
+                                            <li class="page-item <?php echo $i == $usersPage ? 'active' : ''; ?>">
+                                                <a class="page-link" href="?<?php echo buildUsersQueryString(['users_page']); ?>&users_page=<?php echo $i; ?>">
+                                                    <?php echo $i; ?>
+                                                    <?php if ($i == $usersPage): ?>
+                                                        <span class="visually-hidden">(current)</span>
+                                                    <?php endif; ?>
+                                                </a>
+                                            </li>
+                                        <?php endfor; ?>
+                                        
+                                        <!-- Next Button -->
+                                        <li class="page-item <?php echo $usersPage >= $totalUsersPages ? 'disabled' : ''; ?>">
+                                            <a class="page-link" href="?<?php echo buildUsersQueryString(['users_page']); ?>&users_page=<?php echo $usersPage + 1; ?>">
+                                                Next <i class="fas fa-chevron-right"></i>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            <?php endif; ?>
+                            
+                            <!-- Results Info -->
+                            <div class="text-center text-muted mt-2 mb-0" style="font-size: 0.875rem;">
+                                Showing <?php echo min($usersOffset + 1, $usersCount); ?> to <?php echo min($usersOffset + $usersLimit, $usersCount); ?> of <?php echo $usersCount; ?> users
+                            </div>
+                        </div>
+                     </div>
                 </div>
 
                 <!-- Right Column - Study Groupings & Codes -->
@@ -1384,4 +1529,283 @@ $templatesCount = getTemplatesCount();
             row.style.display = text.includes(searchTerm) ? '' : 'none';
         });
     });
+
+    // User Status Toggle Function
+    function toggleUserStatus(userId, isChecked) {
+        const newStatus = isChecked ? 'active' : 'inactive';
+        const loadingIndicator = document.getElementById('status-loading-' + userId);
+        const statusBadge = document.getElementById('status-badge-' + userId);
+        const toggle = document.getElementById('status_' + userId);
+        
+        // Show loading indicator
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'inline-block';
+        }
+        
+        // Disable toggle during request
+        if (toggle) {
+            toggle.disabled = true;
+        }
+        
+        // Create form data
+        const formData = new FormData();
+        formData.append('user_id', userId);
+        formData.append('new_status', newStatus);
+        
+        // Add CSRF token if available
+        if (typeof csrf_token !== 'undefined') {
+            formData.append('csrf_token', csrf_token);
+        }
+        
+        // Send AJAX request
+        fetch('/admin/handlers/update_user_status.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Hide loading indicator
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
+            
+            // Re-enable toggle
+            if (toggle) {
+                toggle.disabled = false;
+            }
+            
+            if (data.success) {
+                // Update status badge
+                if (statusBadge) {
+                    statusBadge.className = 'badge bg-' + (newStatus === 'active' ? 'success' : 'danger');
+                    statusBadge.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+                }
+                
+                // Show success toast/notification (optional)
+                console.log('User status updated to: ' + newStatus);
+            } else {
+                // Revert toggle state on error
+                if (toggle) {
+                    toggle.checked = !isChecked;
+                }
+                
+                // Show error message
+                alert('Error updating status: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error updating user status:', error);
+            
+            // Hide loading indicator
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
+            
+            // Re-enable toggle
+            if (toggle) {
+                toggle.disabled = false;
+            }
+            
+            // Revert toggle state on error
+            if (toggle) {
+                toggle.checked = !isChecked;
+            }
+            
+            alert('An error occurred while updating the user status. Please try again.');
+        });
+    }
+
+    // ============================================
+    // Add User Modal Functionality
+    // ============================================
+
+    // Toast notification function
+    function showAddUserToast(type, message) {
+        const toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) {
+            const newContainer = document.createElement('div');
+            newContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+            newContainer.style.zIndex = '1060';
+            document.body.appendChild(newContainer);
+        }
+
+        const toastContainerEl = document.querySelector('.toast-container');
+        const toastId = 'addUserToast-' + Date.now();
+        const toast = document.createElement('div');
+        toast.id = toastId;
+        toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : type === 'warning' ? 'warning' : 'danger'} border-0`;
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        `;
+
+        toastContainerEl.appendChild(toast);
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+
+        toast.addEventListener('hidden.bs.toast', function() {
+            toast.remove();
+        });
+    }
+
+    // Fetch institutions for dropdown
+    async function fetchInstitutions() {
+        try {
+            const response = await fetch('/admin/handlers/fetch_institutions.php');
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                const select = document.getElementById('userInstitution');
+                select.innerHTML = '<option value="">Select Institution</option>';
+                data.institutions.forEach(inst => {
+                    const option = document.createElement('option');
+                    option.value = inst.id;
+                    option.textContent = inst.institution_name;
+                    select.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching institutions:', error);
+            showAddUserToast('error', 'Failed to load institutions');
+        }
+    }
+
+    // Handle Add User Modal
+    const addUserModal = document.getElementById('addUserModal');
+    if (addUserModal) {
+        // Fetch institutions when modal is shown
+        addUserModal.addEventListener('shown.bs.modal', function() {
+            fetchInstitutions();
+            document.getElementById('userFullName').focus();
+        });
+
+        // Reset form when modal is hidden
+        addUserModal.addEventListener('hidden.bs.modal', function() {
+            const form = document.getElementById('addUserForm');
+            form.reset();
+            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            form.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+        });
+    }
+
+    // Handle Add User Form Submission
+    const addUserForm = document.getElementById('addUserForm');
+    if (addUserForm) {
+        addUserForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const submitBtn = document.getElementById('addUserSubmitBtn');
+            const originalBtnText = submitBtn.innerHTML;
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
+
+            const formData = {
+                full_name: document.getElementById('userFullName').value.trim(),
+                email: document.getElementById('userEmail').value.trim(),
+                password: document.getElementById('userPassword').value,
+                confirm_password: document.getElementById('userConfirmPassword').value,
+                role: document.getElementById('userRole').value,
+                institution_id: document.getElementById('userInstitution').value
+            };
+
+            let errors = [];
+            
+            if (!formData.full_name) {
+                errors.push('Full Name is required');
+                document.getElementById('userFullName').classList.add('is-invalid');
+            } else {
+                document.getElementById('userFullName').classList.remove('is-invalid');
+            }
+
+            if (!formData.email || !formData.email.includes('@')) {
+                errors.push('Valid email is required');
+                document.getElementById('userEmail').classList.add('is-invalid');
+            } else {
+                document.getElementById('userEmail').classList.remove('is-invalid');
+            }
+
+            if (!formData.password || formData.password.length < 8) {
+                errors.push('Password must be at least 8 characters');
+                document.getElementById('userPassword').classList.add('is-invalid');
+            } else {
+                document.getElementById('userPassword').classList.remove('is-invalid');
+            }
+
+            if (formData.password !== formData.confirm_password) {
+                errors.push('Passwords do not match');
+                document.getElementById('userConfirmPassword').classList.add('is-invalid');
+            } else {
+                document.getElementById('userConfirmPassword').classList.remove('is-invalid');
+            }
+
+            if (!formData.role) {
+                errors.push('Role is required');
+                document.getElementById('userRole').classList.add('is-invalid');
+            } else {
+                document.getElementById('userRole').classList.remove('is-invalid');
+            }
+
+            if (!formData.institution_id) {
+                errors.push('Institution is required');
+                document.getElementById('userInstitution').classList.add('is-invalid');
+            } else {
+                document.getElementById('userInstitution').classList.remove('is-invalid');
+            }
+
+            if (errors.length > 0) {
+                showAddUserToast('error', errors[0]);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+                return;
+            }
+
+            try {
+                const response = await fetch('/admin/handlers/add_new_user.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    showAddUserToast('success', data.message);
+                    const modal = bootstrap.Modal.getInstance(addUserModal);
+                    if (modal) {
+                        modal.hide();
+                    }
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else if (data.status === 'warning') {
+                    showAddUserToast('warning', data.message);
+                    const modal = bootstrap.Modal.getInstance(addUserModal);
+                    if (modal) {
+                        modal.hide();
+                    }
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    showAddUserToast('error', data.message || 'Failed to add user');
+                }
+            } catch (error) {
+                console.error('Error adding user:', error);
+                showAddUserToast('error', 'An error occurred. Please try again.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
+        });
+    }
 </script>
+

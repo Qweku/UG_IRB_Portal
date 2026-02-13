@@ -20,8 +20,6 @@
 </head>
 
 <body class="maintenance-page">
-    
-    <!-- Header Section -->
 
 
     <!-- Main Content -->
@@ -46,7 +44,7 @@
             <div class="maintenance-actions">
                 <button type="button" class="maintenance-btn" onclick="window.location.href = '/login'" aria-label="Go to login page">
                     <i class="fas fa-sign-in-alt" aria-hidden="true"></i>
-                    Go to Login
+                    Refresh Page
                 </button>
             </div>
 

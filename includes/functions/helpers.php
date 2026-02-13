@@ -128,6 +128,19 @@ function getUsersCount()
     return executeCountQuery("SELECT COUNT(*) as count FROM users");
 }
 
+/**
+ * Get paginated users from the database
+ * @param int $limit Number of records per page
+ * @param int $offset Starting position
+ * @return array
+ */
+function getUsers($limit = 10, $offset = 0)
+{
+    $limit = (int)$limit;
+    $offset = (int)$offset;
+    return executeAssocQuery("SELECT id, full_name, email, role, status, created_at FROM users ORDER BY id ASC LIMIT $limit OFFSET $offset");
+}
+
 function getTemplatesCount()
 {
     return executeCountQuery("SELECT COUNT(*) as count FROM irb_templates");
@@ -228,11 +241,17 @@ function getOverdueActionsCount()
  * Get the count of new SAE reports (placeholder - assuming a separate table or field; for now, return 0 or implement based on schema)
  * @return int
  */
-function getNewSAEReportsCount()
+function getNewReportsCount()
 {
-    // Placeholder: Assuming SAE reports are in a separate table. For now, return 0.
-    // In a real implementation, query a sae_reports table or similar.
-    return 0;
+    $institutionId = get_user_institution_id();
+
+    if($institutionId){
+        return executeCountQuery("SELECT COUNT(*) as count FROM reports WHERE institution_id = ?", [$institutionId]);
+    }
+
+    return executeCountQuery("SELECT COUNT(*) as count FROM reports");
+    
+   
 }
 
 /**
@@ -1630,14 +1649,14 @@ function getReviewerAssignments($reviewerId)
 
     try {
         $stmt = $conn->prepare(
-            "SELECT sa.*, 
+            "SELECT a.*, 
                     u.full_name as applicant_name,
                     ar.review_status as review_status,
                     ar.created_at as assigned_at,
                     ar.id as review_id
              FROM application_reviews ar
-             LEFT JOIN student_applications sa ON ar.application_id = sa.id
-             LEFT JOIN users u ON sa.applicant_id = u.id
+             LEFT JOIN applications a ON ar.application_id = a.id
+             LEFT JOIN users u ON a.applicant_id = u.id
              WHERE ar.reviewer_id = ?
              ORDER BY ar.created_at DESC"
         );

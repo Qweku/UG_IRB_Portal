@@ -649,7 +649,7 @@
     border: 2px solid rgba(255, 255, 255, 0.4);
     background: rgba(255, 255, 255, 0.15);
     color: var(--admin-white);
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     font-size: 1.25rem;
@@ -699,6 +699,10 @@
 
     .premium-navbar {
         padding: 12px 0;
+    }
+
+    .mobile-sidebar-toggle{
+        display: flex;
     }
 
     /* Mobile nav-actions improvements */
@@ -751,6 +755,10 @@
 
     .premium-navbar {
         padding: 10px 0;
+    }
+
+     .mobile-sidebar-toggle{
+        display: flex;
     }
 
     .navbar-brand-premium {

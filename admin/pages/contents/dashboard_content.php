@@ -2,7 +2,7 @@
 $activeStudies = getActiveStudiesCount();
 $pendingReviews = getPendingReviewsCount();
 $overdueActions = getOverdueActionsCount();
-$newSAEReports = getNewSAEReportsCount();
+$newSAEReports = getNewReportsCount();
 $recentActivities = getRecentActivities();
 
 $user_name = "";
@@ -19,6 +19,20 @@ if (isset($_SESSION['user_id'])) {
     }
 }
 ?>
+<style>
+    .section-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        margin-right: 16px;
+        background: linear-gradient(135deg, var(--applicant-primary-dark) 0%, var(--applicant-primary) 100%);
+        color: white;
+    }
+</style>
 
 <!-- Main Content -->
 <div class="dashboard-premium">
@@ -107,7 +121,7 @@ if (isset($_SESSION['user_id'])) {
                                 <i class="fas fa-file-medical"></i>
                             </div>
 
-                            <div class="stats-label">SAE Reports</div>
+                            <div class="stats-label">Reports</div>
                         </div>
                         <div>
                             <div class="stats-number"><?php echo $newSAEReports; ?></div>
@@ -121,7 +135,7 @@ if (isset($_SESSION['user_id'])) {
 
     <!-- Quick Actions -->
     <div class="mb-4 fade-in-up">
-        <div class="section-header-premium">
+        <div class="d-flex section-header-premium">
             <div class="section-icon">
                 <i class="fas fa-bolt"></i>
             </div>
@@ -135,44 +149,53 @@ if (isset($_SESSION['user_id'])) {
             <div class="col-md-3 mb-3">
                 <div class="quick-action-premium bg-white">
                     <div class="card-body">
-                        <div class="action-icon">
-                            <i class="fas fa-plus"></i>
-                        </div>
-                        <h6>New Study</h6>
-                        <p>Create a new study protocol</p>
+                        <a href="/studies/add-study" style="text-decoration:none;">
+                            <div class="action-icon">
+                                <i class="fas fa-plus"></i>
+                            </div>
+                            <h6>New Study</h6>
+                            <p>Create a new study protocol</p>
+                        </a>
                     </div>
                 </div>
             </div>
             <div class="col-md-3 mb-3">
                 <div class="quick-action-premium bg-white">
                     <div class="card-body">
-                        <div class="action-icon">
-                            <i class="fas fa-sync"></i>
-                        </div>
-                        <h6>Continuing Review</h6>
-                        <p>Review ongoing studies</p>
+                        <a href="/dashboard/continue-review" style="text-decoration:none;">
+                            <div class="action-icon">
+                                <i class="fas fa-sync"></i>
+                            </div>
+                            <h6>Continuing Review</h6>
+                            <p>Review ongoing studies</p>
+                        </a>
                     </div>
                 </div>
             </div>
             <div class="col-md-3 mb-3">
                 <div class="quick-action-premium bg-white">
                     <div class="card-body">
-                        <div class="action-icon">
-                            <i class="fas fa-exclamation-triangle"></i>
-                        </div>
-                        <h6>SAE Reports</h6>
-                        <p>View adverse events</p>
+                        <a href="/dashboard/report" style="text-decoration:none;">
+                            <div class="action-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <h6>SAE Reports</h6>
+                            <p>View adverse events</p>
+                        </a>
                     </div>
                 </div>
             </div>
             <div class="col-md-3 mb-3">
                 <div class="quick-action-premium bg-white">
                     <div class="card-body">
-                        <div class="action-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <h6>PI Reports</h6>
-                        <p>Investigator reports</p>
+                        <a href="/dashboard/report" style="text-decoration:none;">
+                            <div class="action-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <h6>PI Reports</h6>
+                            <p>Investigator reports</p>
+                        </a>
+
                     </div>
                 </div>
             </div>
@@ -181,7 +204,7 @@ if (isset($_SESSION['user_id'])) {
 
     <!-- Recent Activities -->
     <div class="fade-in-up">
-        <div class="section-header-premium">
+        <div class="d-flex section-header-premium">
             <div class="section-icon">
                 <i class="fas fa-history"></i>
             </div>
