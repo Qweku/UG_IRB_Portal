@@ -1,13 +1,52 @@
+<?php
+// session_start();
+// if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true)
+// {
+//     header('Location: /login');
+//     exit;
+// }
+
+$userName = $_SESSION['full_name'] ?? 'User';
+$organization = '';
+$organizationEmail = '';
+$userEmail = $_SESSION['email'] ?? '';
+$dateCreated = $_SESSION['date_created'] ?? '2020-01-01';
+
+try{
+    $db = new Database();
+    $conn = $db->connect();
+
+    if (!$conn) {
+        throw new Exception("Database connection failed");
+    }
+    // Fetch organization name based on user's institution_id
+    if (isset($_SESSION['institution_id'])) {
+        $institutionId = (int)$_SESSION['institution_id'];
+        $stmt = $conn->prepare("SELECT institution_name, institution_email FROM institutions WHERE id = ?");
+        $stmt->execute([$institutionId]);
+        $institution = $stmt->fetch(PDO::FETCH_ASSOC);
+        $organization = $institution ? $institution['institution_name'] : '';
+        $organizationEmail = $institution ? $institution['institution_email'] : '';
+    }
+
+}
+catch (Exception $e) {
+    echo "Error: " . $e->getMessage();
+    exit;
+}
+
+?>
+
 <!-- Account Information Content -->
 <div class="account-information p-5">
     <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="mb-1">Account Information</h2>
-            <p class="text-muted mb-0">Manage your ProIRB account and billing details</p>
+            <p class="text-muted mb-0">Manage your UG Hares details</p>
         </div>
-        <div class="badge bg-success fs-6">
-            <i class="fas fa-crown me-1"></i> ProIRB Office
+        <div class="badge bg-primary fs-6">
+            <i class="fas fa-crown me-1"></i> UG Hares Office
         </div>
     </div>
 
@@ -26,16 +65,16 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="account-detail-item">
-                                <label class="detail-label">Owner</label>
-                                <div class="detail-value">Dorcas Osel-Boakye</div>
+                                <label class="detail-label">User</label>
+                                <div class="detail-value"><?php echo $userName ?></div>
                             </div>
                             <div class="account-detail-item">
                                 <label class="detail-label">Organization</label>
-                                <div class="detail-value">noguchilrb</div>
+                                <div class="detail-value"><?php echo $organization ?></div>
                             </div>
                             <div class="account-detail-item">
                                 <label class="detail-label">Date Created</label>
-                                <div class="detail-value">2020-09-09</div>
+                                <div class="detail-value"><?php echo $dateCreated ?></div>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -43,64 +82,17 @@
                                 <label class="detail-label">Email</label>
                                 <div class="detail-value">
                                     <i class="fas fa-envelope me-2 text-muted"></i>
-                                    dosel-boakye@noguchi.ug.edu.gh
+                                    <?php echo $userEmail ?>
                                 </div>
                             </div>
-                            <div class="account-detail-item">
-                                <label class="detail-label">Product</label>
-                                <div class="detail-value">
-                                    <i class="fas fa-crown me-2 text-warning"></i>
-                                    ProIRB Office
-                                </div>
-                            </div>
-                            <div class="account-detail-item">
-                                <label class="detail-label">Next Billing Date</label>
-                                <div class="detail-value text-primary">
-                                    <i class="fas fa-calendar-alt me-2"></i>
-                                    December 31, 2024
-                                </div>
-                            </div>
+                            
+                           
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card account-card h-100">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">
-                        <i class="fas fa-credit-card me-2 text-success"></i>
-                        Billing Status
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="billing-status text-center">
-                        <div class="status-icon bg-success">
-                            <i class="fas fa-check"></i>
-                        </div>
-                        <h4 class="text-success mb-2">Active</h4>
-                        <p class="text-muted mb-3">Your account is in good standing</p>
-                        
-                        <div class="billing-progress mb-3">
-                            <div class="progress" style="height: 8px;">
-                                <div class="progress-bar bg-success" style="width: 75%"></div>
-                            </div>
-                            <div class="d-flex justify-content-between mt-1">
-                                <small class="text-muted">Current Cycle</small>
-                                <small class="text-muted">75% Complete</small>
-                            </div>
-                        </div>
-                        
-                        <button class="btn btn-outline-primary btn-sm w-100 mb-2">
-                            <i class="fas fa-download me-1"></i> Invoice History
-                        </button>
-                        <button class="btn btn-outline-secondary btn-sm w-100">
-                            <i class="fas fa-file-invoice me-1"></i> Billing Details
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+       
     </div>
 
     <!-- Support & Contact Section -->
@@ -137,21 +129,12 @@
                                 </div>
                                 <div class="contact-details">
                                     <h6 class="mb-1">Email Support</h6>
-                                    <p class="mb-0 text-muted">support@proirb.com</p>
+                                    <p class="mb-0 text-muted"><?php echo $organizationEmail ?></p>
                                     <small class="text-muted">Typically responds within 2 hours</small>
                                 </div>
                             </div>
                             
-                            <div class="contact-item">
-                                <div class="contact-icon bg-warning">
-                                    <i class="fas fa-comments"></i>
-                                </div>
-                                <div class="contact-details">
-                                    <h6 class="mb-1">Live Chat</h6>
-                                    <p class="mb-0 text-muted">Available on website</p>
-                                    <small class="text-muted">Instant support during business hours</small>
-                                </div>
-                            </div>
+                           
                         </div>
                     </div>
                 </div>
@@ -217,57 +200,7 @@
         </div>
     </div>
 
-    <!-- Usage Statistics -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card account-card">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="fas fa-chart-bar me-2 text-orange"></i>
-                        Usage Statistics
-                    </h5>
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            Last 30 Days
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#">Last 7 Days</a></li>
-                            <li><a class="dropdown-item" href="#">Last 30 Days</a></li>
-                            <li><a class="dropdown-item" href="#">Last 90 Days</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="row text-center">
-                        <div class="col-md-3">
-                            <div class="stat-item">
-                                <div class="stat-number text-primary">156</div>
-                                <div class="stat-label">Active Studies</div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="stat-item">
-                                <div class="stat-number text-success">42</div>
-                                <div class="stat-label">Completed Reviews</div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="stat-item">
-                                <div class="stat-number text-info">28</div>
-                                <div class="stat-label">Team Members</div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="stat-item">
-                                <div class="stat-number text-warning">89%</div>
-                                <div class="stat-label">Storage Used</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+  
 </div>
 
 <style>

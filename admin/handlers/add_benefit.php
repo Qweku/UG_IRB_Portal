@@ -1,5 +1,6 @@
 <?php
-require_once '../../includes/config/database.php';
+require_once '../includes/auth_check.php';
+require_once '../../includes/functions/helpers.php';
 
 header('Content-Type: application/json');
 
@@ -17,25 +18,20 @@ if (empty($benefit_type)) {
     exit;
 }
 
-try {
-    $db = new Database();
-    $conn = $db->connect();
+$db = new Database();
+$conn = $db->connect();
 
-    if (!$conn) {
-        throw new Exception("Database connection failed");
-    }
+if (!$conn) {
+    echo json_encode(['success' => false, 'message' => 'Database connection failed']);
+    exit;
+}
 
-    $stmt = $conn->prepare("INSERT INTO benefits (benefit_type) VALUES (?)");
-    $stmt->execute([$benefit_type]);
+$stmt = $conn->prepare("INSERT INTO benefits (benefit_type) VALUES (?)");
+$stmt->execute([$benefit_type]);
 
-    if ($stmt->rowCount() > 0) {
-        echo json_encode(['success' => true]);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Failed to add benefit']);
-    }
-
-} catch (Exception $e) {
-    error_log("Error adding benefit: " . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => 'Database error']);
+if ($stmt->rowCount() > 0) {
+    echo json_encode(['success' => true]);
+} else {
+    echo json_encode(['success' => false, 'message' => 'Failed to add benefit']);
 }
 ?>

@@ -1,0 +1,152 @@
+/**
+ * Post Meeting Content Styles
+ * Uses unified design system from admin-commons.css
+ */
+
+/* Import Unified Design System */
+@import url('admin-commons.css');
+
+/* ==========================================================================
+   PAGE-SPECIFIC OVERRIDES
+   ========================================================================== */
+
+/* Agenda Details */
+.agenda-details .card {
+    background: var(--admin-white);
+    border: none;
+    border-radius: var(--admin-radius-lg);
+    box-shadow: var(--admin-shadow-md);
+    overflow: hidden;
+}
+
+.agenda-details .card-header {
+    background-color: var(--admin-gray-50) !important;
+    border-bottom: 1px solid var(--admin-border-light);
+    border-radius: var(--admin-radius-lg) var(--admin-radius-lg) 0 0 !important;
+    padding: var(--admin-space-3) var(--admin-space-4);
+    font-weight: 600;
+    color: var(--admin-text-secondary);
+}
+
+.agenda-details .form-label {
+    display: block;
+    margin-bottom: var(--admin-space-2);
+    font-size: var(--admin-font-size-sm);
+    font-weight: 600;
+    color: var(--admin-text-secondary);
+}
+
+.agenda-details .text-muted {
+    font-size: var(--admin-font-size-sm);
+    color: var(--admin-text-muted) !important;
+}
+
+.highlight {
+    background-color: var(--admin-bg-subtle) !important;
+    padding: var(--admin-space-2) var(--admin-space-3);
+    border-radius: var(--admin-radius-md);
+}
+
+/* Form Controls */
+.agenda-details .form-control {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: var(--admin-font-size-sm);
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--admin-text-primary);
+    background-color: var(--admin-white);
+    border: 1px solid var(--admin-border-color);
+    border-radius: var(--admin-radius-md);
+    transition: border-color var(--admin-transition-fast), box-shadow var(--admin-transition-fast);
+}
+
+.agenda-details .form-control:focus {
+    border-color: var(--admin-primary);
+    box-shadow: 0 0 0 0.2rem rgba(36, 63, 129, 0.15);
+    outline: none;
+}
+
+.agenda-details .form-control:disabled {
+    background-color: var(--admin-gray-100);
+    cursor: not-allowed;
+}
+
+/* Table Styles */
+.agenda-details .table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--admin-white);
+    border-radius: var(--admin-radius-lg);
+    overflow: hidden;
+}
+
+.agenda-details .table thead th {
+    background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-primary-dark) 100%);
+    color: var(--admin-white);
+    border: none;
+    padding: var(--admin-space-3) var(--admin-space-4);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: var(--admin-font-size-xs);
+    letter-spacing: 0.5px;
+}
+
+.agenda-details .table tbody tr {
+    transition: all var(--admin-transition-fast);
+    border-bottom: 1px solid var(--admin-border-light);
+}
+
+.agenda-details .table tbody tr:hover {
+    background-color: var(--admin-bg-subtle);
+}
+
+.agenda-details .table tbody td {
+    padding: var(--admin-space-3) var(--admin-space-4);
+    border: none;
+    vertical-align: middle;
+    color: var(--admin-text-secondary);
+}
+
+/* Textarea */
+.agenda-details textarea.form-control {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* Select */
+.agenda-details select.form-control {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23495057' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    padding-right: 2.5rem;
+}
+
+/* Input Group */
+.agenda-details .input-group {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+}
+
+.agenda-details .input-group-text {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    font-size: var(--admin-font-size-sm);
+    font-weight: 400;
+    color: var(--admin-text-secondary);
+    background-color: var(--admin-gray-100);
+    border: 1px solid var(--admin-border-color);
+    border-radius: var(--admin-radius-md);
+}
+
+.agenda-details .input-group-text:first-child {
+    border-radius: var(--admin-radius-md) 0 0 var(--admin-radius-md);
+}
+
+.agenda-details .input-group-text:last-child {
+    border-radius: 0 var(--admin-radius-md) var(--admin-radius-md) 0;
+}

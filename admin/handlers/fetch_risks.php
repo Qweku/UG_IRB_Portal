@@ -1,27 +1,31 @@
-<?php 
-require_once '../../includes/config/database.php';
+<?php
+require_once '../includes/auth_check.php';
+require_once '../../includes/functions/helpers.php';
 
-$risks = [];
+header('Content-Type: application/json');
+
+// Require authentication
+require_auth();
 
 try {
     $db = new Database();
     $conn = $db->connect();
 
     if (!$conn) {
-        throw new Exception("Database connection failed");
+        echo json_encode(['status' => 'error', 'message' => 'Database connection failed']);
+        exit;
     }
 
-    // Fetch risk options
+    // Fetch all risks
     $stmt = $conn->prepare("SELECT id, category_name FROM risks_category ORDER BY id ASC");
     $stmt->execute();
-    $risks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-} catch (Exception $e) {
-    error_log("Error fetching risks: " . $e->getMessage());
+    error_log(__FILE__ . ": Fetched " . count($results) . " records");
+
+    echo json_encode(['status' => 'success', 'data' => $results]);
+
+} catch (PDOException $e) {
+    error_log(__FILE__ . " - Database error: " . $e->getMessage());
+    echo json_encode(['status' => 'error', 'message' => 'Database error']);
 }
-echo '<div class="table-responsive" style="height:300px;"><table class="table table-striped">';
-echo '<thead><tr><th>Name</th><th>Actions</th></tr></thead><tbody>';
-foreach ( $risks as $row) {
-    echo "<tr><td>{$row['category_name']}</td><td><button class='btn btn-sm btn-outline-success' onclick='editItem({$row['id']}, \"{$row['category_name']}\")'><i class='fas fa-edit'></i></button><button class='btn btn-sm btn-outline-danger' onclick='deleteItem({$row['id']})'><i class='fas fa-trash'></i></button></td></tr>";
-}
-echo '</tbody></table></div>';

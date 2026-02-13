@@ -1,0 +1,125 @@
+<?php
+require_once '../../vendor/autoload.php';
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require_once '../includes/auth_check.php';
+require_once '../../includes/functions/csrf.php';
+require_once '../../includes/config/database.php';
+require_once '../../config.php';
+
+// Ensure session is started before CSRF operations
+if (session_status() === PHP_SESSION_NONE) {
+    session_name(CSRF_SESSION_NAME);
+    session_start();
+}
+
+header('Content-Type: application/json');
+
+function sendEmailWithAttachment($to, $subject, $message, $attachment = null) {
+    $mail = new PHPMailer(true);
+
+    try {
+        // Server settings
+        $mail->isSMTP();
+        $mail->Host = SMTP_HOST;
+        $mail->SMTPAuth = true;
+        $mail->Username = SMTP_USER;
+        $mail->Password = SMTP_PASS;
+        $mail->SMTPSecure = SMTP_ENCRYPTION;
+        $mail->Port = SMTP_PORT;
+
+        // Recipients
+        $mail->setFrom(FROM_EMAIL, FROM_NAME);
+        $mail->addAddress($to);
+
+        // Secure attachment validation
+        if ($attachment && isset($_FILES['attachment']) && $_FILES['attachment']['error'] == UPLOAD_ERR_OK) {
+            $allowed_types = ['application/pdf', 'image/jpeg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime_type = finfo_file($finfo, $_FILES['attachment']['tmp_name']);
+            finfo_close($finfo);
+            
+            if (in_array($mime_type, $allowed_types)) {
+                $mail->addAttachment($_FILES['attachment']['tmp_name'], $_FILES['attachment']['name']);
+            }
+        }
+
+        // Content
+        $mail->isHTML(false);
+        $mail->Subject = $subject;
+        $mail->Body = $message;
+
+        error_log("Attempting to send email to: $to with subject: $subject");
+        $mail->send();
+        error_log("Email sent successfully to: $to");
+        return true;
+    } catch (Exception $e) {
+        error_log("Failed to send email to: $to. Mailer Error: {$mail->ErrorInfo}");
+        return false;
+    }
+}
+
+try {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        throw new Exception('Invalid request method');
+    }
+
+    // DEBUG: Log CSRF validation details
+    error_log("[CSRF DEBUG] Session status: " . session_status());
+    error_log("[CSRF DEBUG] Session token: " . ($_SESSION['csrf_token'] ?? 'EMPTY'));
+    error_log("[CSRF DEBUG] POST token: " . ($_POST['csrf_token'] ?? 'EMPTY'));
+
+    // CSRF validation
+    if (!isset($_POST['csrf_token']) || !csrf_validate()) {
+        error_log("[CSRF DEBUG] Validation failed!");
+        throw new Exception('Invalid CSRF token');
+    }
+    error_log("[CSRF DEBUG] Validation passed!");
+
+    $studyId = $_POST['study_id'] ?? null;
+    $recipients = $_POST['recipients'] ?? '';
+    $subject = $_POST['subject'] ?? '';
+    $message = $_POST['message'] ?? '';
+
+    if (!$studyId || !$recipients || !$subject || !$message) {
+        throw new Exception('All fields are required');
+    }
+
+    $recipientList = array_map('trim', explode(',', $recipients));
+    $errors = [];
+
+    foreach ($recipientList as $email) {
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors[] = "Invalid email: $email";
+        }
+    }
+
+    if (!empty($errors)) {
+        throw new Exception(implode(', ', $errors));
+    }
+
+    // Send to each recipient
+    $successCount = 0;
+    foreach ($recipientList as $email) {
+        if (sendEmailWithAttachment($email, $subject, $message)) {
+            $successCount++;
+        }
+    }
+
+    if ($successCount > 0) {
+        echo json_encode([
+            'success' => true,
+            'message' => "Email sent to $successCount recipient(s)"
+        ]);
+    } else {
+        throw new Exception('Failed to send emails');
+    }
+
+} catch (Exception $e) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => $e->getMessage()
+    ]);
+}

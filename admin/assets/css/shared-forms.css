@@ -1,0 +1,142 @@
+/**
+ * Shared Form Styles for prepare_agenda.php and add_new_study.php
+ * Uses unified design system from admin-commons.css
+ */
+
+/* Import Unified Design System */
+@import url('admin-commons.css');
+
+/* ==========================================================================
+   PAGE-SPECIFIC OVERRIDES
+   ========================================================================== */
+
+/* Modal SAE */
+.modal-sae {
+    max-width: 900px;
+}
+
+/* SAE Header */
+.sae-header {
+    background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-primary-light) 100%);
+    color: var(--admin-white);
+    border-radius: var(--admin-radius-lg) var(--admin-radius-lg) 0 0;
+}
+
+/* Study Info Card */
+.study-info-card {
+    background: var(--admin-gray-100);
+    border-left: 4px solid var(--admin-primary);
+    border-radius: var(--admin-radius-md);
+    padding: var(--admin-space-4);
+}
+
+/* Status Badge */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    font-size: var(--admin-font-size-xs);
+    font-weight: 500;
+    border-radius: var(--admin-radius-pill);
+}
+
+/* Section Divider */
+.section-divider {
+    border-bottom: 2px solid var(--admin-border-light);
+    padding-bottom: var(--admin-space-2);
+    margin-bottom: var(--admin-space-4);
+    color: var(--admin-text-primary);
+    font-weight: 600;
+}
+
+/* Form Label Override */
+.form-label {
+    display: block;
+    margin-bottom: var(--admin-space-2);
+    font-size: var(--admin-font-size-sm);
+    font-weight: 500;
+    color: var(--admin-text-secondary);
+}
+
+/* Required Field */
+.required-field::after {
+    content: " *";
+    color: var(--admin-danger);
+}
+
+/* Radio Group Horizontal */
+.radio-group-horizontal .form-check {
+    margin-right: var(--admin-space-4);
+    margin-bottom: 0;
+    padding-left: 1.5rem;
+}
+
+.radio-group-horizontal .form-check-input {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-left: -1.5rem;
+    margin-right: var(--admin-space-2);
+}
+
+/* Date Input Group */
+.date-input-group {
+    position: relative;
+}
+
+.date-input-group .bi {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--admin-text-muted);
+    pointer-events: none;
+}
+
+/* File Upload Area */
+.file-upload-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--admin-space-5);
+    background: var(--admin-white);
+    border: 2px dashed var(--admin-border-color);
+    border-radius: var(--admin-radius-lg);
+    cursor: pointer;
+    transition: all var(--admin-transition-base);
+    text-align: center;
+}
+
+.file-upload-area:hover {
+    border-color: var(--admin-primary);
+    background-color: var(--admin-bg-subtle);
+}
+
+.file-upload-area.dragover {
+    border-color: var(--admin-success);
+    background-color: var(--admin-success-light);
+}
+
+/* Personnel Table Container */
+.personnel-table-container {
+    max-height: 250px;
+    overflow-y: auto;
+    border-radius: var(--admin-radius-md);
+}
+
+/* Cursor Pointer */
+.cursor-pointer {
+    cursor: pointer;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .modal-sae {
+        margin: var(--admin-space-3);
+        max-width: 100%;
+    }
+    
+    .radio-group-horizontal .form-check {
+        margin-right: var(--admin-space-4);
+    }
+}

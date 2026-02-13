@@ -1,0 +1,325 @@
+/**
+ * Administration Dashboard Styles
+ * Uses unified design system from admin-commons.css
+ */
+
+/* Import Unified Design System */
+@import url('admin-commons.css');
+
+/* ==========================================================================
+   PAGE-SPECIFIC OVERRIDES
+   ========================================================================== */
+
+/* Administration Dashboard */
+.administration-dashboard {
+    padding: var(--admin-space-4) 0;
+}
+
+/* Stat Card Override */
+.stat-card {
+    background: var(--admin-white);
+    border: none;
+    border-radius: var(--admin-radius-lg);
+    box-shadow: var(--admin-shadow-md);
+    transition: all var(--admin-transition-base);
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--admin-shadow-hover);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: var(--admin-radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--admin-white);
+    font-size: 1.25rem;
+}
+
+/* Admin Card */
+.admin-card {
+    background: var(--admin-white);
+    border: none;
+    border-radius: var(--admin-radius-lg);
+    box-shadow: var(--admin-shadow-md);
+    transition: all var(--admin-transition-base);
+}
+
+.admin-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--admin-shadow-hover);
+}
+
+/* Admin List Item */
+.admin-list-item {
+    display: flex;
+    align-items: center;
+    padding: var(--admin-space-3) 0;
+    border-bottom: 1px solid var(--admin-border-light);
+}
+
+.admin-list-item:last-child {
+    border-bottom: none;
+}
+
+.admin-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--admin-radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: var(--admin-space-3);
+    color: var(--admin-white);
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.admin-content {
+    flex: 1;
+}
+
+/* Category Grid */
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--admin-space-3);
+    margin-bottom: var(--admin-space-4);
+}
+
+.category-item {
+    background: var(--admin-gray-100);
+    padding: var(--admin-space-3);
+    border-radius: var(--admin-radius-md);
+    text-align: center;
+    transition: all var(--admin-transition-base);
+    border: 1px solid var(--admin-border-light);
+    cursor: pointer;
+}
+
+.category-item:hover {
+    background: var(--admin-primary);
+    color: var(--admin-white);
+    transform: translateY(-2px);
+}
+
+.category-item i {
+    display: block;
+    margin-bottom: var(--admin-space-2);
+    font-size: 1.25rem;
+}
+
+.category-item span {
+    font-size: var(--admin-font-size-sm);
+    font-weight: 500;
+}
+
+/* Code Tables */
+.code-tables {
+    max-height: 300px;
+    overflow-y: auto;
+    border-radius: var(--admin-radius-md);
+}
+
+.code-table-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--admin-space-3);
+    border-bottom: 1px solid var(--admin-border-light);
+    transition: background-color var(--admin-transition-fast);
+}
+
+.code-table-item:hover {
+    background-color: var(--admin-gray-100);
+    border-radius: var(--admin-radius-sm);
+}
+
+.code-name {
+    font-weight: 500;
+    color: var(--admin-text-secondary);
+}
+
+.code-count {
+    font-size: var(--admin-font-size-xs);
+    color: var(--admin-text-muted);
+    background: var(--admin-gray-200);
+    padding: var(--admin-space-1) var(--admin-space-2);
+    border-radius: var(--admin-radius-pill);
+}
+
+/* Custom Scrollbar */
+.code-tables::-webkit-scrollbar {
+    width: 6px;
+}
+
+.code-tables::-webkit-scrollbar-track {
+    background: var(--admin-gray-100);
+    border-radius: 3px;
+}
+
+.code-tables::-webkit-scrollbar-thumb {
+    background: var(--admin-gray-300);
+    border-radius: 3px;
+}
+
+.code-tables::-webkit-scrollbar-thumb:hover {
+    background: var(--admin-gray-400);
+}
+
+/* Template Modal Enhancements */
+#templateModal .modal-content {
+    border: none;
+    border-radius: var(--admin-radius-lg);
+    box-shadow: var(--admin-shadow-xl);
+    overflow: hidden;
+}
+
+#templateModal .modal-header {
+    background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-primary-dark) 100%);
+    border-bottom: none;
+    padding: var(--admin-space-4);
+}
+
+#templateModal .modal-title {
+    font-weight: 600;
+    font-size: var(--admin-font-size-lg);
+    color: var(--admin-white);
+}
+
+#templateModal .modal-body {
+    padding: var(--admin-space-4);
+}
+
+#templateModal .table-responsive {
+    border-radius: var(--admin-radius-md);
+    box-shadow: var(--admin-shadow-sm);
+    margin-bottom: var(--admin-space-4);
+}
+
+#templateModal .table {
+    margin-bottom: 0;
+    border-radius: var(--admin-radius-md);
+    overflow: hidden;
+    table-layout: fixed;
+}
+
+#templateModal .table thead th {
+    background-color: var(--admin-primary);
+    color: var(--admin-white);
+    border: none;
+    padding: var(--admin-space-3);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: var(--admin-font-size-xs);
+    letter-spacing: 0.5px;
+}
+
+#templateModal .table tbody tr {
+    transition: all var(--admin-transition-fast);
+}
+
+#templateModal .table tbody tr:hover {
+    background-color: var(--admin-gray-100);
+    transform: translateY(-1px);
+    box-shadow: var(--admin-shadow-sm);
+}
+
+#templateModal .table tbody td {
+    padding: var(--admin-space-3);
+    border: none;
+    vertical-align: middle;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 0;
+}
+
+#templateModal .actions-panel {
+    background: linear-gradient(135deg, var(--admin-gray-100) 0%, var(--admin-gray-200) 100%);
+    border: none;
+    border-radius: var(--admin-radius-lg);
+    box-shadow: var(--admin-shadow-md);
+    padding: var(--admin-space-4);
+    height: fit-content;
+}
+
+#templateModal .action-btn {
+    margin-bottom: var(--admin-space-3);
+    border-radius: var(--admin-radius-md);
+    font-weight: 500;
+    transition: all var(--admin-transition-base);
+    position: relative;
+    overflow: hidden;
+}
+
+#templateModal .action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--admin-shadow-md);
+}
+
+#templateModal .action-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+#templateModal .action-btn:not(:disabled) {
+    background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-primary-dark) 100%);
+    border: none;
+}
+
+#templateModal .action-btn:not(:disabled):hover {
+    background: linear-gradient(135deg, var(--admin-primary-dark) 0%, var(--admin-primary) 100%);
+}
+
+#templateModal #addNewBtn {
+    background: linear-gradient(135deg, var(--admin-success) 0%, #20c997 100%);
+    border: none;
+    font-weight: 600;
+}
+
+#templateModal #addNewBtn:hover {
+    background: linear-gradient(135deg, #20c997 0%, var(--admin-success) 100%);
+    transform: translateY(-2px);
+    box-shadow: var(--admin-shadow-md);
+}
+
+#templateModal #deleteBtn:not(:disabled) {
+    background: linear-gradient(135deg, var(--admin-danger) 0%, #e83e8c 100%);
+    border: none;
+}
+
+#templateModal #deleteBtn:not(:disabled):hover {
+    background: linear-gradient(135deg, #e83e8c 0%, var(--admin-danger) 100%);
+}
+
+#templateModal .form-control {
+    border-radius: var(--admin-radius-md);
+    border: 1px solid var(--admin-border-color);
+    padding: 0.75rem 1rem;
+    transition: all var(--admin-transition-fast);
+}
+
+#templateModal .form-control:focus {
+    border-color: var(--admin-primary);
+    box-shadow: 0 0 0 0.2rem rgba(36, 63, 129, 0.15);
+}
+
+#templateModal hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--admin-border-light), transparent);
+    margin: var(--admin-space-3) 0;
+}
+
+#replaceTemplateModal {
+    z-index: var(--admin-z-modal-backdrop);
+}
+
+#replaceTemplateModal .modal-backdrop {
+    z-index: calc(var(--admin-z-modal-backdrop) - 10);
+}

@@ -1,62 +1,46 @@
-<?php 
-require_once '../../includes/config/database.php';
+<?php
+require_once '../includes/auth_check.php';
+require_once '../../includes/functions/helpers.php';
 
-$irbActions = [];
+header('Content-Type: application/json');
+
+// Require authentication
+require_auth();
 
 try {
     $db = new Database();
     $conn = $db->connect();
 
     if (!$conn) {
-        throw new Exception("Database connection failed");
+        echo json_encode(['status' => 'error', 'message' => 'Database connection failed']);
+        exit;
     }
 
-     if (isset($_GET['id'])) {
+    // Check if fetching single record by ID
+    if (isset($_GET['id'])) {
         $id = $_GET['id'];
         $stmt = $conn->prepare("SELECT id, irb_action, study_status, user_name, date_modified, sort_sequence FROM irb_action_codes WHERE id = ?");
         $stmt->execute([$id]);
         $irbAction = $stmt->fetch(PDO::FETCH_ASSOC);
+        
         if ($irbAction) {
-            header('Content-Type: application/json');
-            echo json_encode($irbAction);
+            echo json_encode(['status' => 'success', 'data' => $irbAction]);
         } else {
-            http_response_code(404);
-            echo json_encode(['error' => 'Not found']);
+            echo json_encode(['status' => 'error', 'message' => 'Not found']);
         }
         exit;
     }
 
-    // Fetch benefit options
+    // Fetch all irb actions
     $stmt = $conn->prepare("SELECT id, irb_action, study_status, user_name, date_modified, sort_sequence FROM irb_action_codes ORDER BY id ASC");
     $stmt->execute();
-    $irbActions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-} catch (Exception $e) {
-    error_log("Error fetching irb actions: " . $e->getMessage());
+    error_log(__FILE__ . ": Fetched " . count($results) . " records");
+
+    echo json_encode(['status' => 'success', 'data' => $results]);
+
+} catch (PDOException $e) {
+    error_log(__FILE__ . " - Database error: " . $e->getMessage());
+    echo json_encode(['status' => 'error', 'message' => 'Database error']);
 }
-echo '<div class="table-responsive" style="height:300px;"><table class="table table-striped">';
-echo '<thead>
-        <tr>
-           
-            <th>IRB Action</th>
-            <th>Study Status</th>
-            <th>User name</th>
-            <th>Date Modified</th>
-            <th>SortSeq</th>
-            <th>Actions</th>
-        </tr>
-        </thead><tbody>';
-foreach ( $irbActions as $row) {
-    echo "<tr>
-    
-    <td>{$row['irb_action']}</td>
-    <td>{$row['study_status']}</td>
-    <td>{$row['user_name']}</td>
-    <td>{$row['date_modified']}</td>
-    <td>{$row['sort_sequence']}</td>
-    <td><button class='btn btn-sm btn-outline-success' onclick='editItem({$row['id']}, \"{$row['irb_action']}\")'><i class='fas fa-edit'></i></button>
-    <button class='btn btn-sm btn-outline-danger' onclick='deleteItem({$row['id']})'><i class='fas fa-trash'></i></button>
-    </td>
-    </tr>";
-}
-echo '</tbody></table></div>';

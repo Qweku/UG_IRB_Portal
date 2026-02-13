@@ -1,5 +1,7 @@
 <?php
+require_once '../includes/auth_check.php';
 require_once '../../includes/config/database.php';
+require_once '../../includes/functions/notification_functions.php';
 
 header('Content-Type: application/json');
 
@@ -29,7 +31,12 @@ try {
     $stmt = $conn->prepare("INSERT INTO irb_meetings (meeting_date, irb_code) VALUES (?,?)");
     $stmt->execute([$meeting_date, $irb_code]);
 
+    $meetingId = $conn->lastInsertId();
+
     if ($stmt->rowCount() > 0) {
+        // Notify admins, chairs, and reviewers about the scheduled meeting
+        notifyMeetingScheduled($conn, $meetingId, $meeting_date);
+        
         echo json_encode(['success' => true]);
     } else {
         echo json_encode(['success' => false, 'message' => 'Failed to add IRB meeting']);

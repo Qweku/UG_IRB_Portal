@@ -1,11 +1,10 @@
 <?php
+require_once '../includes/auth_check.php';
 require_once '../../includes/config/database.php';
 
 header('Content-Type: application/json');
 
 $data = json_decode(file_get_contents('php://input'), true);
-
-error_log(print_r($data, true));
 
 if (!$data || !isset($data['site_name'])) {
     echo json_encode(['success' => false, 'message' => 'Invalid data']);

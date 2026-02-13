@@ -1,432 +1,470 @@
 <?php
-require_once '../../includes/config/database.php';
+declare(strict_types=1);
+
+// Load configuration FIRST - before any session operations
+require_once '../../config.php';
+
+// Start session with consistent session name
+if (session_status() === PHP_SESSION_NONE) {
+    $session_name = 'ug_irb_session';
+    session_name($session_name);
+    session_start();
+}
+
+require_once '../includes/auth_check.php';
+require_once '../../includes/functions/csrf.php';
+
 header('Content-Type: application/json');
 
-// New Study Input Form Content
-$study_number = '';
-$ref_number = '';
-$exp_date = '';
-$protocol_title = '';
-$sponsor = '';
-$active = '';
-$review_type = '';
-$status = '';
-$risk_category = '';
-$approval_patient_enrollment = '';
-$current_enrolled = '';
-$on_agenda_date = '';
-$irb_of_record = '';
-$cr_required = '';
-$renewal_cycle = '';
-$date_received = '';
-$first_irb_review = '';
-$original_approval = '';
-$last_seen_by_irb = '';
-$last_irb_renewal = '';
-$number_of_saes = '';
-$number_of_cpas = '';
-$initial_summary_of_agenda = '';
-$internal_notes = '';
 
-// Study Personnel Input content
-$name = '';
-$staff_type = '';
-$title = '';
-$date_added = '';
-$company_name = '';
-$email = '';
-$main_phone = '';
-$comments = '';
-
-// Meeting Dates
-$irb_meetings = [];
-
-/**
- * Process form submission for adding a new study and personnel
- * Handles validation, database insertion in a transaction, and user feedback
- */
-function processFormSubmission()
+/* ==========================================================
+| SAE SUBMISSION HANDLER (EDIT ONLY)
+========================================================== */
+function processSAESubmission(PDO $conn, int $studyId): void
 {
-    // Check for at least one personnel
-    if (!isset($_POST['personnel']) || count($_POST['personnel']) == 0) {
-        echo json_encode(['status' => 'error', 'message' => 'At least one study personnel must be added.']);
-        return;
+    // Check if SAE section was submitted at all
+    if (empty($_POST['sae_description']) || empty($_POST['sae_type_of_event'])) {
+        return; // No SAE submission → silently skip
     }
 
-    // Check if edit mode
-    $is_edit = isset($_POST['study_id']) && !empty($_POST['study_id']);
-    $study_id = $is_edit ? (int)$_POST['study_id'] : null;
-
-    // Sanitize and validate input data
-    $required_fields = ['study_number', 'ref_number', 'exp_date', 'protocol_title', 'sponsor', 'actv', 'dateReceived'];
-    $data = [];
-    $pi_names = [];
-
-    foreach ($required_fields as $field) {
-        $data[$field] = trim($_POST[$field] ?? '');
-        if (empty($data[$field])) {
-            echo json_encode(['status' => 'error', 'message' => 'Please fill in all required fields.']);
-            return;
-        }
-    }
-
-    // Additional optional fields
-    $optional_fields = [
-        'review_type',
-        'status',
-        'riskCat',
-        'ape',
-        'currentEnroll',
-        'oad',
-        'ior',
-        'cRequired',
-        'rcm',
-        'fir',
-        'origApp',
-        'lsbi',
-        'lir',
-        'nos',
-        'noc',
-        'isoa',
-        'internalNotes'
+    // Required SAE fields
+    $required = [
+        'sae_description' => 'description',
+        'sae_type_of_event' => 'type_of_event',
     ];
 
-    foreach ($optional_fields as $field) {
-        $data[$field] = trim($_POST[$field] ?? '');
+    $data = [
+        'protocol_id' => $studyId
+    ];
+
+    foreach ($required as $postKey => $dbKey) {
+        $value = trim($_POST[$postKey] ?? '');
+        if ($value === '') {
+            throw new Exception("Missing required SAE field");
+        }
+        $data[$dbKey] = $value;
     }
 
-    // Database operation with transaction
-    try {
-        $db = new Database();
-        $conn = $db->connect();
+    // Optional SAE fields
+    $optionalFields = [
+        'follow_up_report',
+        'original_sae_number',
+        'secondary_sae',
+        'internal_sae_number',
+        'ind_report_number',
+        'medwatch_report_filed',
+        'medwatch_number',
+        'local_event',
+        'location',
+        'study_related',
+        'patient_status',
+        'age',
+        'sex',
+        'patient_identifier',
+        'date_of_event',
+        'date_received',
+        'date_pi_aware',
+        'signed_by_pi',
+        'date_signed',
+        'risks_altered',
+        'new_consent_required'
+    ];
 
-        if (!$conn) {
-            throw new Exception("Database connection failed");
+    foreach ($optionalFields as $field) {
+        $data[$field] = clean($_POST[$field] ?? null);
+    }
+
+    // Build dynamic insert
+    $columns = array_keys($data);
+    $placeholders = array_fill(0, count($columns), '?');
+
+    $sql = "
+        INSERT INTO saes (" . implode(',', $columns) . ", created_at, updated_at)
+        VALUES (" . implode(',', $placeholders) . ", NOW(), NOW())
+    ";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->execute(array_values($data));
+
+    error_log("SAE added for study ID: {$studyId}");
+}
+
+
+/* ==========================================================
+| Utility Helpers
+========================================================== */
+function jsonError(string $message, int $code = 400): void
+{
+    http_response_code($code);
+    echo json_encode(['status' => 'error', 'message' => $message]);
+    exit;
+}
+
+function jsonSuccess(string $message): void
+{
+    echo json_encode(['status' => 'success', 'message' => $message]);
+    exit;
+}
+
+function clean(?string $value): ?string
+{
+    return isset($value) ? trim($value) : null;
+}
+
+/* ==========================================================
+| STUDY DATA NORMALIZATION
+========================================================== */
+function mapStudyData(array $post): array
+{
+    return [
+        'study_number' => clean($post['study_number'] ?? null),
+        'ref_number' => clean($post['ref_number'] ?? null),
+        'expiration_date' => clean($post['exp_date'] ?? null),
+        'protocol_title' => clean($post['protocol_title'] ?? null),
+        'sponsor' => clean($post['sponsor'] ?? null),
+        'active' => ($post['actv'] ?? ''),
+        'review_type' => clean($post['review_type'] ?? null),
+        'status' => clean($post['status'] ?? null),
+        'risk_category' => clean($post['riskCat'] ?? null),
+        'patients_enrolled' => clean($post['ape'] ?? null),
+        'init_enroll' => clean($post['currentEnroll'] ?? null),
+        'on_agenda_date' => clean($post['oad'] ?? null),
+        'irb_of_record' => clean($post['ior'] ?? null),
+        'cr_required' => clean($post['cRequired'] ?? null),
+        'renewal_cycle' => clean($post['rcm'] ?? null),
+        'date_received' => clean($post['date_received'] ?? null),
+        'first_irb_review' => clean($post['first_irb_review'] ?? null),
+        'approval_date' => clean($post['original_approval'] ?? null),
+        'last_irb_review' => clean($post['last_seen_by_irb'] ?? null),
+        'last_seen_by_irb' => clean($post['lsbr'] ?? null),
+        'last_renewal_date' => clean($post['last_irb_renewal'] ?? null),
+        'internal_notes' => clean($post['internal_notes'] ?? null),
+    ];
+}
+
+/* ==========================================================
+| PERSONNEL PARSING
+========================================================== */
+function decodePersonnel(array $raw): array
+{
+    return array_values(array_filter(array_map(function ($row) {
+        $p = json_decode($row, true);
+        return $p && !empty($p['name']) ? [
+            'name' => clean($p['name']),
+            'role' => clean($p['role']),
+            'title' => clean($p['title']),
+            'start_date' => clean($p['start_date']),
+            'company_name' => clean($p['company_name']),
+            'email' => clean($p['email']),
+            'phone' => clean($p['phone']),
+            'comments' => clean($p['comments']),
+            'contact_id' => ($p['contact_id'] ?? null),
+        ] : null;
+    }, $raw)));
+}
+
+function extractRoles(array $personnel): array
+{
+    $roles = [
+        'pi' => '',
+        'reviewers' => [],
+        'admins' => [],
+        'cols' => [],
+    ];
+
+    foreach ($personnel as $p) {
+        match ($p['role']) {
+            'PI' => $roles['pi'] = $p['name'],
+            'Reviewer' => $roles['reviewers'][] = $p['name'],
+            'Admin' => $roles['admins'][] = $p['name'],
+            'Co-PI' => $roles['cols'][] = $p['name'],
+            default => null
+        };
+    }
+
+    return [
+        'pi' => $roles['pi'],
+        'reviewers' => implode(', ', $roles['reviewers']),
+        'admins' => implode(', ', $roles['admins']),
+        'cols' => implode(', ', $roles['cols']),
+    ];
+}
+
+/* ==========================================================
+| FILE UPLOAD HANDLER
+========================================================== */
+function handleUploads(PDO $conn, int $studyId): void
+{
+    if (!isset($_FILES['initialApplication'])) return;
+
+    $allowedTypes = [
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+
+    $uploadDir = '../../uploads/';
+    if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+
+    foreach ($_FILES['initialApplication']['tmp_name'] as $i => $tmp) {
+        if ($_FILES['initialApplication']['error'][$i] !== UPLOAD_ERR_OK) {
+            throw new Exception("File upload failed");
         }
 
-        $conn->beginTransaction();
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $type = finfo_file($finfo, $tmp);
+        finfo_close($finfo);
 
-        if ($is_edit) {
-            // Update study
-            $stmt = $conn->prepare("UPDATE studies SET
-                protocol_number = :study_number, ref_num = :ref_number, expiration_date = :exp_date,
-                title = :protocol_title, sponsor_displayname = :sponsor, study_active = :active,
-                review_type = :review_type, study_status = :status, risk_category = :risk_category,
-                patients_enrolled = :approval_patient_enrollment, init_enroll = :current_enrolled,
-                on_agenda_date = :on_agenda_date, irb_of_record = :irb_of_record, cr_required = :cr_required,
-                renewal_cycle = :renewal_cycle, date_received = :date_received, first_irb_review = :first_irb_review,
-                approval_date = :original_approval, last_irb_review = :last_seen_by_irb,
-                last_renewal_date = :last_irb_renewal, remarks = :internal_notes
-                WHERE id = :study_id");
-
-            $stmt->execute([
-                ':study_number' => $data['study_number'],
-                ':ref_number' => $data['ref_number'],
-                ':exp_date' => $data['exp_date'],
-                ':protocol_title' => $data['protocol_title'],
-                ':sponsor' => $data['sponsor'],
-                ':active' => $data['actv'],
-                ':review_type' => $data['review_type'],
-                ':status' => $data['status'],
-                ':risk_category' => $data['riskCat'],
-                ':approval_patient_enrollment' => $data['ape'],
-                ':current_enrolled' => $data['currentEnroll'],
-                ':on_agenda_date' => $data['oad'],
-                ':irb_of_record' => $data['ior'],
-                ':cr_required' => $data['cRequired'],
-                ':renewal_cycle' => $data['rcm'],
-                ':date_received' => $data['dateReceived'],
-                ':first_irb_review' => $data['fir'],
-                ':original_approval' => $data['origApp'],
-                ':last_seen_by_irb' => $data['lsbi'],
-                ':last_irb_renewal' => $data['lir'],
-                ':internal_notes' => $data['internalNotes'],
-                ':study_id' => $study_id
-            ]);
-
-            // Delete existing personnel
-            $stmt = $conn->prepare("DELETE FROM study_personnel WHERE study_id = ?");
-            $stmt->execute([$study_id]);
-
-            // Insert personnel
-            $pi_names = [];
-            foreach ($_POST['personnel'] as $p_json) {
-                $p = json_decode($p_json, true);
-                if (!$p) continue;
-
-                $p_data = [
-                    'name' => trim($p['name'] ?? ''),
-                    'role' => trim($p['staffType'] ?? ''),
-                    'title' => trim($p['title'] ?? ''),
-                    'start_date' => trim($p['dateAdded'] ?? ''),
-                    'company_name' => trim($p['companyName'] ?? ''),
-                    'email' => trim($p['email'] ?? ''),
-                    'phone' => trim($p['mainPhone'] ?? ''),
-                    'comments' => trim($p['comments'] ?? ''),
-                ];
-
-                if (empty($p_data['name']) || empty($p_data['role'])) {
-                    continue; // Skip invalid
-                }
-
-                $pi_names[] = $p_data['name'];
-
-                $stmt = $conn->prepare("INSERT INTO study_personnel (
-                    study_id, name, role, title, start_date, company_name, email, phone, comments
-                ) VALUES (
-                    :study_id, :name, :role, :title, :start_date, :company_name, :email, :phone, :comments
-                )");
-
-                $stmt->execute([
-                    ':study_id' => $study_id,
-                    ':name' => $p_data['name'],
-                    ':role' => $p_data['role'],
-                    ':title' => $p_data['title'],
-                    ':start_date' => $p_data['start_date'],
-                    ':company_name' => $p_data['company_name'],
-                    ':email' => $p_data['email'],
-                    ':phone' => $p_data['phone'],
-                    ':comments' => $p_data['comments']
-                ]);
-            }
-            $pi_string = implode(', ', $pi_names);
-
-            $stmt = $conn->prepare("UPDATE studies SET pi = :pi WHERE id = :study_id");
-
-            $stmt->execute([
-
-                ':pi' => $pi_string,
-
-                ':study_id' => $study_id
-
-            ]);
-
-            // Fetch meetings
-            $stmt = $conn->prepare("SELECT meeting_date FROM irb_meetings");
-            $stmt->execute();
-            $irbMeetings = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            // Today's date
-            $today = new DateTime();
-
-            // Variable to store the next meeting
-            $nextMeeting = null;
-
-            foreach ($irbMeetings as $meeting) {
-                $date = new DateTime($meeting['meeting_date']);
-
-                // If date is in the future
-                if ($date > $today) {
-                    // If not set yet or this date is earlier than the currently stored one
-                    if ($nextMeeting === null || $date < $nextMeeting) {
-                        $nextMeeting = $date;
-                    }
-                }
-            }
-
-            // Check if agenda item exists
-            $stmt = $conn->prepare("SELECT id FROM agenda_items WHERE irb_number = ?");
-            $stmt->execute([$data['study_number']]);
-            $agenda_id = $stmt->fetchColumn();
-
-            if ($agenda_id) {
-                // Update existing agenda item
-                $stmt = $conn->prepare("UPDATE agenda_items SET
-                    agenda_category = 'Expedited', agenda_group = 'Expedited', expedite = 1, title = :title,
-                    renewal = :renewal, review = :review, meeting_date = :meeting_date, reference_number = :reference_number, pi = :pi
-                    WHERE id = :id");
-
-                $stmt->execute([
-                    ':title' => $data['protocol_title'],
-                    ':renewal' => $data['lir'],
-                    ':review' => $data['lsbi'],
-                    ':meeting_date' => $nextMeeting ? $nextMeeting->format('Y-m-d') : null,
-                    ':reference_number' => $data['ref_number'],
-                    ':pi' => $pi_string,
-                    ':id' => $agenda_id
-                ]);
-            } else {
-                // Insert new agenda item
-                $stmt = $conn->prepare("INSERT INTO agenda_items (
-                    irb_number, agenda_category, agenda_group, expedite, title,
-                    renewal, review, meeting_date, reference_number, pi
-                ) VALUES (
-                    :irb_number, 'Expedited', 'Expedited', 1 , :title, :renewal, :review, :meeting_date, :reference_number, :pi
-                )");
-
-                $stmt->execute([
-                    ':irb_number' => $data['study_number'],
-                    ':title' => $data['protocol_title'],
-                    ':renewal' => $data['lir'],
-                    ':review' => $data['lsbi'],
-                    ':meeting_date' => $nextMeeting ? $nextMeeting->format('Y-m-d') : null,
-                    ':reference_number' => $data['ref_number'],
-                    ':pi' => $pi_string,
-                ]);
-            }
-        } else {
-            // Fetch meetings
-            $stmt = $conn->prepare("SELECT meeting_date FROM irb_meetings");
-            $stmt->execute();
-            $irbMeetings = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            // Today's date
-            $today = new DateTime();
-
-            // Variable to store the next meeting
-            $nextMeeting = null;
-
-            foreach ($irbMeetings as $meeting) {
-                $date = new DateTime($meeting['meeting_date']);
-
-                // If date is in the future
-                if ($date > $today) {
-                    // If not set yet or this date is earlier than the currently stored one
-                    if ($nextMeeting === null || $date < $nextMeeting) {
-                        $nextMeeting = $date;
-                    }
-                }
-            }
-            // Insert study
-            $stmt = $conn->prepare("INSERT INTO studies (
-                protocol_number, ref_num, expiration_date, title, sponsor_displayname,
-                study_active, review_type, study_status, risk_category, patients_enrolled,
-                init_enroll, on_agenda_date, irb_of_record, cr_required, renewal_cycle,
-                date_received, first_irb_review, approval_date, last_irb_review, meeting_date,
-                last_renewal_date, remarks
-            ) VALUES (
-                :study_number, :ref_number, :exp_date, :protocol_title, :sponsor,
-                :active, :review_type, :status, :risk_category, :approval_patient_enrollment,
-                :current_enrolled, :on_agenda_date, :irb_of_record, :cr_required,
-                :renewal_cycle, :date_received, :first_irb_review, :original_approval,
-                :last_seen_by_irb, :meeting_date, :last_irb_renewal, :internal_notes
-            )");
-
-            $stmt->execute([
-                ':study_number' => $data['study_number'],
-                ':ref_number' => $data['ref_number'],
-                ':exp_date' => $data['exp_date'],
-                ':protocol_title' => $data['protocol_title'],
-                ':sponsor' => $data['sponsor'],
-                ':active' => $data['actv'],
-                ':review_type' => $data['review_type'],
-                ':status' => $data['status'],
-                ':risk_category' => $data['riskCat'],
-                ':approval_patient_enrollment' => $data['ape'],
-                ':current_enrolled' => $data['currentEnroll'],
-                ':on_agenda_date' => $data['oad'],
-                ':irb_of_record' => $data['ior'],
-                ':cr_required' => $data['cRequired'],
-                ':renewal_cycle' => $data['rcm'],
-                ':date_received' => $data['dateReceived'],
-                ':first_irb_review' => $data['fir'],
-                ':original_approval' => $data['origApp'],
-                ':last_seen_by_irb' => $data['lsbi'],
-                ':meeting_date' => $nextMeeting ? $nextMeeting->format('Y-m-d') : null,
-                ':last_irb_renewal' => $data['lir'],
-                ':internal_notes' => $data['internalNotes']
-            ]);
-
-            $study_id = $conn->lastInsertId();
-
-
-
-            // Insert personnel
-            foreach ($_POST['personnel'] as $p_json) {
-                $p = json_decode($p_json, true);
-                if (!$p) continue;
-
-                $p_data = [
-                    'name' => trim($p['name'] ?? ''),
-                    'role' => trim($p['staffType'] ?? ''),
-                    'title' => trim($p['title'] ?? ''),
-                    'start_date' => trim($p['dateAdded'] ?? ''),
-                    'company_name' => trim($p['companyName'] ?? ''),
-                    'email' => trim($p['email'] ?? ''),
-                    'phone' => trim($p['mainPhone'] ?? ''),
-                    'comments' => trim($p['comments'] ?? ''),
-                ];
-
-                if (empty($p_data['name'])) {
-                    continue; // Skip invalid
-                }
-
-
-                $pi_names[] = $p_data['name'];
-
-
-                $stmt = $conn->prepare("INSERT INTO study_personnel (
-                    study_id, name, role, title, start_date, company_name, email, phone, comments
-                ) VALUES (
-                    :study_id, :name, :role, :title, :start_date, :company_name, :email, :phone, :comments
-                )");
-
-                $stmt->execute([
-                    ':study_id' => $study_id,
-                    ':name' => $p_data['name'],
-                    ':role' => $p_data['role'],
-                    ':title' => $p_data['title'],
-                    ':start_date' => $p_data['start_date'],
-                    ':company_name' => $p_data['company_name'],
-                    ':email' => $p_data['email'],
-                    ':phone' => $p_data['phone'],
-                    ':comments' => $p_data['comments']
-                ]);
-            }
-
-            $pi_string = implode(', ', $pi_names);
-
-            // // Fetch meetings
-           
-
-            // if ($nextMeeting) {
-            //     echo "Next meeting date: " . $nextMeeting->format("Y-m-d");
-            // } else {
-            //     echo "No upcoming meetings found";
-            // }
-
-            // Insert into agenda items
-            $stmt = $conn->prepare("INSERT INTO agenda_items (
-                irb_number, agenda_category, agenda_group, expedite, title,
-                 renewal, review, meeting_date, reference_number, pi
-            ) VALUES (
-                :irb_number, 'Expedited', 'Expedited', 1 , :title, :renewal, :review, :meeting_date, :reference_number, :pi
-            )");
-
-            $stmt->execute([
-                ':irb_number' => $data['study_number'],
-                ':title' => $data['protocol_title'],
-                ':renewal' => $data['lir'],
-                ':review' => $data['lsbi'],
-                ':meeting_date' => $nextMeeting ? $nextMeeting->format('Y-m-d') : null,
-                ':reference_number' => $data['ref_number'],
-                ':pi' => $pi_string,
-            ]);
-
-
-            // Update PI in studies
-            $stmt = $conn->prepare("UPDATE studies SET pi = :pi WHERE id = :study_id");
-
-            $stmt->execute([
-                ':pi' => $pi_string,
-                ':study_id' => $study_id
-            ]);
+        if (!in_array($type, $allowedTypes)) {
+            throw new Exception("Invalid file type uploaded");
         }
 
-        $conn->commit();
-        $message = $is_edit ? 'Study/Protocol has been updated successfully!' : 'New study/protocol have been saved successfully!';
-        echo json_encode(['status' => 'success', 'message' => $message]);
-    } catch (PDOException $e) {
-        $conn->rollBack();
-        error_log("Database error: " . $e->getMessage());
-        echo json_encode(['status' => 'error', 'message' => 'Failed to save study. Please try again.']);
-    } catch (Exception $e) {
-        $conn->rollBack();
-        error_log("General error: " . $e->getMessage());
-        echo json_encode(['status' => 'error', 'message' => 'An error occurred. Please try again.']);
+        $original = preg_replace('/[^a-zA-Z0-9._-]/', '_', $_FILES['initialApplication']['name'][$i]);
+        $path = $uploadDir . uniqid('doc_') . '_' . $original;
+
+        move_uploaded_file($tmp, $path);
+
+        $stmt = $conn->prepare("
+            INSERT INTO documents (study_id, document_type, file_name, file_path, uploaded_at)
+            VALUES (?, 'initial_application', ?, ?, NOW())
+        ");
+        $stmt->execute([$studyId, $original, $path]);
     }
 }
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    processFormSubmission();
+/* ==========================================================
+| MAIN HANDLER
+========================================================== */
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    jsonError("Invalid request method", 405);
+}
+
+// CSRF validation already done above (lines 32-37)
+// Note: csrf_validate() clears the token after validation to prevent reuse
+
+$nextMeeting = '';
+
+
+
+$db = new Database();
+$conn = $db->connect();
+$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+
+
+$personnelRaw = $_POST['personnel'] ?? [];
+if (!$personnelRaw) jsonError("At least one personnel is required");
+
+error_log("Raw personnel input: " . json_encode($personnelRaw));
+
+$personnel = decodePersonnel($personnelRaw);
+error_log("Decoded personnel: " . json_encode($personnel));
+
+$roles = extractRoles($personnel);
+
+$data = mapStudyData($_POST);
+
+$irb_code = '';
+
+// Fetch IRB code based on selected user institution id
+if (isset($_SESSION['institution_id'])) {
+    $institutionId = (int)$_SESSION['institution_id'];
+    $stmt = $conn->prepare("SELECT institution_name FROM institutions WHERE id = ?");
+    $stmt->execute([$institutionId]);
+    $irb_code = $stmt->fetchColumn() ?: '';
+}
+
+foreach (['study_number', 'ref_number', 'expiration_date', 'protocol_title', 'sponsor', 'date_received'] as $field) {
+    if (empty($data[$field])) jsonError("Missing required field: $field");
+}
+
+$isEdit = !empty($_POST['study_id']);
+$studyId = $isEdit ? (int)$_POST['study_id'] : null;
+
+try {
+    $conn->beginTransaction();
+
+    // Get next meeting date
+    $stmt = $conn->prepare("SELECT meeting_date FROM irb_meetings WHERE meeting_date > NOW() ORDER BY meeting_date ASC LIMIT 1");
+    $stmt->execute();
+    $nextMeeting = $stmt->fetchColumn();
+
+    error_log("Next meeting date: " . $nextMeeting);
+
+    if ($isEdit) {
+        /* ---------------- UPDATE STUDY ---------------- */
+        $stmt = $conn->prepare("
+            UPDATE studies SET
+                protocol_number=?, ref_num=?, expiration_date=?, title=?, sponsor_displayname=?,
+                study_active=?, review_type=?, study_status=?, risk_category=?,
+                patients_enrolled=?, init_enroll=?, on_agenda_date=?, irb_of_record=?,
+                cr_required=?, renewal_cycle=?, date_received=?, first_irb_review=?,
+                approval_date=?, last_irb_review=?, last_renewal_date=?, remarks=?,
+                pi=?, reviewers=?, admins=?, cols=?
+            WHERE id=?
+        ");
+
+        $stmt->execute([
+            $data['study_number'],
+            $data['ref_number'],
+            $data['expiration_date'],
+            $data['protocol_title'],
+            $data['sponsor'],
+            $data['active'],
+            $data['review_type'],
+            $data['status'],
+            $data['risk_category'],
+            $data['patients_enrolled'],
+            $data['init_enroll'],
+            $data['on_agenda_date'],
+            $data['irb_of_record'],
+            $data['cr_required'],
+            $data['renewal_cycle'],
+            $data['date_received'],
+            $data['first_irb_review'],
+            $data['approval_date'],
+            $data['last_irb_review'],
+            $data['last_renewal_date'],
+            $data['internal_notes'],
+            $roles['pi'],
+            $roles['reviewers'],
+            $roles['admins'],
+            $roles['cols'],
+            $studyId
+        ]);
+
+        if (!empty($personnel)) {
+            $conn->prepare("DELETE FROM study_personnel WHERE study_id=?")->execute([$studyId]);
+        }
+    } else {
+        /* ---------------- INSERT STUDY ---------------- */
+        $stmt = $conn->prepare("
+            INSERT INTO studies (
+                protocol_number, ref_num, expiration_date, title, sponsor_displayname,
+                study_active, review_type, study_status, risk_category, patients_enrolled,
+                init_enroll, on_agenda_date, irb_of_record, irb_code, cr_required,
+                renewal_cycle, date_received, first_irb_review, approval_date, meeting_date,
+                last_irb_review, last_renewal_date, remarks,
+                pi, reviewers, admins, cols
+            ) VALUES (
+                ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
+            )
+        ");
+
+        $stmt->execute([
+            $data['study_number'],
+            $data['ref_number'],
+            $data['expiration_date'],
+            $data['protocol_title'],
+            $data['sponsor'],
+            $data['active'],
+            $data['review_type'],
+            $data['status'],
+            $data['risk_category'],
+            $data['patients_enrolled'],
+            $data['init_enroll'],
+            $data['on_agenda_date'],
+            $data['irb_of_record'],
+            $irb_code,
+            $data['cr_required'],
+            $data['renewal_cycle'],
+            $data['date_received'],
+            $data['first_irb_review'],
+            $data['approval_date'],
+            $nextMeeting,
+            $data['last_irb_review'],
+            $data['last_renewal_date'],
+            $data['internal_notes'],
+            $roles['pi'],
+            $roles['reviewers'],
+            $roles['admins'],
+            $roles['cols']
+        ]);
+
+        $studyId = (int)$conn->lastInsertId();
+    }
+
+    /* ---------------- PERSONNEL INSERT ---------------- */
+    $stmt = $conn->prepare("
+        INSERT INTO study_personnel
+        (study_id, contact_id, name, role, title, start_date, company_name, email, phone, comments)
+        VALUES (?, ?, ?,?,?,?,?,?,?,?)
+    ");
+
+    foreach ($personnel as $p) {
+        $stmt->execute([
+            $studyId,
+            $p['contact_id'],
+            $p['name'],
+            $p['role'],
+            $p['title'],
+            $p['start_date'],
+            $p['company_name'],
+            $p['email'],
+            $p['phone'],
+            $p['comments']
+        ]);
+    }
+
+   
+
+    // Handle agenda items: Update if exists (for edits), insert if not
+    $agendaExists = false;
+    if ($isEdit) {
+        // Check if agenda item exists for this study
+        $stmt = $conn->prepare("SELECT id FROM agenda_items WHERE study_id = ?");
+        $stmt->execute([$studyId]);
+        $agendaExists = $stmt->fetchColumn();
+    }
+
+    if ($agendaExists) {
+        // Update existing agenda item
+        $stmt = $conn->prepare("
+            UPDATE agenda_items SET
+                irb_number = ?, agenda_category = 'Expedited', agenda_group = 'Expedited', expedite = 1,
+                title = ?, renewal = ?, review = ?, meeting_date = ?, reference_number = ?, pi = ?
+            WHERE study_id = ?
+        ");
+        $stmt->execute([
+            $data['study_number'],
+            $data['protocol_title'],
+            $data['last_renewal_date'],
+            $data['last_irb_review'],
+            $nextMeeting,
+            $data['ref_number'],
+            $roles['pi'],
+            $studyId
+        ]);
+    } else {
+        // Insert new agenda item (for adds or if none exists for edits)
+        $stmt = $conn->prepare("
+            INSERT INTO agenda_items (
+                irb_number, agenda_category, agenda_group, expedite, title, study_id,
+                renewal, review, meeting_date, reference_number, pi
+            ) VALUES (?, 'Expedited', 'Expedited', 1, ?, ?, ?, ?, ?, ?, ?)
+        ");
+        $stmt->execute([
+            $data['study_number'],
+            $data['protocol_title'],
+            $studyId,
+            $data['last_renewal_date'],
+            $data['last_irb_review'],
+            $nextMeeting,
+            $data['ref_number'],
+            $roles['pi']
+        ]);
+    }
+
+     // ================= SAE (EDIT ONLY) =================
+    if ($isEdit) {
+        processSAESubmission($conn, $studyId);
+    }
+
+    handleUploads($conn, $studyId);
+
+    $conn->commit();
+    jsonSuccess($isEdit ? 'Study updated successfully' : 'Study created successfully');
+} catch (Exception $e) {
+    if ($conn->inTransaction()) $conn->rollBack();
+    error_log("Study Handler Error: " . $e->getMessage());
+    jsonError("Failed to save study. Please try again.");
 }

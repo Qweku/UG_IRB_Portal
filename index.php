@@ -1,236 +1,356 @@
 <?php
 
+declare(strict_types=1);
 
-// Include configuration
+/* ==========================================================
+ | MAINTENANCE MODE CHECK (must be at top before any output)
+ ========================================================== */
 require_once 'config.php';
 
-include 'admin/includes/header.php'; 
-// Get the requested path
-$request_uri = $_SERVER['REQUEST_URI'];
-$script_name = $_SERVER['SCRIPT_NAME'];
-
-// Remove query string and script name to get clean path
-$path = str_replace(dirname($script_name), '', $request_uri);
-$path = parse_url($path, PHP_URL_PATH);
-$path = trim($path, '/');
-
-// Split path into segments
-$segments = array_filter(explode('/', $path));
-
-// Route the request
-try {
-    if (empty($segments)) {
-        // Home page
-        require_once 'admin/pages/dashboard.php';
-    } elseif ($segments[0] === 'admin') {
-        // Admin routes
-        handleAdminRoutes($segments);
-    } elseif ($segments[0] === 'api') {
-        // API routes
-        handleApiRoutes($segments);
+// Check if maintenance mode is enabled and we're NOT on the maintenance page
+$maintenance_mode = getenv('MAINTENANCE_MODE') === 'true';
+if ($maintenance_mode) {
+    $current_uri = $_SERVER['REQUEST_URI'] ?? '';
+    $maintenance_page = '/maintenance';
+    
+    // If we're on the maintenance page, continue normally
+    if (strpos($current_uri, $maintenance_page) !== false) {
+        // Allow access to maintenance page - continue rendering
     } else {
-        // Frontend routes
-        handleFrontendRoutes($segments);
-    }
-} catch (Exception $e) {
-    // Handle errors gracefully
-    error_log("Routing error: " . $e->getMessage());
-    require_once 'admin/404.php';
-}
-
-/**
- * Handle admin routes
- */
-function handleAdminRoutes($segments) {
-    $admin_path = 'admin/';
-
-    // Remove 'admin' from segments
-    array_shift($segments);
-
-    if (empty($segments)) {
-        // Admin dashboard
-        require_once $admin_path . 'pages/dashboard.php';
-    } elseif ($segments[0] === 'login') {
-        require_once $admin_path . 'login.php';
-    } elseif ($segments[0] === 'dashboard') {
-        require_once $admin_path . 'pages/dashboard.php';
-    } elseif ($segments[0] === 'products') {
-        require_once $admin_path . 'pages/products/view-products.php';
-    } elseif ($segments[0] === 'categories') {
-        require_once $admin_path . 'pages/products/categories.php';
-    } elseif ($segments[0] === 'orders') {
-        require_once $admin_path . 'pages/orders/view-orders.php';
-    } else {
-        // 404 for admin
-        require_once 'admin/404.php';
+        // Destroy all sessions to log out users
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            $_SESSION = array();
+            session_destroy();
+        }
+        // Redirect to maintenance page
+        header('Location: ' . $maintenance_page);
+        exit;
     }
 }
 
+/* ==========================================================
+ | BOOTSTRAP
+ ========================================================== */
+require_once 'includes/functions/csrf.php';
+
+// Use consistent session name across entire application
+// This must be set BEFORE session_start()
+defined('CSRF_SESSION_NAME') || define('CSRF_SESSION_NAME', 'ug_irb_session');
+session_name(CSRF_SESSION_NAME);
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+/* ==========================================================
+ | DATABASE CONNECTION (needed for session validation)
+ ========================================================== */
+require_once 'includes/config/database.php';
+$db = new Database();
+$conn = $db->connect();
+
+/* ==========================================================
+ | BASE PATHS
+ ========================================================== */
+$ADMIN_BASE     = 'admin/pages/';
+$APPLICANT_BASE = 'applicant/pages/';
+$REVIEWER_BASE  = 'reviewer/pages/';
+$USER_BASE      = 'user/';
+$ERROR_404      = 'admin/404.php';
+$ERROR_403      = 'admin/403.php';
+$MAINTENANCE_PAGE = 'admin/pages/maintenance.php';
+
+/* ==========================================================
+ | REQUEST PARSING
+ ========================================================== */
+$requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$scriptDir   = dirname($_SERVER['SCRIPT_NAME']);
+
+$path     = trim(str_replace($scriptDir, '', $requestPath), '/');
+$segments = array_values(array_filter(explode('/', $path)));
+
+$section = $segments[0] ?? 'dashboard';
+$subpage = $segments[1] ?? null;
+
+/* ==========================================================
+ | AUTH PAGE GUARD (PREVENT LOGIN LOOP)
+ ========================================================== */
+$authPages = ['login', 'register', 'forgot-password'];
+
+if (in_array($section, $authPages, true) && is_authenticated()) {
+    switch ($_SESSION['role']) {
+        case 'admin':
+        case 'super_admin':
+            header('Location: /dashboard');
+            break;
+        case 'applicant':
+            header('Location: /applicant-dashboard');
+            break;
+        case 'reviewer':
+            header('Location: /reviewer-dashboard');
+            break;
+        default:
+            header('Location: /dashboard');
+    }
+    exit;
+}
+
+/* ==========================================================
+ | ROUTE DEFINITIONS
+ ========================================================== */
+$routes = [
+
+    /* ----------- MAINTENANCE ROUTE -------------- */
+    'maintenance' => [
+        '_' => ['file' => $MAINTENANCE_PAGE, 'roles' => [], 'type' => '']
+    ],
+
+    /* ---------- AUTH / ACTION ROUTES (NO HEADER) ---------- */
+    'login' => [
+        '_' => ['file' => 'login.php', 'roles' => [], 'type' => 'page']
+    ],
+    'register' => [
+        '_' => ['file' => 'register.php', 'roles' => [], 'type' => 'page']
+    ],
+    'logout' => [
+        '_' => ['file' => 'logout.php', 'roles' => [], 'type' => 'action']
+    ],
+    'authenticate' => [
+        '_' => ['file' => 'authenticate.php', 'roles' => [], 'type' => 'action']
+    ],
+    'forgot-password' => [
+        '_' => ['file' => 'forgot_password.php', 'roles' => [], 'type' => 'page']
+    ],
+
+    /* ---------- DASHBOARD ---------- */
+    'dashboard' => [
+        '_'          => ['file' => 'dashboard/index.php', 'roles' => ['admin', 'super_admin']],
+        'applications'    => ['file' => 'dashboard/applications_content.php', 'roles' => ['admin', 'super_admin']],
+        'studies'    => ['file' => 'dashboard/study_content.php', 'roles' => ['admin', 'super_admin']],
+        'preliminary-agenda'  => ['file' => 'dashboard/preliminary_agenda_content.php', 'roles' => ['admin', 'super_admin']],  // /dashboard/preliminary-agenda
+        'continue-review'  => ['file' => 'dashboard/due_continue_review_content.php', 'roles' => ['admin', 'super_admin']],  // /dashboard/continue-review
+        'post-irb-meeting'  => ['file' => 'dashboard/post_meeting_content.php', 'roles' => ['admin', 'super_admin']],  // /dashboard/post-irb-meeting
+        'agenda-records'  => ['file' => 'dashboard/agenda_records_content.php', 'roles' => ['admin', 'super_admin']],  // /dashboard/agenda-records
+        'reports'  => ['file' => 'dashboard/reports_content.php', 'roles' => ['admin', 'super_admin']],  // /dashboard/reports
+        'follow-up'  => ['file' => 'dashboard/follow_up_content.php', 'roles' => ['admin', 'super_admin']],  // /dashboard/follow-up
+        'administration'  => ['file' => 'dashboard/administration_content.php', 'roles' => ['admin', 'super_admin']],  // /dashboard/administration
+        'institutions'  => ['file' => 'dashboard/institutions_content.php', 'roles' => ['super_admin']],  // /dashboard/institutions
+    ],
+
+    /* ---------- STUDIES ---------- */
+    'studies' => [
+        'add-study' => ['file' => 'contents/add_new_study.php', 'roles' => ['admin', 'super_admin']]
+    ],
+
+    /* ---------- CONTACTS ---------- */
+    'contacts' => [
+        '_' => ['file' => 'contents/create_contact.php', 'roles' => ['admin', 'super_admin']]
+    ],
+
+    /* ---------- LETTERS ---------- */
+    'generate-letter' => [
+        '_' => ['file' => 'contents/general_letters_content.php', 'roles' => ['admin', 'super_admin']]
+    ],
+
+    /* ---------- APPLICANT ---------- */
+    'applicant-dashboard' => [
+        '_'       => ['file' => 'applicant/pages/index.php', 'roles' => ['applicant']],
+        'profile' => ['file' => 'applicant/pages/profile.php', 'roles' => ['applicant']],
+        'applications' => ['file' => 'applicant/pages/applications.php', 'roles' => ['applicant']],
+    ],
+
+    'add-protocol' => [
+        'student-application' => ['file' => 'applicant/pages/student_application.php', 'roles' => ['applicant']],
+        'nmimr-application' => ['file' => 'applicant/pages/nmimr_application.php', 'roles' => ['applicant']],
+        'non-nmimr-application' => ['file' => 'applicant/pages/non_nmimr_application.php', 'roles' => ['applicant']],
+    ],
+
+    /* ---------- REVIEWER ---------- */
+    'reviewer-dashboard' => [
+        '_' => ['file' => 'reviewer/pages/index.php', 'roles' => ['reviewer']],
+        'reviews' => ['file' => 'reviewer/pages/reviews.php', 'roles' => ['reviewer']],
+        'review' => ['file' => 'reviewer/pages/review_detail.php', 'roles' => ['reviewer']],
+        'meetings' => ['file' => 'reviewer/pages/meetings.php', 'roles' => ['reviewer']],
+        'workload' => ['file' => 'reviewer/pages/workload.php', 'roles' => ['reviewer']],
+        'profile' => ['file' => 'reviewer/pages/profile.php', 'roles' => ['reviewer']],
+    ],
+];
+
+
+
+
+/* ==========================================================
+ | AUTH HELPERS
+ ========================================================== */
+
 /**
- * Handle API routes
+ * Validate session token against database
+ * @param PDO $conn Database connection
+ * @return bool
  */
-function handleApiRoutes($segments) {
-    $api_path = 'frontend/includes/api/';
+function validate_session_token($conn): bool {
+    if (!isset($_SESSION['user_id']) || !isset($_SESSION['session_token'])) {
+        return false;
+    }
+    
+    try {
+        $stmt = $conn->prepare("SELECT session_token, session_expires_at FROM users WHERE id = ?");
+        $stmt->execute([$_SESSION['user_id']]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // Check if token matches and hasn't expired
+        if (!$user || empty($user['session_token']) || $user['session_token'] !== $_SESSION['session_token']) {
+            return false;
+        }
+        
+        if ($user['session_expires_at'] && strtotime($user['session_expires_at']) < time()) {
+            return false;
+        }
+        
+        // Update last_activity periodically (every 5 minutes)
+        if (time() - ($_SESSION['last_activity'] ?? 0) > 300) {
+            $stmt = $conn->prepare("UPDATE users SET last_activity = NOW() WHERE id = ?");
+            $stmt->execute([$_SESSION['user_id']]);
+            $_SESSION['last_activity'] = time();
+        }
+        
+        return true;
+    } catch (Exception $e) {
+        error_log('Session validation error: ' . $e->getMessage());
+        return false;
+    }
+}
 
-    // Remove 'api' from segments
-    array_shift($segments);
+/**
+ * Check if user is authenticated (returns boolean without redirect)
+ * @return bool
+ */
+function is_authenticated(): bool
+{
+    if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+        return false;
+    }
+    
+    // Validate session token against database
+    global $conn;
+    if ($conn) {
+        return validate_session_token($conn);
+    }
+    
+    return true;
+}
 
-    if (empty($segments)) {
-        // API root - could show API documentation
-        header('Content-Type: application/json');
-        echo json_encode(['error' => 'API endpoint required']);
+/**
+ * Check if user is authenticated, redirect to login if not
+ * @return bool
+ */
+function require_login(): bool
+{
+    error_log('require_login called - is_authenticated: ' . (is_authenticated() ? 'true' : 'false'));  // DEBUG
+    if (!is_authenticated()) {
+        error_log('User not authenticated, redirecting to login');
+        header('Location: /login');
+        exit;
+    }
+    return true;
+}
+
+/**
+ * Require specific role(s) for access
+ * @param array $roles Required roles
+ * @return void
+ */
+function requireRole(array $roles): void
+{
+    if (!is_authenticated()) {
+        header('Location: /login');
         exit;
     }
 
-    $endpoint = $segments[0];
-
-    switch ($endpoint) {
-        case 'newsletter':
-            require_once $api_path . 'newsletter.php';
-            break;
-        case 'cart':
-            require_once $api_path . 'cart.php';
-            break;
-        case 'wishlist':
-            require_once $api_path . 'wishlist.php';
-            break;
-        case 'products':
-            require_once $api_path . 'products.php';
-            break;
-        default:
-            header('Content-Type: application/json');
-            echo json_encode(['error' => 'API endpoint not found']);
-            exit;
+    if (!in_array($_SESSION['role'], $roles, true)) {
+        http_response_code(403);
+        require 'admin/403.php';
+        exit;
     }
 }
 
-/**
- * Handle frontend routes
- */
-function handleFrontendRoutes($segments) {
-    $frontend_path = 'admin/pages/';
 
-    $route = $segments[0];
+/* ==========================================================
+ | ROUTE RESOLUTION
+ ========================================================== */
+$pageConfig = null;
 
-    switch ($route) {
-        case 'products':
-            if (count($segments) === 1) {
-                // All products
-                require_once $frontend_path . 'products/category.php';
-            } elseif (count($segments) === 2) {
-                // Category products
-                $_GET['cat'] = $segments[1];
-                require_once $frontend_path . 'products/category.php';
-            } else {
-                require_once 'admin/404.php';
-            }
-            break;
-
-        case 'product':
-            if (count($segments) >= 2) {
-                // Product detail - extract ID from slug
-                $slug_parts = explode('-', $segments[1]);
-                if (is_numeric($slug_parts[0])) {
-                    $_GET['id'] = intval($slug_parts[0]);
-                    require_once $frontend_path . 'products/product-detail.php';
-                } else {
-                    require_once 'admin/404.php';
-                }
-            } else {
-                require_once 'admin/404.php';
-            }
-            break;
-
-        case 'dashboard':
-            require_once $frontend_path . 'dashboard.php';
-            break;
-
-        case 'authenticate':
-            require_once $frontend_path . 'user/authenticate.php';
-            break;
-
-        case 'add-study':
-            require_once $frontend_path . 'contents/add_new_study.php';
-            break;
-
-        case 'prepare-agenda':
-            require_once $frontend_path . 'contents/prepare_agenda.php';
-            break;
-
-        case 'minutes':
-            require_once $frontend_path . 'contents/minutes_preparation.php';
-            break;
-
-        case 'login':
-            require_once $frontend_path . 'user/login.php';
-            break;
-
-        case 'register':
-            require_once $frontend_path . 'user/register.php';
-            break;
-
-        case 'generate-letter':
-            require_once $frontend_path . 'contents/general_letters_content.php';
-            break;
-
-        case 'contacts':
-            require_once $frontend_path . 'contents/create_contact.php';
-            break;
-
-        case 'logout':
-            require_once $frontend_path . 'user/logout.php';
-            break;
-
-        case 'about':
-            require_once $frontend_path . 'static/about.php';
-            break;
-
-
-        case 'account-information':
-            require_once $frontend_path . 'contents/account_information.php';
-            break;
-
-        case 'shipping':
-            require_once $frontend_path . 'static/shipping.php';
-            break;
-
-        case 'returns':
-            require_once $frontend_path . 'static/returns.php';
-            break;
-
-        case 'terms':
-            require_once $frontend_path . 'static/terms.php';
-            break;
-
-        case 'privacy':
-            require_once $frontend_path . 'static/privacy.php';
-            break;
-
-        case 'size-guide':
-            require_once $frontend_path . 'static/size-guide.php';
-            break;
-
-        case 'careers':
-            require_once $frontend_path . 'static/careers.php';
-            break;
-
-        case 'press':
-            require_once $frontend_path . 'static/press.php';
-            break;
-
-        case 'blog':
-            require_once $frontend_path . 'static/blog.php';
-            break;
-
-        case 'sustainability':
-            require_once $frontend_path . 'static/sustainability.php';
-            break;
-
-        default:
-            // 404 for unknown routes
-            require_once 'admin/404.php';
-            break;
+if (isset($routes[$section])) {
+    if ($subpage && isset($routes[$section][$subpage])) {
+        $pageConfig = $routes[$section][$subpage];
+    } elseif (isset($routes[$section]['_'])) {
+        $pageConfig = $routes[$section]['_'];
     }
 }
 
-include 'admin/includes/footer.php';
+if (!$pageConfig) {
+    http_response_code(404);
+    require $ERROR_404;
+    exit;
+}
+
+/* ==========================================================
+ | ROLE CHECK
+ ========================================================== */
+$roles = $pageConfig['roles'] ?? [];
+
+if ($roles) {
+    if (!is_authenticated()) {
+        // User not logged in at all, redirect to login
+        header('Location: /login');
+        exit;
+    }
+
+    if (!in_array($_SESSION['role'], $roles, true)) {
+        // User logged in but wrong role, show 403
+        http_response_code(403);
+        require $ERROR_403;
+        exit;
+    }
+}
+
+/* ==========================================================
+ | FILE RESOLUTION
+ ========================================================== */
+$file = $pageConfig['file'];
+
+$resolvedFile = null;
+
+// Check if the file path already exists directly (for routes with full paths like 'reviewer/pages/index.php')
+if (file_exists($file)) {
+    $resolvedFile = $file;
+} elseif (file_exists($ADMIN_BASE . $file)) {
+    $resolvedFile = $ADMIN_BASE . $file;
+} elseif (file_exists($APPLICANT_BASE . $file)) {
+    $resolvedFile = $APPLICANT_BASE . $file;
+} elseif (file_exists($REVIEWER_BASE . $file)) {
+    $resolvedFile = $REVIEWER_BASE . $file;
+} elseif (file_exists($USER_BASE . $file)) {
+    $resolvedFile = $USER_BASE . $file;
+}
+
+if (!$resolvedFile) {
+    http_response_code(404);
+    require $ERROR_404;
+    exit;
+}
+
+/* ==========================================================
+ | RENDER (SAFE HEADER HANDLING)
+ ========================================================== */
+$type = $pageConfig['type'] ?? 'page';
+
+if ($type === 'page') {
+    require 'admin/includes/header.php';
+}
+
+require $resolvedFile;
+
+if ($type === 'page') {
+    require 'admin/includes/footer.php';
+}

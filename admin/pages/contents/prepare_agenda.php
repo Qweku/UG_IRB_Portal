@@ -1,5 +1,14 @@
 <?php
 
+// Authentication check
+// if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+//     header('Location: /login');
+//     exit;
+// }
+
+// Include CSRF protection
+// require_once '../../includes/functions/csrf.php';
+
 try {
     $db = new Database();
     $conn = $db->connect();
@@ -38,32 +47,217 @@ try {
     echo json_encode(['status' => 'error', 'message' => 'Failed to fetch meeting. Please try again.']);
 }
 
-
+// Function to sanitize output
+function esc($value) {
+    return htmlspecialchars($value ?? '', ENT_QUOTES, 'UTF-8');
+}
 
 ?>
 
+<style>
+    .modal-sae {
+        max-width: 900px;
+    }
+    .sae-header {
+        background: linear-gradient(135deg, var(--royal-blue), var(--royal-blue-light));
+        color: white;
+    }
+    .study-info-card {
+        border-left: 4px solid #0d6efd;
+        background-color: #f8f9fa;
+    }
+    .status-badge {
+        font-size: 0.8rem;
+        padding: 0.35rem 0.75rem;
+    }
+    .section-divider {
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem;
+        color: #2c3e50;
+        font-weight: 600;
+    }
+    .form-label {
+        font-weight: 500;
+        color: #495057;
+        margin-bottom: 0.4rem;
+    }
+    .required-field::after {
+        content: " *";
+        color: #dc3545;
+    }
+    .radio-group-horizontal .form-check {
+        margin-right: 1.5rem;
+        margin-bottom: 0;
+    }
+    .date-input-group {
+        position: relative;
+    }
+    .date-input-group .bi {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        pointer-events: none;
+    }
+    .file-upload-area {
+        border: 2px dashed #dee2e6;
+        border-radius: 0.375rem;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .file-upload-area:hover {
+        border-color: #0d6efd;
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+    .file-upload-area.dragover {
+        border-color: #198754;
+        background-color: rgba(25, 135, 84, 0.1);
+    }
+    .personnel-table-container {
+        max-height: 250px;
+        overflow-y: auto;
+    }
+    @media (max-width: 768px) {
+        .modal-sae {
+            margin: 0.5rem;
+        }
+        .radio-group-horizontal .form-check {
+            margin-right: 1rem;
+        }
+    }
+    .cursor-pointer {
+        cursor: pointer;
+    }
+</style>
 
-<div class="agenda-preparation p-5">
+<!-- Error/Success Messages -->
+<?php if (isset($_SESSION['error_message'])): ?>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <?php echo esc($_SESSION['error_message']); unset($_SESSION['error_message']); ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+<?php endif; ?>
+
+<?php if (isset($_SESSION['success_message'])): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <?php echo esc($_SESSION['success_message']); unset($_SESSION['success_message']); ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+<?php endif; ?>
+
+<div class="agenda-preparation p-4 p-lg-5">
     <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">Agenda Preparation</h2>
-
+        <div>
+            <h2 class="mb-1">Agenda Preparation</h2>
+            <p class="text-muted mb-0">Prepare the agenda for upcoming IRB meetings</p>
+        </div>
+        <span class="badge bg-success fs-6">Active</span>
     </div>
 
     <!-- Institution Header -->
-    <div class="card mb-4">
-        <div class="card-body text-center bg-light">
-            <h4 class="text-dark mb-1">NOGUCHI MEMORIAL INSTITUTE FOR MEDICAL RESEARCH-IRB</h4>
+    <div class="card mb-4 border-primary">
+        <div class="card-body text-center bg-primary bg-opacity-10 py-3">
+            <h4 class="text-primary mb-1 fw-bold">NOGUCHI MEMORIAL INSTITUTE FOR MEDICAL RESEARCH-IRB</h4>
+            <h5 class="text-muted mb-0">Institutional Review Board</h5>
+        </div>
+    </div>
 
+    <!-- Actions Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0 fw-bold">Actions</h6>
+                </div>
+                <div class="card-body">
+                    <!-- Initial Application Section -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+
+                            <input type="checkbox">
+                            <label class="form-label fw-semibold">Print Report Date</label>
+                        </div>
+
+                        <div class="col-md-3">
+                            <input type="checkbox">
+                            <label class="form-label fw-semibold">Print Sites</label>
+                        </div>
+
+                        <div class="col-md-3">
+
+                            <input type="checkbox">
+                            <label class="form-label fw-semibold">Print Co-Investigators</label>
+                        </div>
+
+                        <div class="col-md-3">
+
+                            <input type="checkbox">
+                            <label class="form-label fw-semibold">Print Item Numbers</label>
+                        </div>
+                    </div>
+
+                   
+
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <button class="btn btn-primary btn-md">
+                                <i class="fas fa-eye me-1"></i>Preview (Large fonts)
+                            </button>
+                        </div>
+
+                        <div class="col-md-3">
+                            <button class="btn btn-primary btn-md">
+                                <i class="fas fa-eye me-1"></i>Preview (Small fonts)
+                            </button>
+                        </div>
+
+                         <div class="col-md-3">
+                            <button class="btn btn-primary btn-md">
+                                <i class="fas fa-download me-1"></i>Download PDF (Large fonts)
+                            </button>
+                        </div>
+
+                        <div class="col-md-3">
+                            <button class="btn btn-primary btn-md">
+                                <i class="fas fa-dowload me-1"></i>Download PDF (Small fonts)
+                            </button>
+                        </div>
+                    </div>
+
+                
+
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <button class="btn btn-primary btn-md">
+                                <i class="fas fa-download me-1"></i>Download Word (Large fonts)
+                            </button>
+                        </div>
+
+                        <div class="col-md-3">
+                            <button class="btn btn-primary btn-md">
+                                <i class="fas fa-download me-1"></i>Download Word (Small fonts)
+                            </button>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Main Form Content -->
     <form class="needs-validation" id="agendaForm">
+        <?php echo csrf_field(); ?>
         <div class="main-content">
             <!-- Study Header Section -->
             <div class="row mb-4">
-                <div class="col-12">
+                <div class="col-md-12">
                     <div class="card">
                         <div class="card-header bg-light">
                             <div class="d-flex justify-content-between align-items-center">
@@ -97,11 +291,12 @@ try {
                         </div>
                     </div>
                 </div>
+
             </div>
 
-            <!-- IRB Member Section -->
             <div class="row mb-4">
-                <div class="col-12">
+                <!-- IRB Member Section -->
+                <div class="col-md-6">
                     <div class="card">
                         <div class="card-header bg-light d-flex justify-content-between align-items-center">
                             <h6 class="mb-0 fw-bold">IRB Members Section</h6>
@@ -124,14 +319,9 @@ try {
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td>-- No personnel added --</td>
-                                            <td>
-                                                <input type="checkbox">
+                                            <td colspan="5" class="text-center text-muted py-3">
+                                                -- No member added yet --
                                             </td>
-                                            <td>-</td>
-                                            <td>-</td>
-
-
                                         </tr>
                                     </tbody>
                                 </table>
@@ -159,11 +349,10 @@ try {
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Agenda Details Section -->
-            <div class="row mb-4">
-                <div class="col-md-12">
+
+                <!-- Agenda Details Section -->
+                <div class="col-md-6">
                     <div class="card">
                         <div class="card-header bg-light">
                             <h6 class="mb-0 fw-bold">Agenda Detials</h6>
@@ -217,98 +406,14 @@ try {
                         </div>
                     </div>
                 </div>
-
-
             </div>
 
 
 
-            <!-- Actions Section -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header bg-light">
-                            <h6 class="mb-0 fw-bold">Actions</h6>
-                        </div>
-                        <div class="card-body">
-                            <!-- Initial Application Section -->
-                            <div class="row mb-4">
-                                <div class="col-md-6">
 
-                                    <input type="checkbox">
-                                    <label class="form-label fw-semibold">Print Report Date</label>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <input type="checkbox">
-                                    <label class="form-label fw-semibold">Print Sites</label>
-                                </div>
-                            </div>
-
-                            <div class="row mb-4">
-                                <div class="col-md-6">
-
-                                    <input type="checkbox">
-                                    <label class="form-label fw-semibold">Print Co-Investigators</label>
-                                </div>
-
-                                <div class="col-md-6">
-
-                                    <input type="checkbox">
-                                    <label class="form-label fw-semibold">Print Item Numbers</label>
-                                </div>
-                            </div>
-
-                            <div class="row mb-4">
-                                <div class="col-md-6">
-                                    <button class="btn btn-primary btn-md">
-                                        <i class="fas fa-eye me-1"></i>Preview (Large fonts)
-                                    </button>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <button class="btn btn-primary btn-md">
-                                        <i class="fas fa-eye me-1"></i>Preview (Small fonts)
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="row mb-4">
-                                <div class="col-md-6">
-                                    <button class="btn btn-primary btn-md">
-                                        <i class="fas fa-download me-1"></i>Download PDF (Large fonts)
-                                    </button>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <button class="btn btn-primary btn-md">
-                                        <i class="fas fa-dowload me-1"></i>Download PDF (Small fonts)
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="row mb-4">
-                                <div class="col-md-6">
-                                    <button class="btn btn-primary btn-md">
-                                        <i class="fas fa-download me-1"></i>Download Word (Large fonts)
-                                    </button>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <button class="btn btn-primary btn-md">
-                                        <i class="fas fa-download me-1"></i>Download Word (Small fonts)
-                                    </button>
-                                </div>
-                            </div>
-
-
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
-        <div>
+        <div class="d-flex justify-content-end">
             <button type="submit" class="btn btn-success me-2">
                 <i class="fas fa-save me-1"></i> Save Agenda
             </button>
@@ -451,7 +556,6 @@ try {
                 showToast('error', result.message);
             }
         } catch (error) {
-            // console.log('Error:', error);
             showToast('error', 'An unexpected error occurred.');
         }
     });
