@@ -1,5 +1,10 @@
-# Enable URL rewriting
 RewriteEngine On
 
-# Rewrite /maintenance to admin/pages/maintenance.php
-RewriteRule ^maintenance/?$ admin/pages/maintenance.php [L]
+# If request is NOT a real file
+RewriteCond %{REQUEST_FILENAME} !-f
+
+# And NOT a real directory
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Redirect everything to index.php
+RewriteRule ^ index.php [L]
