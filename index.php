@@ -67,13 +67,24 @@ $MAINTENANCE_PAGE = 'admin/pages/maintenance.php';
  | REQUEST PARSING
  ========================================================== */
 $requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$scriptDir   = dirname($_SERVER['SCRIPT_NAME']);
 
-$path     = trim(str_replace($scriptDir, '', $requestPath), '/');
-$segments = array_values(array_filter(explode('/', $path)));
+// Remove trailing slash
+$requestPath = rtrim($requestPath, '/');
+
+// Get base directory dynamically
+$basePath = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
+
+if ($basePath && strpos($requestPath, $basePath) === 0) {
+    $requestPath = substr($requestPath, strlen($basePath));
+}
+
+$requestPath = trim($requestPath, '/');
+
+$segments = explode('/', $requestPath);
 
 $section = $segments[0] ?? 'dashboard';
 $subpage = $segments[1] ?? null;
+
 
 /* ==========================================================
  | AUTH PAGE GUARD (PREVENT LOGIN LOOP)

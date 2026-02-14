@@ -57,7 +57,7 @@ define('BASE_URL', getenv('BASE_URL') ?: 'https://ughares.ug.edu.gh/');
 define('BASE_PATH', dirname(__FILE__));
 
 // Database configuration - use environment variables or fallbacks
-define('DB_HOST', getenv('DB_HOST') ?: 'ughares.ug.edu.gh');
+define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
 define('DB_NAME', getenv('DB_NAME') ?: 'ugharesadmin_ugirb');
 define('DB_USER', getenv('DB_USER') ?: 'ugharesadmin_nimda');
 define('DB_PASS', getenv('DB_PASS') ?: 'Exodus14:14');
