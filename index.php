@@ -2,11 +2,28 @@
 
 declare(strict_types=1);
 
-/* ==========================================================
- | MAINTENANCE MODE CHECK (must be at top before any output)
- ========================================================== */
+
 require_once 'config.php';
 
+
+
+/* ==========================================================
+ | BOOTSTRAP
+ ========================================================== */
+require_once 'includes/functions/csrf.php';
+
+// Use consistent session name across entire application
+// This must be set BEFORE session_start()
+defined('CSRF_SESSION_NAME') || define('CSRF_SESSION_NAME', 'ug_irb_session');
+session_name(CSRF_SESSION_NAME);
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+/* ==========================================================
+ | MAINTENANCE MODE CHECK (moved after session start)
+ ========================================================== */
 // Check if maintenance mode is enabled and we're NOT on the maintenance page
 $maintenance_mode = getenv('MAINTENANCE_MODE') === 'true';
 if ($maintenance_mode) {
@@ -29,21 +46,7 @@ if ($maintenance_mode) {
 }
 
 /* ==========================================================
- | BOOTSTRAP
- ========================================================== */
-require_once 'includes/functions/csrf.php';
-
-// Use consistent session name across entire application
-// This must be set BEFORE session_start()
-defined('CSRF_SESSION_NAME') || define('CSRF_SESSION_NAME', 'ug_irb_session');
-session_name(CSRF_SESSION_NAME);
-
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-/* ==========================================================
- | DATABASE CONNECTION (needed for session validation)
+ | DATABASE CONNECTION (only if not in maintenance mode)
  ========================================================== */
 require_once 'includes/config/database.php';
 $db = new Database();
