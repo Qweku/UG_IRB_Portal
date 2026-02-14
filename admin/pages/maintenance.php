@@ -8,13 +8,17 @@
     <meta name="description" content="UG IRB Portal is currently undergoing scheduled maintenance. We will be back shortly.">
     <meta name="robots" content="noindex, nofollow">
     <title>Maintenance Mode - UG Hares</title>
-    
+    <link rel="apple-touch-icon" sizes="180x180" href="/admin/assets/images/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/admin/assets/images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/admin/assets/images/favicon-16x16.png">
+    <link rel="manifest" href="/admin/assets/images/site.webmanifest">
+
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <!-- Maintenance Page Styles -->
     <link href="/admin/assets/css/maintenance.css" rel="stylesheet">
 </head>
@@ -25,7 +29,7 @@
     <!-- Main Content -->
     <main class="maintenance-main" role="main">
         <div class="maintenance-card">
-            
+
             <!-- Animated Icon Container -->
             <div class="maintenance-icon-container">
                 <i class="fas fa-cog maintenance-icon" aria-hidden="true"></i>
@@ -36,7 +40,7 @@
 
             <!-- Explanatory Message -->
             <p class="maintenance-message">
-                We're currently performing scheduled maintenance to improve our services. 
+                We're currently performing scheduled maintenance to improve our services.
                 We'll be back shortly. Thank you for your patience.
             </p>
 
@@ -53,7 +57,7 @@
                 <p class="maintenance-footer-title">UG IRB Portal</p>
                 <p class="maintenance-footer-text">Institutional Review Board - Ethics Committee</p>
             </footer>
-            
+
         </div>
     </main>
 

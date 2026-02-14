@@ -37,23 +37,8 @@ $current_uri = $_SERVER['REQUEST_URI'] ?? '';
 $maintenance_page = '/maintenance'; // Path to the maintenance page
 
 // If maintenance mode is enabled and we're NOT on the maintenance page, redirect
-if ($maintenance_mode) {
-    // Allow access to the maintenance page itself
-    if (strpos($current_uri, $maintenance_page) !== false) {
-        // We're on the maintenance page, allow access
-        return;
-    }
-
-    // Destroy all sessions to log out users
-    if (session_status() === PHP_SESSION_ACTIVE) {
-        $_SESSION = array();
-        session_destroy();
-    }
-
-    // Perform the redirect
-    header('Location: ' . $maintenance_page);
-    exit;
-}
+// NOTE: The actual redirect logic is handled in index.php to ensure proper flow
+// This block just checks if we're on the maintenance page to allow access
 
 /**
  * Error Handling Configuration
@@ -87,5 +72,4 @@ define('FROM_EMAIL', getenv('FROM_EMAIL') ?: 'no-reply@ug.edu.gh');
 define('FROM_NAME', getenv('FROM_NAME') ?: 'UG IRB Portal');
 
 // Include required files
-require_once 'includes/config/database.php';
 require_once 'includes/functions/helpers.php';
