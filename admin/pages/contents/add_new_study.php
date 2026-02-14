@@ -1,9 +1,9 @@
 <?php
 
 // Prevent caching
-header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-header('Pragma: no-cache');
-header('Expires: 0');
+// header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+// header('Pragma: no-cache');
+// header('Expires: 0');
 
 // Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {

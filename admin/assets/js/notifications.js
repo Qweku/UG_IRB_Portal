@@ -22,14 +22,14 @@
     /**
      * Initialize the notification system
      */
-    function init() {
+    async function init() {
         if (!notificationBtn || !notificationPanel) {
             console.warn('Notification elements not found');
             return;
         }
-
-        // Load notifications from storage or use default
-        loadNotifications();
+        console.log("Loading Notifications");
+        // Load notifications from storage or fetch from database
+        await loadNotifications();
 
         // Event listeners
         setupEventListeners();
@@ -41,19 +41,19 @@
     }
 
     /**
-     * Load notifications from localStorage or use defaults
+     * Load notifications from localStorage or fetch from database
      */
-    function loadNotifications() {
+    async function loadNotifications() {
         const stored = localStorage.getItem('ug_irb_notifications');
         if (stored) {
             try {
                 notifications = JSON.parse(stored);
             } catch (e) {
                 console.error('Error parsing notifications:', e);
-                notifications = getDefaultNotifications();
+                notifications = await getDefaultNotifications();
             }
         } else {
-            notifications = getDefaultNotifications();
+            notifications = await getDefaultNotifications();
         }
         
         // Calculate unread count
@@ -61,9 +61,31 @@
     }
 
     /**
-     * Get default notifications for demo purposes
+     * Fetch notifications from the database
+     * @returns {Promise<Array>} Array of notifications
      */
-    function getDefaultNotifications() {
+    async function getDefaultNotifications() {
+        try {
+            const response = await fetch('/admin/handlers/fetch_notifications.php');
+            const data = await response.json();
+            
+            if (data.status === 'success' && data.notifications && data.notifications.length > 0) {
+                return data.notifications;
+            } else {
+                console.warn('No notifications found or fetch failed');
+                return [];
+            }
+        } catch (error) {
+            console.error('Error fetching notifications:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Fallback notifications when database fetch fails
+     * @returns {Array} Default notification array
+     */
+    function getFallbackNotifications() {
         return [
             {
                 id: 1,
@@ -78,44 +100,44 @@
                     { text: "Assign Reviewers", primary: false, action: "assign" }
                 ]
             },
-            {
-                id: 2,
-                title: "Review Completed",
-                message: "Dr. Jane Doe has completed the review for protocol #2023-156.",
-                time: "1 hour ago",
-                read: false,
-                type: "review",
-                details: "The review has been submitted with the following recommendations: Approved with minor revisions. Please review the comments and prepare the response letter.",
-                actions: [
-                    { text: "View Review", primary: true, action: "view" },
-                    { text: "Prepare Response", primary: false, action: "respond" }
-                ]
-            },
-            {
-                id: 3,
-                title: "Upcoming IRB Meeting",
-                message: "The next IRB meeting is scheduled for next Tuesday at 10:00 AM.",
-                time: "3 hours ago",
-                read: true,
-                type: "meeting",
-                details: "Agenda items include: 5 new applications, 3 continuing reviews, and 2 protocol amendments. Please ensure all materials are prepared by Friday.",
-                actions: [
-                    { text: "View Agenda", primary: true, action: "agenda" },
-                    { text: "Add Items", primary: false, action: "add" }
-                ]
-            },
-            {
-                id: 4,
-                title: "System Maintenance Scheduled",
-                message: "The system will undergo maintenance this weekend.",
-                time: "Yesterday",
-                read: true,
-                type: "system",
-                details: "Scheduled maintenance will occur from Saturday 10 PM to Sunday 6 AM. During this time, the system will be unavailable. Please save your work before the maintenance window.",
-                actions: [
-                    { text: "Acknowledge", primary: true, action: "acknowledge" }
-                ]
-            }
+            // {
+            //     id: 2,
+            //     title: "Review Completed",
+            //     message: "Dr. Jane Doe has completed the review for protocol #2023-156.",
+            //     time: "1 hour ago",
+            //     read: false,
+            //     type: "review",
+            //     details: "The review has been submitted with the following recommendations: Approved with minor revisions. Please review the comments and prepare the response letter.",
+            //     actions: [
+            //         { text: "View Review", primary: true, action: "view" },
+            //         { text: "Prepare Response", primary: false, action: "respond" }
+            //     ]
+            // },
+            // {
+            //     id: 3,
+            //     title: "Upcoming IRB Meeting",
+            //     message: "The next IRB meeting is scheduled for next Tuesday at 10:00 AM.",
+            //     time: "3 hours ago",
+            //     read: true,
+            //     type: "meeting",
+            //     details: "Agenda items include: 5 new applications, 3 continuing reviews, and 2 protocol amendments. Please ensure all materials are prepared by Friday.",
+            //     actions: [
+            //         { text: "View Agenda", primary: true, action: "agenda" },
+            //         { text: "Add Items", primary: false, action: "add" }
+            //     ]
+            // },
+            // {
+            //     id: 4,
+            //     title: "System Maintenance Scheduled",
+            //     message: "The system will undergo maintenance this weekend.",
+            //     time: "Yesterday",
+            //     read: true,
+            //     type: "system",
+            //     details: "Scheduled maintenance will occur from Saturday 10 PM to Sunday 6 AM. During this time, the system will be unavailable. Please save your work before the maintenance window.",
+            //     actions: [
+            //         { text: "Acknowledge", primary: true, action: "acknowledge" }
+            //     ]
+            // }
         ];
     }
 
@@ -214,20 +236,32 @@
     /**
      * Mark all notifications as read
      */
-    function markAllAsRead() {
+    async function markAllAsRead() {
+        // Update local state
         notifications.forEach(n => n.read = true);
         unreadCount = 0;
         saveNotifications();
         renderNotifications();
         updateBadge();
         updatePulseAnimation();
+        
+        // Sync with database
+        try {
+            await fetch('/admin/handlers/mark_notification_read.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'mark_all=true'
+            });
+        } catch (error) {
+            console.error('Error syncing read status to database:', error);
+        }
     }
 
     /**
      * Mark a single notification as read
      * @param {number} id - Notification ID
      */
-    function markAsRead(id) {
+    async function markAsRead(id) {
         const notification = notifications.find(n => n.id === id);
         if (notification && !notification.read) {
             notification.read = true;
@@ -235,6 +269,17 @@
             saveNotifications();
             updateBadge();
             updatePulseAnimation();
+            
+            // Sync with database
+            try {
+                await fetch('/admin/handlers/mark_notification_read.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'notification_id=' + id
+                });
+            } catch (error) {
+                console.error('Error syncing read status to database:', error);
+            }
         }
     }
 
@@ -253,11 +298,16 @@
         // Mark as read when expanded
         markAsRead(id);
         
-        // Re-render to update read state
-        if (notificationList) {
+        // Update the existing DOM element to reflect read state
+        if (item) {
             const notification = notifications.find(n => n.id === id);
-            if (notification) {
-                renderNotificationItem(notification, notificationList);
+            if (notification && notification.read) {
+                item.classList.remove('unread');
+                // Remove unread indicator if it exists
+                const indicator = item.querySelector('.unread-indicator');
+                if (indicator) {
+                    indicator.remove();
+                }
             }
         }
     }
@@ -421,6 +471,30 @@
     }
 
     /**
+     * Refresh notifications from database (bypass localStorage)
+     */
+    async function refreshNotifications() {
+        try {
+            const response = await fetch('../handlers/fetch_notifications.php');
+            const data = await response.json();
+            
+            if (data.status === 'success' && data.notifications) {
+                notifications = data.notifications;
+                unreadCount = data.unread_count || notifications.filter(n => !n.read).length;
+                saveNotifications();
+                renderNotifications();
+                updateBadge();
+                updatePulseAnimation();
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Error refreshing notifications:', error);
+            return false;
+        }
+    }
+
+    /**
      * Clear all notifications
      */
     function clearAll() {
@@ -442,6 +516,7 @@
         handleAction,
         addNotification,
         clearAll,
+        refreshNotifications,
         getNotifications: () => notifications,
         getUnreadCount: () => unreadCount
     };
