@@ -53,14 +53,14 @@ if (getenv('APP_ENV') === 'production') {
 }
 
 // Base path configuration
-define('BASE_URL', getenv('BASE_URL') ?: 'http://localhost/UG_IRB_Portal/');
+define('BASE_URL', getenv('BASE_URL') ?: 'https://ughares.ug.edu.gh/');
 define('BASE_PATH', dirname(__FILE__));
 
 // Database configuration - use environment variables or fallbacks
-define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
-define('DB_NAME', getenv('DB_NAME') ?: 'ug_irb_portal');
-define('DB_USER', getenv('DB_USER') ?: 'root');
-define('DB_PASS', getenv('DB_PASS') ?: '');
+define('DB_HOST', getenv('DB_HOST') ?: 'ughares.ug.edu.gh');
+define('DB_NAME', getenv('DB_NAME') ?: 'ugharesadmin_ugirb');
+define('DB_USER', getenv('DB_USER') ?: 'ugharesadmin_nimda');
+define('DB_PASS', getenv('DB_PASS') ?: 'Exodus14:14');
 
 // Email configuration - use environment variables
 define('SMTP_HOST', getenv('SMTP_HOST') ?: 'smtp.gmail.com');
