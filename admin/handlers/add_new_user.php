@@ -94,11 +94,11 @@ try {
     
     if ($phoneColumnExists) {
         // Insert user with phone
-        $stmt = $conn->prepare("INSERT INTO users (full_name, email, phone_number, password_hash, role, institution_id, status, created_at) VALUES (?, ?, ?, ?, ?, ?, 'active', NOW())");
+        $stmt = $conn->prepare("INSERT INTO users (full_name, email, phone_number, password_hash, role, institution_id, status, is_first, created_at) VALUES (?, ?, ?, ?, ?, ?, 'active', 0, NOW())");
         $stmt->execute([$full_name, $email, $phone, $hashed_password, $role, $institution_id]);
     } else {
         // Insert user without phone
-        $stmt = $conn->prepare("INSERT INTO users (full_name, email, password_hash, role, institution_id, status, created_at) VALUES (?, ?, ?, ?, ?, 'active', NOW())");
+        $stmt = $conn->prepare("INSERT INTO users (full_name, email, password_hash, role, institution_id, status, is_first, created_at) VALUES (?, ?, ?, ?, ?, 'active', 0, NOW())");
         $stmt->execute([$full_name, $email, $hashed_password, $role, $institution_id]);
     }
 

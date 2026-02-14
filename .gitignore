@@ -3,3 +3,4 @@
 /tests
 /plans
 .env
+config.php

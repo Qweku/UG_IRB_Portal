@@ -100,8 +100,9 @@ function validate_admin_session_token($conn): bool {
 
 function require_auth() {
     // Ensure session is started with consistent session name (idempotent)
-    session_name(CSRF_SESSION_NAME);
+    // Only call session_name() if session hasn't been started yet
     if (session_status() === PHP_SESSION_NONE) {
+        session_name(CSRF_SESSION_NAME);
         session_set_cookie_params([
             'lifetime' => 0,
             'path' => '/',
@@ -179,8 +180,9 @@ function is_authenticated() {
  */
 function get_current_user_id() {
     // Ensure session is started with consistent session name (idempotent)
-    session_name(CSRF_SESSION_NAME);
+    // Only call session_name() if session hasn't been started yet
     if (session_status() === PHP_SESSION_NONE) {
+        session_name(CSRF_SESSION_NAME);
         session_set_cookie_params([
             'lifetime' => 0,
             'path' => '/',

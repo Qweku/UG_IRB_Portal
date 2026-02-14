@@ -401,7 +401,6 @@ function buildUsersQueryString($exclude = []) {
                                                 <option value="">Select Role</option>
                                                 <option value="admin">Admin</option>
                                                 <option value="super_admin">Super Admin</option>
-                                                <option value="applicant">Applicant</option>
                                                 <option value="reviewer">Reviewer</option>
                                             </select>
                                             <div class="invalid-feedback" id="userRoleError"></div>
@@ -1885,6 +1884,12 @@ function buildUsersQueryString($exclude = []) {
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             });
+            
+            // Check if response is OK
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status} ${response.statusText}`);
+            }
+            
             const data = await response.json();
             
             if (data.status === 'success') {
@@ -1896,10 +1901,14 @@ function buildUsersQueryString($exclude = []) {
                     option.textContent = inst.institution_name;
                     select.appendChild(option);
                 });
+            } else if (data.status === 'error') {
+                // Display server error message
+                console.error('Server error:', data.message);
+                showAddUserToast('error', data.message || 'Failed to load institutions');
             }
         } catch (error) {
             console.error('Error fetching institutions:', error);
-            showAddUserToast('error', 'Failed to load institutions');
+            showAddUserToast('error', 'Failed to load institutions: ' + error.message);
         }
     }
 

@@ -7,8 +7,8 @@ $recentActivities = getRecentActivities();
 
 $user_name = "";
 if (isset($_SESSION['user_id'])) {
-    $db = new Database();
-    $conn = $db->connect();
+    // $db = new Database();
+    // $conn = $db->connect();
 
     $stmt = $conn->prepare("SELECT full_name FROM users WHERE id = ?");
     $stmt->execute([$_SESSION['user_id']]);
