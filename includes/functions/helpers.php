@@ -65,16 +65,29 @@ function executeListQuery($query, $params = [])
  * Execute a query and return associative array
  * @param string $query
  * @param array $params
+ * @param array $types Optional PDO::PARAM_* types for each parameter (e.g., [PDO::PARAM_INT, PDO::PARAM_STR])
  * @return array
  */
-function executeAssocQuery($query, $params = [])
+function executeAssocQuery($query, $params = [], $types = [])
 {
     $db = new Database();
     $conn = $db->connect();
     if (!$conn) return [];
     try {
         $stmt = $conn->prepare($query);
-        $stmt->execute($params);
+        
+        // Bind parameters with explicit types if provided
+        if (!empty($types)) {
+            foreach ($params as $index => $value) {
+                $paramIndex = $index + 1; // PDO uses 1-based indexing
+                $paramType = $types[$index] ?? PDO::PARAM_STR;
+                $stmt->bindValue($paramIndex, $value, $paramType);
+            }
+            $stmt->execute();
+        } else {
+            $stmt->execute($params);
+        }
+        
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
         error_log("Error executing assoc query: " . $e->getMessage());
@@ -293,9 +306,17 @@ function getAgendaRecords($limit = null, $offset = null)
     $institutionId = get_user_institution_id();
     if ($limit !== null && $offset !== null) {
         if ($institutionId) {
-            return executeAssocQuery("SELECT irb_code, meeting_date, agenda_heading FROM agenda_records WHERE institution_id = ? ORDER BY meeting_date DESC LIMIT ? OFFSET ?", [$institutionId, $limit, $offset]);
+            return executeAssocQuery(
+                "SELECT irb_code, meeting_date, agenda_heading FROM agenda_records WHERE institution_id = ? ORDER BY meeting_date DESC LIMIT ? OFFSET ?", 
+                [$institutionId, (int)$limit, (int)$offset],
+                [PDO::PARAM_STR, PDO::PARAM_INT, PDO::PARAM_INT]
+            );
         }
-        return executeAssocQuery("SELECT irb_code, meeting_date, agenda_heading FROM agenda_records ORDER BY meeting_date DESC LIMIT ? OFFSET ?", [$limit, $offset]);
+        return executeAssocQuery(
+            "SELECT irb_code, meeting_date, agenda_heading FROM agenda_records ORDER BY meeting_date DESC LIMIT ? OFFSET ?", 
+            [(int)$limit, (int)$offset],
+            [PDO::PARAM_INT, PDO::PARAM_INT]
+        );
     }
     if ($institutionId) {
         return executeAssocQuery("SELECT irb_code, meeting_date, agenda_heading FROM agenda_records WHERE institution_id = ? ORDER BY meeting_date DESC", [$institutionId]);
@@ -311,7 +332,11 @@ function getLetterTemplates()
 function getAllInstitutions($limit = null, $offset = null)
 {
     if ($limit !== null && $offset !== null) {
-        return executeAssocQuery("SELECT * FROM institutions ORDER BY id ASC LIMIT ? OFFSET ?", [$limit, $offset]);
+        return executeAssocQuery(
+            "SELECT * FROM institutions ORDER BY id ASC LIMIT ? OFFSET ?", 
+            [(int)$limit, (int)$offset],
+            [PDO::PARAM_INT, PDO::PARAM_INT]
+        );
     }
     return executeAssocQuery("SELECT * FROM institutions ORDER BY id ASC");
 }
@@ -539,10 +564,15 @@ function getContinueReviewStudies($limit = null, $offset = null)
         if ($limit !== null && $offset !== null) {
             if ($institutionId) {
                 $stmt = $conn->prepare("SELECT * FROM studies WHERE expiration_date <= NOW() AND institution_id = ? ORDER BY expiration_date ASC LIMIT ? OFFSET ?");
-                $stmt->execute([$institutionId, $limit, $offset]);
+                $stmt->bindValue(1, $institutionId, PDO::PARAM_STR);
+                $stmt->bindValue(2, (int)$limit, PDO::PARAM_INT);
+                $stmt->bindValue(3, (int)$offset, PDO::PARAM_INT);
+                $stmt->execute();
             } else {
                 $stmt = $conn->prepare("SELECT * FROM studies WHERE expiration_date <= NOW() ORDER BY expiration_date ASC LIMIT ? OFFSET ?");
-                $stmt->execute([$limit, $offset]);
+                $stmt->bindValue(1, (int)$limit, PDO::PARAM_INT);
+                $stmt->bindValue(2, (int)$offset, PDO::PARAM_INT);
+                $stmt->execute();
             }
         } else {
             if ($institutionId) {
@@ -664,7 +694,10 @@ function getMeetings($limit = null, $offset = null)
         if ($institutionId) {
             if ($limit !== null && $offset !== null) {
                 $stmt = $conn->prepare("SELECT * FROM agenda_items WHERE institution_id = ? ORDER BY meeting_date DESC LIMIT ? OFFSET ?");
-                $stmt->execute([$institutionId, $limit, $offset]);
+                $stmt->bindValue(1, $institutionId, PDO::PARAM_STR);
+                $stmt->bindValue(2, (int)$limit, PDO::PARAM_INT);
+                $stmt->bindValue(3, (int)$offset, PDO::PARAM_INT);
+                $stmt->execute();
             } else {
                 $stmt = $conn->prepare("SELECT * FROM agenda_items WHERE institution_id = ? ORDER BY meeting_date DESC");
                 $stmt->execute([$institutionId]);
@@ -673,7 +706,9 @@ function getMeetings($limit = null, $offset = null)
         }
         if ($limit !== null && $offset !== null) {
             $stmt = $conn->prepare("SELECT * FROM agenda_items ORDER BY meeting_date DESC LIMIT ? OFFSET ?");
-            $stmt->execute([$limit, $offset]);
+            $stmt->bindValue(1, (int)$limit, PDO::PARAM_INT);
+            $stmt->bindValue(2, (int)$offset, PDO::PARAM_INT);
+            $stmt->execute();
         } else {
             $stmt = $conn->prepare("SELECT * FROM agenda_items ORDER BY meeting_date DESC");
             $stmt->execute();
@@ -1588,7 +1623,9 @@ function getAllApplications($limit = null, $offset = null)
         if ($limit !== null && $offset !== null) {
             $query .= " LIMIT ? OFFSET ?";
             $stmt = $conn->prepare($query);
-            $stmt->execute([$limit, $offset]);
+            $stmt->bindValue(1, (int)$limit, PDO::PARAM_INT);
+            $stmt->bindValue(2, (int)$offset, PDO::PARAM_INT);
+            $stmt->execute();
         } else {
             $stmt = $conn->prepare($query);
             $stmt->execute();
