@@ -45,16 +45,16 @@
      */
     async function loadNotifications() {
         const stored = localStorage.getItem('ug_irb_notifications');
-        if (stored) {
+       
             try {
-                notifications = JSON.parse(stored);
+                notifications = await getAllNotifications();
             } catch (e) {
                 console.error('Error parsing notifications:', e);
-                notifications = await getDefaultNotifications();
+                notifications = []
             }
-        } else {
-            notifications = await getDefaultNotifications();
-        }
+        // else {
+        //     notifications = []
+        // }
         
         // Calculate unread count
         unreadCount = notifications.filter(n => !n.read).length;
@@ -64,7 +64,7 @@
      * Fetch notifications from the database
      * @returns {Promise<Array>} Array of notifications
      */
-    async function getDefaultNotifications() {
+    async function getAllNotifications() {
         try {
             const response = await fetch('/admin/handlers/fetch_notifications.php');
             const data = await response.json();
@@ -81,65 +81,7 @@
         }
     }
 
-    /**
-     * Fallback notifications when database fetch fails
-     * @returns {Array} Default notification array
-     */
-    function getFallbackNotifications() {
-        return [
-            {
-                id: 1,
-                title: "New Application Received",
-                message: "Study protocol #2024-001 has been submitted for review by Dr. John Smith.",
-                time: "2 minutes ago",
-                read: false,
-                type: "application",
-                details: "This is a new research application seeking approval for a clinical trial on diabetes treatment. Please review the submitted documents and assign reviewers.",
-                actions: [
-                    { text: "Review", primary: true, action: "review" },
-                    { text: "Assign Reviewers", primary: false, action: "assign" }
-                ]
-            },
-            // {
-            //     id: 2,
-            //     title: "Review Completed",
-            //     message: "Dr. Jane Doe has completed the review for protocol #2023-156.",
-            //     time: "1 hour ago",
-            //     read: false,
-            //     type: "review",
-            //     details: "The review has been submitted with the following recommendations: Approved with minor revisions. Please review the comments and prepare the response letter.",
-            //     actions: [
-            //         { text: "View Review", primary: true, action: "view" },
-            //         { text: "Prepare Response", primary: false, action: "respond" }
-            //     ]
-            // },
-            // {
-            //     id: 3,
-            //     title: "Upcoming IRB Meeting",
-            //     message: "The next IRB meeting is scheduled for next Tuesday at 10:00 AM.",
-            //     time: "3 hours ago",
-            //     read: true,
-            //     type: "meeting",
-            //     details: "Agenda items include: 5 new applications, 3 continuing reviews, and 2 protocol amendments. Please ensure all materials are prepared by Friday.",
-            //     actions: [
-            //         { text: "View Agenda", primary: true, action: "agenda" },
-            //         { text: "Add Items", primary: false, action: "add" }
-            //     ]
-            // },
-            // {
-            //     id: 4,
-            //     title: "System Maintenance Scheduled",
-            //     message: "The system will undergo maintenance this weekend.",
-            //     time: "Yesterday",
-            //     read: true,
-            //     type: "system",
-            //     details: "Scheduled maintenance will occur from Saturday 10 PM to Sunday 6 AM. During this time, the system will be unavailable. Please save your work before the maintenance window.",
-            //     actions: [
-            //         { text: "Acknowledge", primary: true, action: "acknowledge" }
-            //     ]
-            // }
-        ];
-    }
+   
 
     /**
      * Save notifications to localStorage
