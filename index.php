@@ -80,10 +80,31 @@ if ($basePath && strpos($requestPath, $basePath) === 0) {
 
 $requestPath = trim($requestPath, '/');
 
-$segments = explode('/', $requestPath);
+$segments = array_values(array_filter(explode('/', $requestPath)));
 
-$section = $segments[0] ?? 'dashboard';
+$section = $segments[0] ?? null;
 $subpage = $segments[1] ?? null;
+
+// If no route provided (visiting "/"), redirect properly
+if ($section === null) {
+    if (is_authenticated()) {
+        switch ($_SESSION['role']) {
+            case 'admin':
+            case 'super_admin':
+                header('Location: /dashboard');
+                break;
+            case 'applicant':
+                header('Location: /applicant-dashboard');
+                break;
+            case 'reviewer':
+                header('Location: /reviewer-dashboard');
+                break;
+        }
+    } else {
+        header('Location: /login');
+    }
+    exit;
+}
 
 
 /* ==========================================================
