@@ -2,5 +2,7 @@
 /uploads/
 /tests
 /plans
+/includes/uploads
 .env
 config.php
+php_errors.log
