@@ -62,7 +62,7 @@ try {
     // Fetch the latest draft for this user
     // Order by created_at DESC to get the most recent draft
     $stmt = $conn->prepare("
-        SELECT * FROM student_applications 
+        SELECT * FROM applications 
         WHERE applicant_id = ? 
         AND application_type = ?
         AND status = 'draft'
@@ -75,7 +75,7 @@ try {
     if (!$draft) {
         // Check if there are any submitted applications (don't auto-fill if already submitted)
         $stmt = $conn->prepare("
-            SELECT COUNT(*) FROM student_applications 
+            SELECT COUNT(*) FROM applications 
             WHERE applicant_id = ? 
             AND status != 'draft'
         ");

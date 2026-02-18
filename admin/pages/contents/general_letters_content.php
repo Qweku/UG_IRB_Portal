@@ -481,4 +481,103 @@ $actionLetters = getActionLetters();
         ccField.value = ccEmails.join(', ');
         bootstrap.Modal.getInstance(document.getElementById('contactsModal')).hide();
     });
+
+    /* Download Letter Function */
+    function downloadLetter() {
+        // Get the selected letter template
+        const letterSelect = document.getElementById('letterSelect');
+        const templatePath = letterSelect.value;
+
+        // Validate that a letter is selected
+        if (!templatePath || letterSelect.options[letterSelect.selectedIndex].disabled) {
+            alert('Please select a letter template first.');
+            return;
+        }
+
+        // Get study number (IRB number)
+        const studyNumberInput = document.querySelector('input[name="study_number"]');
+        const studyNumber = studyNumberInput ? studyNumberInput.value : '';
+
+        if (!studyNumber || studyNumber === '#') {
+            alert('Study number is not available.');
+            return;
+        }
+
+        // Get other form values
+        const followUpDate = document.querySelector('input[name="follow_up_date"]').value;
+        const dueBy = document.querySelector('input[name="due_by"]').value;
+        const dateSent = document.querySelector('input[name="date_sent"]').value;
+
+        // Get letter type from the actionLetters array
+        const selectedLetter = actionLetters.find(l => l.file_path === templatePath);
+        const letterType = selectedLetter ? selectedLetter.letter_type : '';
+
+        // Prepare the form data
+        const formData = new FormData();
+        formData.append('study_id', study_id);
+        formData.append('template_path', templatePath);
+        formData.append('study_number', studyNumber);
+        formData.append('follow_up_date', followUpDate);
+        formData.append('due_by', dueBy);
+        formData.append('date_sent', dateSent);
+        formData.append('letter_type', letterType);
+
+        // Show loading indicator
+        const downloadBtn = document.getElementById('downloadBtn');
+        const originalBtnContent = downloadBtn.innerHTML;
+        downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Downloading...';
+        downloadBtn.disabled = true;
+
+        // Call the download handler
+        fetch('/admin/handlers/download_letter.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            // Check if the response is JSON (error) or a file download (success)
+            const contentType = response.headers.get('content-type');
+            
+            if (contentType && contentType.includes('application/json')) {
+                // It's a JSON error response
+                return response.json().then(errorData => {
+                    throw new Error(errorData.message || 'Failed to generate letter');
+                });
+            }
+
+            // It's a file download - get the filename from headers
+            const disposition = response.headers.get('Content-Disposition');
+            let filename = 'IRBActionLetter.docx';
+            if (disposition && disposition.includes('filename=')) {
+                const filenameMatch = disposition.match(/filename="?([^";\n]+)"?/);
+                if (filenameMatch) {
+                    filename = filenameMatch[1];
+                }
+            }
+
+            return response.blob().then(blob => ({ blob, filename }));
+        })
+        .then(({ blob, filename }) => {
+            // Create a download link and trigger it
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            // Show success message
+            alert('Letter downloaded successfully!');
+        })
+        .catch(error => {
+            console.error('Download error:', error);
+            alert('Error: ' + error.message);
+        })
+        .finally(() => {
+            // Restore button state
+            downloadBtn.innerHTML = originalBtnContent;
+            downloadBtn.disabled = false;
+        });
+    }
 </script>

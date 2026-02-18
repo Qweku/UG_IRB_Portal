@@ -1631,7 +1631,26 @@ function formatFileSize($bytes)
                 body: formData
             });
 
-            const data = await response.json();
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers.get('content-type'));
+            
+            const responseText = await response.text();
+            console.log('Response text:', responseText);
+            
+            let data;
+            try {
+                data = JSON.parse(responseText);
+            } catch (e) {
+                // Response is not JSON - show the error
+                hideLoadingOverlay();
+                showToast('error', 'Server error: ' + responseText.substring(0, 200));
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                console.error('Non-JSON response:', responseText);
+                return;
+            }
+            
+            console.log('Response data:', data);
 
             if (data.status === 'success') {
                 hideLoadingOverlay();
@@ -1647,7 +1666,7 @@ function formatFileSize($bytes)
             }
         } catch (error) {
             hideLoadingOverlay();
-            showToast('error', 'An unexpected error occurred');
+            showToast('error', 'Error: ' + error.message + '. Check console for details.');
             console.error('Error:', error);
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;

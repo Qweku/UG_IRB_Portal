@@ -235,10 +235,12 @@ class StudentHandler extends BaseAbstractHandler
 
         if ($recordExists) {
             // UPDATE existing record
+            error_log("StudentHandler: UPDATE operation reached for student application ID: " . $applicationId);
             return $this->updateTypeSpecific($applicationId);
         }
 
         // INSERT new record
+        error_log("StudentHandler: INSERT operation reached for student application ID: " . $applicationId);
         $stmt = $this->db->prepare("
             INSERT INTO student_application_details (
                 application_id,
@@ -383,6 +385,7 @@ class StudentHandler extends BaseAbstractHandler
      */
     protected function updateTypeSpecific(int $applicationId): bool
     {
+        error_log("StudentHandler: UPDATE operation executing for student application ID: " . $applicationId);
         $stmt = $this->db->prepare("
             UPDATE student_application_details SET
                 student_name = :student_name,

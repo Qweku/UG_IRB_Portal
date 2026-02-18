@@ -61,7 +61,7 @@ if (!$conn) {
 }
 
 try {
-    $stmt = $conn->prepare("SELECT * FROM student_applications WHERE id = ? AND applicant_id = ?");
+    $stmt = $conn->prepare("SELECT * FROM applications WHERE id = ? AND applicant_id = ?");
     $stmt->execute([$applicationId, $userId]);
     $application = $stmt->fetch(PDO::FETCH_ASSOC);
     

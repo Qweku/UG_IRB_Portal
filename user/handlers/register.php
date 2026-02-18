@@ -61,6 +61,7 @@ try {
     $password = $_POST['password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
     $role = trim($_POST['role'] ?? 'applicant');
+    $studentId =trim($_POST['student_id'] ?? '');
 
     // Validate required fields
     $errors = [];
@@ -195,8 +196,9 @@ try {
 
     // Add user to applicant user table
     $stmt = $conn->prepare("
-        INSERT INTO applicant_users (user_id, first_name, middle_name, last_name, phone_number, email, applicant_type, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+        INSERT INTO applicant_users (user_id, first_name, middle_name, last_name, phone_number, email,
+            student_id, applicant_type, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
     ");
     $stmt->execute([
         $conn->lastInsertId(),
@@ -205,6 +207,7 @@ try {
         $last_name,
         $phone_number,
         $email,
+        $studentId,
         $application_type
     ]);
 

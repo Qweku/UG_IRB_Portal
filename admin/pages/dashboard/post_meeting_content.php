@@ -93,12 +93,35 @@ $meeting_date = $_GET['meeting_date'] ?? null;
         const agendaItemInput = document.querySelector('input[name="agenda_id"]');
         studyIdInput.value = ""; // Clear previous value
         agendaItemInput.value = "";
-        fetch("/admin/handlers/fetch_agenda_meetings.php?meeting_date=" + meeting_date)
-            .then(res => res.json())
-            .then(data => {
+        console.log("Loading agenda for date:", meeting_date);
+        fetch("/admin/handlers/fetch_agenda_meetings.php?meeting_date=" + encodeURIComponent(meeting_date), {
+            credentials: 'same-origin'
+        })
+            .then(res => {
+                console.log("Response status:", res.status);
+                if (!res.ok) {
+                    return res.text().then(text => {
+                        console.log("Error response:", text);
+                        throw new Error('HTTP ' + res.status + ': ' + text);
+                    });
+                }
+                return res.json();
+            })
+            .then(response => {
+                console.log("Response:", response);
 
-                if (data.error) {
-                    alert("Error: " + data.error);
+                // Handle both array response and {status, data} response
+                let data = response;
+                if (response.status === 'success' && response.data) {
+                    data = response.data;
+                } else if (response.error) {
+                    alert("Error: " + response.error);
+                    return;
+                }
+
+                if (!Array.isArray(data)) {
+                    console.error("Expected array but got:", data);
+                    alert("Unexpected response format");
                     return;
                 }
 
@@ -155,8 +178,8 @@ $meeting_date = $_GET['meeting_date'] ?? null;
 
             })
             .catch(err => {
-                alert("Request Failed");
-                console.log(err);
+                alert("Request Failed: " + err.message);
+                console.error("Fetch error:", err);
             });
     }
 
@@ -167,15 +190,26 @@ $meeting_date = $_GET['meeting_date'] ?? null;
 
     // Function that loads the details (so we don't repeat code)
     function loadAgendaDetails(id) {
-        fetch("/admin/handlers/fetch_agenda_details.php?id=" + id)
-            .then(res => res.json())
-            .then(data => {
-
-                if (data.error) {
-                    alert("Error: " + data.error);
+        fetch("/admin/handlers/fetch_agenda_details.php?id=" + id, {
+            credentials: 'same-origin'
+        })
+            .then(res => {
+                if (!res.ok) {
+                    return res.text().then(text => {
+                        throw new Error('HTTP ' + res.status + ': ' + text);
+                    });
+                }
+                return res.json();
+            })
+            .then(response => {
+                // Handle both direct response and {status, data} response
+                let data = response;
+                if (response.status === 'success' && response.data) {
+                    data = response.data;
+                } else if (response.error) {
+                    alert("Error: " + response.error);
                     return;
                 }
-
 
                 document.getElementById("studyContent").innerHTML = `
                 <div class="row mb-4">
@@ -300,8 +334,8 @@ $meeting_date = $_GET['meeting_date'] ?? null;
 
             })
             .catch(err => {
-                alert("Request Failed");
-                console.log(err);
+                alert("Request Failed: " + err.message);
+                console.error("Fetch error:", err);
             });
     }
 </script>

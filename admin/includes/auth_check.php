@@ -17,10 +17,10 @@ error_log("[AUTH_CHECK] HTTP_X_REQUESTED_WITH: " . ($_SERVER['HTTP_X_REQUESTED_W
 
 // Start session with consistent session name
 // This must be done BEFORE any output and with the correct session name
-session_name(CSRF_SESSION_NAME);
-
-// Check if session is already active
+// Only call session_name() when session is not already active
 if (session_status() === PHP_SESSION_NONE) {
+    session_name(CSRF_SESSION_NAME);
+    
     // Configure session cookie for better AJAX compatibility
     session_set_cookie_params([
         'lifetime' => 0,

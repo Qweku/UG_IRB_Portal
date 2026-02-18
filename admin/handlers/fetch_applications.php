@@ -28,18 +28,31 @@ try {
     $whereConditions = [];
     $params = [];
     
+    // Handle status filtering: allow specific status if provided, but never allow 'draft'
+    // Default: show submitted and under_review applications
     if (!empty($status)) {
-        $whereConditions[] = "a.status = ?";
-        $params[] = $status;
+        if ($status === 'draft') {
+            // Don't allow viewing draft applications - return no results
+            $whereConditions[] = "a.status = 'draft'";
+        } else {
+            $whereConditions[] = "a.status = ?";
+            $params[] = $status;
+        }
+    } else {
+        // Default: show submitted and under_review (exclude draft)
+        $allowedStatuses = ['submitted', 'under_review'];
+        $placeholders = implode(',', array_fill(0, count($allowedStatuses), '?'));
+        $whereConditions[] = "a.status IN ($placeholders)";
+        $params = array_merge($params, $allowedStatuses);
     }
     
     if (!empty($dateFrom)) {
-        $whereConditions[] = "a.submission_date >= ?";
+        $whereConditions[] = "a.updated_at >= ?";
         $params[] = $dateFrom;
     }
     
     if (!empty($dateTo)) {
-        $whereConditions[] = "a.submission_date <= ?";
+        $whereConditions[] = "a.updated_at <= ?";
         $params[] = $dateTo;
     }
     

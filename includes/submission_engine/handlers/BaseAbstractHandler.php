@@ -19,7 +19,7 @@ use UGIRB\SubmissionEngine\Services\ProtocolNumberGenerator;
 use UGIRB\SubmissionEngine\Services\EmailService;
 
 // Include notification functions for admin/chair notifications
-require_once __DIR__ . '/../../../functions/notification_functions.php';
+require_once __DIR__ . '/../../functions/notification_functions.php';
 
 abstract class BaseAbstractHandler implements IApplicationHandler
 {

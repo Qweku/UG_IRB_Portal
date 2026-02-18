@@ -14,13 +14,9 @@ $profile = getApplicantProfile($userId);
 // Check for draft application
 $applicant_type = $profile['applicant_type'] ?? 'student';
 
-if ($applicant_type === 'nmimr') {
-    $draftApplication = getDraftApplication($userId, 'nmimr_applications');
-} elseif ($applicant_type === 'non_nmimr') {
-    $draftApplication = getDraftApplication($userId, 'non_nmimr_applications');
-} else {
-    $draftApplication = getDraftApplication($userId, 'student_applications');
-}
+
+$draftApplication = getDraftApplication($userId);
+
 $hasDraftApplication = !empty($draftApplication);
 
 // Get applicant's studies
@@ -37,7 +33,7 @@ if ($status_filter !== 'all') {
 <style>
     /* Studies Page Specific Styles */
     .page-header-section {
-        background:linear-gradient(135deg, var(--applicant-primary-dark) 0%, var(--applicant-primary) 100%);
+        background: linear-gradient(135deg, var(--applicant-primary-dark) 0%, var(--applicant-primary) 100%);
         border-radius: 16px;
         padding: 32px;
         margin-bottom: 24px;
@@ -290,7 +286,7 @@ if ($status_filter !== 'all') {
 
         <!-- Main Content Area -->
         <div class="content-section col-lg-10 col-md-12 col-sm-12 ms-sm-auto px-4 py-3">
-            
+
             <!-- Mobile Sidebar Toggle Button -->
             <!-- <button class="mobile-sidebar-toggle mb-3" onclick="toggleSidebar()">
                 <i class="fas fa-bars"></i> Menu
@@ -506,42 +502,42 @@ if ($status_filter !== 'all') {
 </div>
 
 <script>
-/**
- * Sidebar Toggle Functions for Mobile Responsiveness
- */
-function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const backdrop = document.querySelector('.sidebar-backdrop');
-    
-    if (sidebar) {
-        sidebar.classList.toggle('show');
-    }
-    if (backdrop) {
-        backdrop.classList.toggle('show');
-    }
-    
-    // Prevent body scroll when sidebar is open
-    document.body.classList.toggle('sidebar-open');
-}
+    /**
+     * Sidebar Toggle Functions for Mobile Responsiveness
+     */
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const backdrop = document.querySelector('.sidebar-backdrop');
 
-function closeSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const backdrop = document.querySelector('.sidebar-backdrop');
-    
-    if (sidebar) {
-        sidebar.classList.remove('show');
-    }
-    if (backdrop) {
-        backdrop.classList.remove('show');
-    }
-    
-    document.body.classList.remove('sidebar-open');
-}
+        if (sidebar) {
+            sidebar.classList.toggle('show');
+        }
+        if (backdrop) {
+            backdrop.classList.toggle('show');
+        }
 
-// Close sidebar on Escape key press
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeSidebar();
+        // Prevent body scroll when sidebar is open
+        document.body.classList.toggle('sidebar-open');
     }
-});
+
+    function closeSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const backdrop = document.querySelector('.sidebar-backdrop');
+
+        if (sidebar) {
+            sidebar.classList.remove('show');
+        }
+        if (backdrop) {
+            backdrop.classList.remove('show');
+        }
+
+        document.body.classList.remove('sidebar-open');
+    }
+
+    // Close sidebar on Escape key press
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeSidebar();
+        }
+    });
 </script>

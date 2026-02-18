@@ -109,7 +109,7 @@ $csrf_token = csrf_token();
                     <label for="student_id" class="form-label">Student ID <span class="text-danger">*</span></label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-id-card"></i></span>
-                        <input type="text" class="form-control" id="student_id" name="student_id" placeholder="Enter your student ID" required>
+                        <input type="text" class="form-control" id="student_id" name="student_id" placeholder="Enter your student ID">
                     </div>
                 </div>
 

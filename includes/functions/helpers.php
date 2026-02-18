@@ -1511,7 +1511,7 @@ function hasOngoingApplication($userId)
 
     try {
         $stmt = $conn->prepare(
-            "SELECT COUNT(*) as count FROM student_applications 
+            "SELECT COUNT(*) as count FROM applications 
              WHERE applicant_id = ? AND status IN ('draft', 'submitted', 'under_review')"
         );
         $stmt->execute([$userId]);
@@ -1558,7 +1558,7 @@ function is_reviewer_logged_in()
 function getPendingApplicationsCount()
 {
     return executeCountQuery(
-        "SELECT COUNT(*) as count FROM student_applications WHERE status = 'submitted'",
+        "SELECT COUNT(*) as count FROM applications WHERE status = 'submitted'",
         []
     );
 }
@@ -1743,13 +1743,13 @@ function getApplicationForReview($applicationId)
 
     try {
         $stmt = $conn->prepare(
-            "SELECT sa.*, 
+            "SELECT a.*, 
                     u.full_name as applicant_name,
                     u.email as applicant_email,
                     sa.created_at as submitted_at
-             FROM student_applications sa
-             LEFT JOIN users u ON sa.applicant_id = u.id
-             WHERE sa.id = ?"
+             FROM applications a
+             LEFT JOIN users u ON a.applicant_id = u.id
+             WHERE a.id = ?"
         );
         $stmt->execute([$applicationId]);
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
@@ -1901,7 +1901,7 @@ function submitReviewDecision($data)
         ];
         $appStatus = $appStatusMap[$data['decision']] ?? 'under_review';
 
-        $stmt = $conn->prepare("UPDATE student_applications SET status = ?, updated_at = NOW() WHERE id = ?");
+        $stmt = $conn->prepare("UPDATE applications SET status = ?, updated_at = NOW() WHERE id = ?");
         $stmt->execute([$appStatus, $data['application_id']]);
 
         $conn->commit();
@@ -1962,9 +1962,9 @@ function getReviewerDeadlines($reviewerId)
 
     try {
         $stmt = $conn->prepare(
-            "SELECT sa.*, ar.review_deadline, ar.id as review_id
+            "SELECT a.*, ar.review_deadline, ar.id as review_id
              FROM application_reviews ar
-             LEFT JOIN student_applications sa ON ar.application_id = sa.id
+             LEFT JOIN applications a ON ar.application_id = a.id
              WHERE ar.reviewer_id = ? 
                AND ar.review_deadline IS NOT NULL
                AND ar.review_deadline >= CURDATE()

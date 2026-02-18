@@ -133,10 +133,10 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
 
 <div class="container-fluid dashboard-container">
     <div class="row">
-        <?php include 'sidebar.php'; ?>
+       
 
         <!-- Main Content Area -->
-        <div class="content-section col-lg-10 col-md-9 ms-sm-auto px-4 py-3">
+        <div class="content-section col-lg-12 col-md-9 ms-sm-auto px-4 py-3">
             
             <!-- Mobile Sidebar Toggle Button -->
             <!-- <button class="mobile-sidebar-toggle mb-3" onclick="toggleSidebar()">
@@ -1301,7 +1301,7 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
             document.getElementById('study_start_date').value = app.study_start_date || '';
             document.getElementById('study_end_date').value = app.study_end_date || '';
             document.getElementById('funding_sources').value = app.funding_sources || '';
-            document.getElementById('prior_irb_review').value = app.prior_irb_review || '';
+            document.getElementById('prior_irb_review').value = app.prior_irb_review || 'no';
             document.getElementById('collaborating_institutions').value = app.collaborating_institutions || '';
 
             // Step 3 - Section B
