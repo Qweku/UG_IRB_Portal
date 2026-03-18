@@ -10,6 +10,21 @@ $limit = 5;
 $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $offset = ($page - 1) * $limit;
 
+// Check for existing draft study
+$draft_study = null;
+try {
+    // require_once '../../config.php';
+    $db = new Database();
+    $conn = $db->connect();
+    if ($conn) {
+        $stmt = $conn->prepare("SELECT id, title FROM studies WHERE is_draft = 1 LIMIT 1");
+        $stmt->execute();
+        $draft_study = $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+} catch (PDOException $e) {
+    error_log("Error checking for draft study: " . $e->getMessage());
+}
+
 // Include CSRF protection
 // require_once '../../includes/functions/csrf.php';
 
@@ -63,9 +78,15 @@ function buildQueryString($exclude = [])
         <div class="container-fluid">
             <!-- Actions Bar -->
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <a class="btn btn-primary" href="/studies/add-study">
-                    <i class="fas fa-plus me-2"></i>Add New Study
-                </a>
+                <?php if ($draft_study): ?>
+                    <a class="btn btn-warning" href="/studies/add-study?id=<?php echo (int)$draft_study['id']; ?>">
+                        <i class="fas fa-edit me-2"></i>Continue Draft Study
+                    </a>
+                <?php else: ?>
+                    <a class="btn btn-primary" href="/studies/add-study">
+                        <i class="fas fa-plus me-2"></i>Add New Study
+                    </a>
+                <?php endif; ?>
             </div>
 
             <!-- Filter Section -->

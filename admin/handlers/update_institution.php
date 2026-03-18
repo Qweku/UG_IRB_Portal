@@ -7,7 +7,7 @@ header('Content-Type: application/json');
 $data = json_decode(file_get_contents('php://input'), true);
 
 // CSRF validation
-if (!isset($data['csrf_token']) || !csrf_validate()) {
+if (!isset($data['csrf_token']) || !validateCsrfToken($data['csrf_token'])){
     echo json_encode(['success' => false, 'message' => 'Invalid CSRF token']);
     exit;
 }

@@ -1,7 +1,7 @@
 <?php
 
 // Include CSRF protection
-// require_once '../../includes/functions/csrf.php';
+// require_once '../../../includes/functions/csrf.php';
 
 // Pagination parameters for users
 $usersLimit = 10;
@@ -234,7 +234,10 @@ function buildUsersQueryString($exclude = []) {
                     </div>
 
                     <!-- Users Table -->
-                     <div class="premium-card">
+                     <?php 
+                        $hideUsersTable =  $_SESSION['role'] === 'super_admin' ? 'display' : 'none';
+                     ?>
+                     <div class="premium-card" style="display: <?= htmlspecialchars($hideUsersTable); ?>;">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">
                                 <i class="fas fa-file-alt me-2"></i>
@@ -292,7 +295,7 @@ function buildUsersQueryString($exclude = []) {
                                                     <td>
                                                         <div class="btn-group btn-group-sm">
                                                            
-                                                            <button type="button" class="btn btn-outline-danger" title="Delete" onclick="deleteUser(<?php echo $user['id']; ?>")">
+                                                            <button type="button" class="btn btn-outline-danger" title="Delete" onclick="deleteUser(<?php echo $user['id']; ?>)">
                                                                 <i class="fas fa-trash"></i>
                                                             </button>
                                                         </div>
@@ -400,7 +403,6 @@ function buildUsersQueryString($exclude = []) {
                                             <select class="form-select" id="userRole" name="role" required>
                                                 <option value="">Select Role</option>
                                                 <option value="admin">Admin</option>
-                                                <option value="super_admin">Super Admin</option>
                                                 <option value="reviewer">Reviewer</option>
                                             </select>
                                             <div class="invalid-feedback" id="userRoleError"></div>
@@ -1732,6 +1734,9 @@ function buildUsersQueryString($exclude = []) {
         });
     });
 
+// CSRF token for AJAX requests
+var csrf_token = '<?php echo csrf_token(); ?>';
+
     // User Status Toggle Function
     function toggleUserStatus(userId, isChecked) {
         const newStatus = isChecked ? 'active' : 'inactive';
@@ -1814,6 +1819,91 @@ function buildUsersQueryString($exclude = []) {
             }
             
             alert('An error occurred while updating the user status. Please try again.');
+        });
+    }
+
+    // User Delete Function
+    function deleteUser(userId) {
+        // Show confirmation dialog
+        if (!confirm('Are you sure you want to delete this user? This action cannot be undone?')) {
+            return;
+        }
+        
+        const deleteButton = event ? event.target.closest('button') : null;
+        let loadingIndicator = document.getElementById('delete-loading-' + userId);
+        
+        // Create loading indicator dynamically if it doesn't exist
+        if (!loadingIndicator && deleteButton) {
+            loadingIndicator = document.createElement('span');
+            loadingIndicator.id = 'delete-loading-' + userId;
+            loadingIndicator.className = 'spinner-border spinner-border-sm me-1';
+            loadingIndicator.style.display = 'none';
+            loadingIndicator.setAttribute('role', 'status');
+            loadingIndicator.setAttribute('aria-hidden', 'true');
+            deleteButton.insertBefore(loadingIndicator, deleteButton.firstChild);
+        }
+        
+        // Show loading indicator
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'inline-block';
+        }
+        
+        // Disable button during request
+        if (deleteButton) {
+            deleteButton.disabled = true;
+        }
+        
+        // Create form data
+        const formData = new FormData();
+        formData.append('user_id', userId);
+        
+        // Add CSRF token if available
+        if (typeof csrf_token !== 'undefined') {
+            formData.append('csrf_token', csrf_token);
+        }
+        
+        // Send AJAX request
+        fetch('/admin/handlers/delete_user.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Hide loading indicator
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
+            
+            // Re-enable button
+            if (deleteButton) {
+                deleteButton.disabled = false;
+            }
+            
+            if (data.success) {
+                // Show success message
+                alert('User deleted successfully');
+                
+                // Refresh the page or remove the row
+                location.reload();
+            } else {
+                // Show error message
+                alert('Error deleting user: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting user:', error);
+            
+            // Hide loading indicator
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
+            
+            // Re-enable button
+            if (deleteButton) {
+                deleteButton.disabled = false;
+            }
+            
+            alert('An error occurred while deleting the user. Please try again.');
         });
     }
 

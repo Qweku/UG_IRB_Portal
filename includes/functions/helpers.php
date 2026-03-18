@@ -126,9 +126,9 @@ function getActiveStudiesCount()
 {
     $institutionId = get_user_institution_id();
     if ($institutionId) {
-        return executeCountQuery("SELECT COUNT(*) as count FROM studies WHERE study_status = 'open' AND institution_id = ?", [$institutionId]);
+        return executeCountQuery("SELECT COUNT(*) as count FROM studies WHERE is_draft = 0 AND institution_id = ?", [$institutionId]);
     }
-    return executeCountQuery("SELECT COUNT(*) as count FROM studies WHERE study_status = 'open'");
+    return executeCountQuery("SELECT COUNT(*) as count FROM studies WHERE is_draft = 0 ");
 }
 
 function getContactsCount()
@@ -271,7 +271,7 @@ function getNewReportsCount()
  */
 function getRecentActivities()
 {
-    return executeAssocQuery("SELECT title, study_status, pi, updated_at FROM studies ORDER BY updated_at DESC LIMIT 5");
+    return executeAssocQuery("SELECT title, study_status, pi, updated_at FROM studies WHERE is_draft = 0 ORDER BY updated_at DESC LIMIT 5");
 }
 
 
@@ -414,6 +414,26 @@ function getStudies($status = 'all', $review_type = 'all', $pi_name = '', $sort_
         error_log("Error fetching studies: " . $e->getMessage());
         return [];
     }
+}
+
+function getInstitutionName()
+{
+
+$db = new Database();
+    $conn = $db->connect();
+    if (!$conn) {
+        return [];
+    }
+    $institutionId = get_user_institution_id();
+    error_log("User Institution ID: " . ($institutionId ?? 'None'));
+    if ($institutionId) {
+       $stmt = $conn->prepare("SELECT institution_name FROM institutions WHERE id = ?");
+        $stmt->execute([$institutionId]);
+        $result = $stmt->fetch();
+        error_log("Fetched Institution Name: " . ($result['institution_name'] ?? 'Not Found'));
+        return $result['institution_name'] ?? 'Unknown Institution';
+    }
+    return 'All Institutions';
 }
 
 /**
@@ -817,6 +837,109 @@ function getSAETypesList()
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
     } catch (PDOException $e) {
         error_log("Error fetching sae types: " . $e->getMessage());
+        return [];
+    }
+}
+
+// Get CPA action codes
+function getCPAActionCodes()
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) {
+        return [];
+    }
+
+    try {
+        // Assuming a cpa_action_codes table exists
+        $stmt = $conn->prepare("SELECT cpa_action FROM cpa_action_codes");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    } catch (PDOException $e) {
+        error_log("Error fetching CPA action codes: " . $e->getMessage());
+        return [];
+    }
+}
+
+// Get CPA types
+function getCPATypes()
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) {
+        return [];
+    }
+
+    try {
+        // Assuming a cpa_types table exists
+        $stmt = $conn->prepare("SELECT type_name FROM cpa_types");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    } catch (PDOException $e) {
+        error_log("Error fetching CPA types: " . $e->getMessage());
+        return [];
+    }
+}
+
+
+// Get SAE count
+function getSAECount(int $study_id)
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) {
+        return 0;
+    }
+
+    try {
+        // Assuming a sae_reports table exists
+        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM saes WHERE protocol_id = ?");
+        $stmt->execute([$study_id]);
+        $result = $stmt->fetch();
+        return (int)($result['count'] ?? 0);
+    } catch (PDOException $e) {
+        error_log("Error fetching SAE count: " . $e->getMessage());
+        return 0;
+    }
+}
+
+// CPA Count
+function getCPACount(int $study_id)
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) {
+        return 0;
+    }
+
+    try {
+        // Assuming a cpa_reports table exists
+        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM cpas WHERE protocol_id = ?");
+        $stmt->execute([$study_id]);
+        $result = $stmt->fetch();
+        return (int)($result['count'] ?? 0);
+    } catch (PDOException $e) {
+        error_log("Error fetching CPA count: " . $e->getMessage());
+        return 0;
+    }
+}
+
+// CPA List
+function getCPAList(int $study_id)
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) {
+        return [];
+    }
+
+    try {
+        // Assuming a cpa_reports table exists
+        $stmt = $conn->prepare("SELECT * FROM cpas WHERE protocol_id = ? ORDER BY created_at DESC");
+        $stmt->execute([$study_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error fetching CPA list: " . $e->getMessage());
         return [];
     }
 }

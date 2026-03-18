@@ -31,7 +31,7 @@ $maintenance_mode = getenv('MAINTENANCE_MODE') === 'true';
 if ($maintenance_mode) {
     $current_uri = $_SERVER['REQUEST_URI'] ?? '';
     $maintenance_page = '/maintenance';
-    
+
     // If we're on the maintenance page, continue normally
     if (strpos($current_uri, $maintenance_page) !== false) {
         // Allow access to maintenance page - continue rendering
@@ -112,7 +112,7 @@ if ($section === null) {
 /* ==========================================================
  | AUTH PAGE GUARD (PREVENT LOGIN LOOP)
  ========================================================== */
-$authPages = ['login', 'register', 'forgot-password'];
+$authPages = ['login', 'register', 'forgot-password', 'reset-password'];
 
 if (in_array($section, $authPages, true) && is_authenticated()) {
     switch ($_SESSION['role']) {
@@ -158,6 +158,15 @@ $routes = [
     'forgot-password' => [
         '_' => ['file' => 'forgot_password.php', 'roles' => [], 'type' => 'page']
     ],
+    'forgot-password-action' => [
+        '_' => ['file' => 'user/handlers/forgot_password_handler.php', 'roles' => [], 'type' => 'action']
+    ],
+    'reset-password' => [
+        '_' => ['file' => 'reset_password.php', 'roles' => [], 'type' => 'page']
+    ],
+    'reset-password-action' => [
+        '_' => ['file' => 'user/handlers/reset_password_handler.php', 'roles' => [], 'type' => 'action']
+    ],
 
     /* ---------- DASHBOARD ---------- */
     'dashboard' => [
@@ -174,9 +183,19 @@ $routes = [
         'institutions'  => ['file' => 'dashboard/institutions_content.php', 'roles' => ['super_admin']],  // /dashboard/institutions
     ],
 
+    /* ---------- APPLICATIONS ---------- */
+    'applications' => [
+        'view-application' => ['file' => 'contents/view_application.php', 'roles' => ['admin', 'super_admin']],
+    ],
+
     /* ---------- STUDIES ---------- */
     'studies' => [
         'add-study' => ['file' => 'contents/add_new_study.php', 'roles' => ['admin', 'super_admin']]
+    ],
+
+    /* ---------- AGENDA ---------- */
+    'agenda' => [
+        'prepare-agenda' => ['file' => 'contents/prepare_agenda.php', 'roles' => ['admin', 'super_admin']]
     ],
 
     /* ---------- CONTACTS ---------- */
@@ -225,32 +244,33 @@ $routes = [
  * @param PDO $conn Database connection
  * @return bool
  */
-function validate_session_token($conn): bool {
+function validate_session_token($conn): bool
+{
     if (!isset($_SESSION['user_id']) || !isset($_SESSION['session_token'])) {
         return false;
     }
-    
+
     try {
         $stmt = $conn->prepare("SELECT session_token, session_expires_at FROM users WHERE id = ?");
         $stmt->execute([$_SESSION['user_id']]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         // Check if token matches and hasn't expired
         if (!$user || empty($user['session_token']) || $user['session_token'] !== $_SESSION['session_token']) {
             return false;
         }
-        
+
         if ($user['session_expires_at'] && strtotime($user['session_expires_at']) < time()) {
             return false;
         }
-        
+
         // Update last_activity periodically (every 5 minutes)
         if (time() - ($_SESSION['last_activity'] ?? 0) > 300) {
             $stmt = $conn->prepare("UPDATE users SET last_activity = NOW() WHERE id = ?");
             $stmt->execute([$_SESSION['user_id']]);
             $_SESSION['last_activity'] = time();
         }
-        
+
         return true;
     } catch (Exception $e) {
         error_log('Session validation error: ' . $e->getMessage());
@@ -267,13 +287,13 @@ function is_authenticated(): bool
     if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         return false;
     }
-    
+
     // Validate session token against database
     global $conn;
     if ($conn) {
         return validate_session_token($conn);
     }
-    
+
     return true;
 }
 

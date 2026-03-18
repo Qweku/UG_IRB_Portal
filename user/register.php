@@ -19,6 +19,7 @@ if (is_admin_logged_in()) {
 
 // Generate CSRF token for the form
 $csrf_token = csrf_token();
+$institutions = getAllInstitutions();
 
 ?>
 <!DOCTYPE html>
@@ -87,6 +88,19 @@ $csrf_token = csrf_token();
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-envelope"></i></span>
                         <input type="email" class="form-control" id="email" name="email" placeholder="your.email@example.com" required>
+                    </div>
+                </div>
+
+                 <div class="mb-3">
+                    <label for="institution" class="form-label">Institution <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-file-alt"></i></span>
+                        <select class="form-select" id="institution" name="institution" required>
+                            <option class="text-muted" selected disabled>Select Institution</option>
+                            <?php foreach ($institutions as $institution): ?>
+                                <option value="<?php echo htmlspecialchars($institution['id']) ?>"><?php echo htmlspecialchars($institution['institution_name']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
                 </div>
 

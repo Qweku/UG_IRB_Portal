@@ -36,3 +36,22 @@ function csrf_validate() {
     }
     return true;
 }
+
+/**
+ * Validate a CSRF token against the session token
+ * @param string $token The token to validate
+ * @return bool True if valid, false otherwise
+ */
+function validateCsrfToken($token) {
+    if (empty($token)) {
+        return false;
+    }
+    
+    $sessionToken = csrf_token_get();
+    
+    if (!$sessionToken || !$token) {
+        return false;
+    }
+    
+    return hash_equals($sessionToken, $token);
+}

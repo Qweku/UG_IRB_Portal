@@ -8,6 +8,7 @@ $offset = ($page - 1) * $limit;
 $db = new Database();
 $conn = $db->connect();
 $total_records = 0;
+$meeting_dates = getMeetingDates();
 if ($conn) {
     try {
         $institutionId = get_user_institution_id();
@@ -83,9 +84,12 @@ function buildQueryString($exclude = [])
                         <h5 class="section-title mb-3">Meeting Dates</h5>
                         <div class="d-flex align-items-center">
                             <select class="form-select me-2" style="max-width: 200px;">
-                                <option selected>2025-10-01</option>
-                                <option>2025-11-05</option>
-                                <option>2025-12-03</option>
+                                <?php foreach ($meeting_dates as $md): ?>
+                                    <option selected><?php echo htmlspecialchars($md) ?></option>
+
+                                <?php endforeach; ?>
+                                <!-- <option>2025-11-05</option>
+                                <option>2025-12-03</option> -->
                             </select>
 
                         </div>
@@ -125,7 +129,7 @@ function buildQueryString($exclude = [])
             <!-- Agenda Items Table -->
             <div class="premium-card mb-4">
                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h4 class="section-title mb-0">
+                    <h4 class="section-title mb-0 text-white">
                         <i class="fas fa-list me-2"></i>
                         Study Items
                     </h4>
@@ -138,7 +142,7 @@ function buildQueryString($exclude = [])
                         </div>
                     </div>
                 </div>
-                <div class="card-body p-0">
+                <div class="card-body p-3">
                     <div class="table-responsive">
                         <table class="table table-hover table-premium mb-0">
                             <thead class="table-primary">
@@ -146,7 +150,7 @@ function buildQueryString($exclude = [])
                                     <th>IRB #</th>
                                     <th>Study Type</th>
                                     <th>Protocol Number & Title</th>
-                                    <th>ExpirationDate</th>
+                                    <th>Expiration Date</th>
                                     <th>Agenda</th>
                                     <th>chkCRRqd</th>
                                     <th>ExpediteFlag</th>
@@ -189,7 +193,7 @@ function buildQueryString($exclude = [])
                                 } else {
                                     foreach ($studies as $index => $study) {
                                         echo '<tr>
-                                            <td>' .htmlspecialchars($study['irb_number'] ?? '013/25-26') . '</td>
+                                            <td>' . htmlspecialchars($study['irb_number'] ?? '013/25-26') . '</td>
                                             <td>' . htmlspecialchars($study['review_type'] ?? '') . '</td>
                                              <td>' . htmlspecialchars($study['protocol_number'] ?? '') . '</td>
                                             <td>' . htmlspecialchars($study['expiration_date'] ?? '') . '</td>
@@ -214,103 +218,103 @@ function buildQueryString($exclude = [])
                         </table>
                     </div>
 
-                        <!-- Pagination -->
-                        <?php if ($total_pages > 1): ?>
-                            <div class="pagination-wrapper mt-3">
-                                <nav aria-label="Continue review studies pagination">
-                                    <ul class="pagination justify-content-center mb-0">
-                                        <?php
-                                        $queryString = buildQueryString(['page']);
-                                        $currentUrl = strtok($_SERVER['REQUEST_URI'], '?');
-                                        $separator = empty($queryString) ? '?' : '?' . $queryString . '&';
-                                        ?>
-                                        <!-- First Page -->
-                                        <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
-                                            <a class="page-link" href="<?php echo $currentUrl . $separator . 'page=1'; ?>" aria-label="First">
-                                                <i class="fas fa-angle-double-left"></i>
+                    <!-- Pagination -->
+                    <?php if ($total_pages > 1): ?>
+                        <div class="pagination-wrapper mt-3">
+                            <nav aria-label="Continue review studies pagination">
+                                <ul class="pagination justify-content-center mb-0">
+                                    <?php
+                                    $queryString = buildQueryString(['page']);
+                                    $currentUrl = strtok($_SERVER['REQUEST_URI'], '?');
+                                    $separator = empty($queryString) ? '?' : '?' . $queryString . '&';
+                                    ?>
+                                    <!-- First Page -->
+                                    <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
+                                        <a class="page-link" href="<?php echo $currentUrl . $separator . 'page=1'; ?>" aria-label="First">
+                                            <i class="fas fa-angle-double-left"></i>
+                                        </a>
+                                    </li>
+                                    <!-- Previous Page -->
+                                    <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
+                                        <a class="page-link" href="<?php echo $currentUrl . $separator . 'page=' . max(1, $page - 1); ?>" aria-label="Previous">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </a>
+                                    </li>
+
+                                    <?php
+                                    // Show limited page numbers around current page
+                                    $startPage = max(1, min($page - 2, $total_pages - 4));
+                                    $endPage = min($total_pages, max(5, $page + 2));
+
+                                    if ($startPage > 1):
+                                    ?>
+                                        <li class="page-item disabled">
+                                            <span class="page-link">...</span>
+                                        </li>
+                                    <?php endif; ?>
+
+                                    <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
+                                        <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
+                                            <a class="page-link" href="<?php echo $currentUrl . $separator . 'page=' . $i; ?>">
+                                                <?php echo $i; ?>
+                                                <?php if ($i == $page): ?>
+                                                    <span class="visually-hidden">(current)</span>
+                                                <?php endif; ?>
                                             </a>
                                         </li>
-                                        <!-- Previous Page -->
-                                        <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
-                                            <a class="page-link" href="<?php echo $currentUrl . $separator . 'page=' . max(1, $page - 1); ?>" aria-label="Previous">
-                                                <i class="fas fa-chevron-left"></i>
-                                            </a>
+                                    <?php endfor; ?>
+
+                                    <?php if ($endPage < $total_pages): ?>
+                                        <li class="page-item disabled">
+                                            <span class="page-link">...</span>
                                         </li>
+                                    <?php endif; ?>
 
-                                        <?php
-                                        // Show limited page numbers around current page
-                                        $startPage = max(1, min($page - 2, $total_pages - 4));
-                                        $endPage = min($total_pages, max(5, $page + 2));
-
-                                        if ($startPage > 1):
-                                        ?>
-                                            <li class="page-item disabled">
-                                                <span class="page-link">...</span>
-                                            </li>
-                                        <?php endif; ?>
-
-                                        <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
-                                            <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
-                                                <a class="page-link" href="<?php echo $currentUrl . $separator . 'page=' . $i; ?>">
-                                                    <?php echo $i; ?>
-                                                    <?php if ($i == $page): ?>
-                                                        <span class="visually-hidden">(current)</span>
-                                                    <?php endif; ?>
-                                                </a>
-                                            </li>
-                                        <?php endfor; ?>
-
-                                        <?php if ($endPage < $total_pages): ?>
-                                            <li class="page-item disabled">
-                                                <span class="page-link">...</span>
-                                            </li>
-                                        <?php endif; ?>
-
-                                        <!-- Next Page -->
-                                        <li class="page-item <?php echo $page >= $total_pages ? 'disabled' : ''; ?>">
-                                            <a class="page-link" href="<?php echo $currentUrl . $separator . 'page=' . min($total_pages, $page + 1); ?>" aria-label="Next">
-                                                <i class="fas fa-chevron-right"></i>
-                                            </a>
-                                        </li>
-                                        <!-- Last Page -->
-                                        <li class="page-item <?php echo $page >= $total_pages ? 'disabled' : ''; ?>">
-                                            <a class="page-link" href="<?php echo $currentUrl . $separator . 'page=' . $total_pages; ?>" aria-label="Last">
-                                                <i class="fas fa-angle-double-right"></i>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </nav>
-                                <div class="text-center mt-2">
-                                    <span class="text-muted small">
-                                        Showing page <?php echo $page; ?> of <?php echo $total_pages; ?>
-                                        (<?php echo $total_records; ?> total studies)
-                                    </span>
-                                </div>
-                            </div>
-                        <?php elseif ($total_records > 0): ?>
-                            <div class="text-center mt-3">
+                                    <!-- Next Page -->
+                                    <li class="page-item <?php echo $page >= $total_pages ? 'disabled' : ''; ?>">
+                                        <a class="page-link" href="<?php echo $currentUrl . $separator . 'page=' . min($total_pages, $page + 1); ?>" aria-label="Next">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                    <!-- Last Page -->
+                                    <li class="page-item <?php echo $page >= $total_pages ? 'disabled' : ''; ?>">
+                                        <a class="page-link" href="<?php echo $currentUrl . $separator . 'page=' . $total_pages; ?>" aria-label="Last">
+                                            <i class="fas fa-angle-double-right"></i>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </nav>
+                            <div class="text-center mt-2">
                                 <span class="text-muted small">
-                                    Showing all <?php echo $total_records; ?> studies
+                                    Showing page <?php echo $page; ?> of <?php echo $total_pages; ?>
+                                    (<?php echo $total_records; ?> total studies)
                                 </span>
                             </div>
-                        <?php endif; ?>
-                    </div>
+                        </div>
+                    <?php elseif ($total_records > 0): ?>
+                        <div class="text-center mt-3">
+                            <span class="text-muted small">
+                                Showing all <?php echo $total_records; ?> studies
+                            </span>
+                        </div>
+                    <?php endif; ?>
                 </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="d-flex justify-content-between mt-4">
-                <div>
-                    <button class="btn btn-outline-primary me-2">
-                        <i class="fas fa-copy me-1"></i>Place on Agenda Only
-                    </button>
-                    <button class="btn btn-outline-primary me-2">
-                        <i class="fas fa-calendar-plus me-1"></i>Place on Agenda And Print Letter
-                    </button>
-                    
-                </div>
-               
             </div>
         </div>
+
+        <!-- Action Buttons -->
+        <div class="d-flex justify-content-between mt-4">
+            <div>
+                <button class="btn btn-outline-primary me-2">
+                    <i class="fas fa-copy me-1"></i>Place on Agenda Only
+                </button>
+                <button class="btn btn-outline-primary me-2">
+                    <i class="fas fa-calendar-plus me-1"></i>Place on Agenda And Print Letter
+                </button>
+
+            </div>
+
+        </div>
     </div>
+</div>
 </div>

@@ -1222,7 +1222,7 @@ body {
 
 /* Input Group */
 .input-group-text {
-    background: var(--royal-blue);
+    /* background: var(--royal-blue); */
     color: white;
     border: none;
     border-radius: 10px 0 0 10px;

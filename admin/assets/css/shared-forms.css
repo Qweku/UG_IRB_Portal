@@ -15,6 +15,30 @@
     max-width: 900px;
 }
 
+/* Modal CPA */
+.modal-cpa {
+    max-width: 850px;
+}
+
+/* CPA Header - Indigo gradient */
+.cpa-header {
+    background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%);
+    color: #ffffff;
+    border-radius: 0;
+    padding: 1rem 1.5rem;
+}
+
+.cpa-header .modal-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+}
+
+.cpa-header .btn-close-white {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
 /* SAE Header */
 .sae-header {
     background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-primary-light) 100%);
@@ -132,6 +156,11 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .modal-sae {
+        margin: var(--admin-space-3);
+        max-width: 100%;
+    }
+    
+    .modal-cpa {
         margin: var(--admin-space-3);
         max-width: 100%;
     }

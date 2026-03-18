@@ -53,7 +53,7 @@ if (getenv('APP_ENV') === 'production') {
 }
 
 // Base path configuration
-define('BASE_URL', getenv('BASE_URL') ?: 'http://localhost/UG_IRB_Portal/');
+define('BASE_URL', getenv('BASE_URL') ?: 'http://localhost:8080/');
 define('BASE_PATH', dirname(__FILE__));
 
 // Database configuration - use environment variables or fallbacks

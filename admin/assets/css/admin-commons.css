@@ -1162,3 +1162,117 @@
         padding: var(--admin-space-2);
     }
 }
+
+/* ==========================================================================
+   STEPPER STYLES FOR ADD NEW STUDY FORM
+   ========================================================================== */
+
+.stepper-sidebar {
+    background: #fff;
+    border-radius: 8px;
+}
+
+.stepper-vertical {
+    display: flex;
+    flex-direction: column;
+}
+
+.step {
+    position: relative;
+    padding-bottom: 10px;
+}
+
+.step:last-child {
+    padding-bottom: 0;
+}
+
+.step-header {
+    cursor: pointer;
+}
+
+.step-number {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.step-title h6 {
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.step-progress {
+    position: relative;
+}
+
+.step-line {
+    position: absolute;
+    left: 15px;
+    top: 32px;
+    bottom: -10px;
+    width: 2px;
+    background-color: #dee2e6;
+}
+
+.step:last-child .step-line {
+    display: none;
+}
+
+.step.completed .step-line {
+    background-color: #198754;
+}
+
+.step.active .step-line {
+    background-color: #dee2e6;
+}
+
+.stepper-navigation {
+    margin-top: 20px;
+}
+
+/* Step Content - Hidden by default */
+.step-content {
+    display: none;
+}
+
+/* Only show active step */
+.step-content.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Progress Bar */
+#stepperProgress {
+    transition: width 0.3s ease;
+}
+
+/* Form Validation in Steps */
+.step-content .is-invalid {
+    border-color: #dc3545;
+}
+
+.step-content .is-valid {
+    border-color: #198754;
+}
+
+/* Override card styles for step content */
+.step-content .premium-card {
+    margin-bottom: 1rem;
+}
+
+.step-content .premium-card:last-child {
+    margin-bottom: 0;
+}

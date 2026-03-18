@@ -22,6 +22,10 @@ if (session_status() === PHP_SESSION_NONE) {
 // require_once '../../includes/functions/csrf.php';
 
 // Initialize study variables with default values
+$institution_name = getInstitutionName();
+
+
+
 $study_vars = [
     'study_number' => '',
     'ref_number' => '',
@@ -35,7 +39,7 @@ $study_vars = [
     'approval_patient_enrollment' => '',
     'current_enrolled' => '',
     'on_agenda_date' => '',
-    'irb_of_record' => 'NOGUCHI MEMORIAL INSTITUTE FOR MEDICAL RESEARCH-IRB',
+    'irb_of_record' => $institution_name ?? '',
     'cr_required' => '',
     'renewal_cycle' => '12',
     'date_received' => date('Y-m-d'),
@@ -44,18 +48,26 @@ $study_vars = [
     'last_seen_by_irb' => '',
     'last_irb_renewal' => '',
     'internal_notes' => '',
-    'initial_summary_of_agenda' => ''
+    'initial_summary_of_agenda' => '',
+    // Additional fields with defaults
+    'funding_source' => '',
+    'duration' => '',
+    'study_design' => '',
+    'target_population' => '',
+    'sample_size' => '',
+    'age_range' => '',
+    'vulnerable_population' => ''
 ];
 
-// Extract variables for easier access
+// Extract variables for default case (will be overwritten if application data exists)
 extract($study_vars, EXTR_SKIP);
 
 $is_edit = false;
 $study_id = null;
 $personnel_data = [];
 $documents = [];
-$sae_count = 0;;
-$cpas = [];
+$application = [];
+
 // Get staff types from the database
 $dropdown_data = [
     'staffTypes' => [],
@@ -73,111 +85,123 @@ try {
     $conn = $db->connect();
 
     if (!$conn) {
-        throw new Exception("Database connection failed");
+        echo json_encode(['status' => 'error', 'message' => 'Database connection failed']);
+        exit;
     }
-
     // Fetch dropdown data using helpers
     $dropdown_data['staffTypes'] = getStaffTypes();
     $dropdown_data['sponsors'] = getSponsors();
     $dropdown_data['study_types'] = getReviewTypesList();
     $dropdown_data['study_statuses'] = getStudyStatusesList();
     $dropdown_data['risk_categories'] = getRiskCategoriesList();
-    $dropdown_data['cpa_actions'] = getCPAActionCodes();
-    $dropdown_data['cpa_types'] = getCPATypes();
     $dropdown_data['sae_types'] = getSAETypesList();
     $dropdown_data['locations'] = getStudyLocationsList();
 
-    // Process contacts
-    $allContacts = getAllContacts();
+    $applicationId = $_GET['id'] ?? null;
 
-    $contact_list = [];
-    foreach ($allContacts as $c) {
-        if (!empty($c['first_name']) || !empty($c['last_name'])) {
-            $fullName = trim($c['first_name'] . ' ' . ($c['middle_name'] ? $c['middle_name'] . ' ' : '') . $c['last_name']);
-
-            if (!empty($fullName)) {
-                $contact_list[] = [
-                    'name' => $fullName,
-                    'id' => $c['id']
-                ];
-            }
-        }
+    if (empty($applicationId)) {
+        echo json_encode(['status' => 'error', 'message' => 'Application ID is required']);
+        exit;
     }
-    $dropdown_data['contacts'] = $contact_list;
 
-    // Log contact list in readable format
-    error_log("Contact list: " . implode(', ', array_map(function ($c) {
-        return $c['name'] . ' => ' . $c['id'];
-    }, $contact_list)));
+    // Get main application data with all three detail tables
+    $stmt = $conn->prepare("SELECT a.*, 
+                        sa.*, 
+                        na.*, 
+                        nna.* 
+                        FROM applications a
+                        LEFT JOIN student_application_details sa ON sa.application_id = a.id
+                        LEFT JOIN nmimr_application_details na ON na.application_id = a.id
+                        LEFT JOIN non_nmimr_application_details nna ON nna.application_id = a.id
+                        WHERE a.id = ?");
+    $stmt->execute([$applicationId]);
+    $application = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Check for edit mode
-    if (isset($_GET['edit']) && $_GET['edit'] == '1' && isset($_GET['id']) && is_numeric($_GET['id'])) {
-        $is_edit = true;
-        $study_id = (int)$_GET['id'];
+    error_log("All Application Details:" .  print_r($application, true));
 
-        $sae_count = getSAECount($study_id);
-        $cpa_count = getCPACount($study_id);
-        $cpas = getCPAList($study_id);
-
-        error_log("Editing study ID: $study_id, SAE count: $sae_count");
-
-        // Fetch study data
-        $stmt = $conn->prepare("SELECT * FROM studies WHERE id = ?");
-        $stmt->execute([$study_id]);
-        $study = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($study) {
-            // Map database fields to variables
-            $study_mapping = [
-                'study_number' => 'protocol_number',
-                'ref_number' => 'ref_num',
-                'exp_date' => 'expiration_date',
-                'protocol_title' => 'title',
-                'sponsor' => 'sponsor_displayname',
-                'active' => 'study_active',
-                'review_type' => 'review_type',
-                'status' => 'study_status',
-                'risk_category' => 'risk_category',
-                'approval_patient_enrollment' => 'patients_enrolled',
-                'current_enrolled' => 'init_enroll',
-                'on_agenda_date' => 'on_agenda_date',
-                'irb_of_record' => 'irb_of_record',
-                'cr_required' => 'cr_required',
-                'renewal_cycle' => 'renewal_cycle',
-                'date_received' => 'date_received',
-                'first_irb_review' => 'first_irb_review',
-                'original_approval' => 'approval_date',
-                'last_seen_by_irb' => 'last_irb_review',
-                'last_irb_renewal' => 'last_renewal_date',
-                'internal_notes' => 'remarks'
-            ];
-
-            foreach ($study_mapping as $var => $field) {
-                if (isset($study[$field])) {
-                    $$var = $study[$field];
-                }
-            }
-
-            // Fetch personnel
-            $stmt = $conn->prepare("SELECT * FROM study_personnel WHERE study_id = ? ORDER BY id");
-            $stmt->execute([$study_id]);
-            $personnel_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            // Fetch documents
-            $stmt = $conn->prepare("SELECT * FROM documents WHERE study_id = ? ORDER BY uploaded_at DESC");
-            $stmt->execute([$study_id]);
-            $documents = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } else {
-            $is_edit = false;
-            $_SESSION['error_message'] = 'Study not found';
-        }
+    if (!$application) {
+        echo json_encode(['status' => 'error', 'message' => 'Application not found']);
+        exit;
     }
+
+    // Map application data to study_vars for form population
+    if (!empty($application)) {
+        $study_vars = [
+            'study_number' => $application['protocol_number'] ?? '',
+            'ref_number' => 'NR' . ($application['protocol_number'] ?? ''),
+            'exp_date' => date('Y-m-d', strtotime('+1 year')),
+            'protocol_title' => $application['study_title'] ?? '',
+            'sponsor' => $application['sponsor'] ?? '',
+            'active' => 'Open',
+            'review_type' => '',
+            'status' => $application['status'] ?? '',
+            'risk_category' => '',
+            'approval_patient_enrollment' => '',
+            'current_enrolled' => '',
+            'on_agenda_date' => '',
+            'irb_of_record' => $institution_name ?? '',
+            'cr_required' => '',
+            'renewal_cycle' => '12',
+            'date_received' => $application['created_at'] ?? date('Y-m-d'),
+            'first_irb_review' => '',
+            'original_approval' => '',
+            'last_seen_by_irb' => '',
+            'last_irb_renewal' => '',
+            'internal_notes' => $application['abstract'] ?? '',
+            'initial_summary_of_agenda' => '',
+            // Additional fields from application
+            'funding_source' => $application['funding_source'] ?? '',
+            'duration' => $application['study_duration'] ?? '',
+            'study_design' => $application['study_design'] ?? '',
+            'target_population' => $application['target_population'] ?? '',
+            'sample_size' => $application['sample_size'] ?? '',
+            'age_range' => $application['age_range'] ?? '',
+            'vulnerable_population' => $application['vulnerable_population'] ?? ''
+        ];
+
+        // Extract variables for easier access
+        extract($study_vars, EXTR_SKIP);
+    }
+
+    // Get assigned reviewers
+    $stmt = $conn->prepare("
+        SELECT ar.*, u.full_name, u.email
+        FROM application_reviews ar
+        JOIN users u ON ar.reviewer_id = u.id
+        WHERE ar.application_id = ?
+        ORDER BY ar.created_at DESC
+    ");
+    $stmt->execute([$applicationId]);
+    $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Fetch documents - try application_id first, then study_id
+    $stmt = $conn->prepare("SELECT * FROM application_documents WHERE application_id = ?");
+    $stmt->execute([$applicationId]);
+    $documents = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // If no documents with application_id, try study_id
+    if (empty($documents)) {
+        $stmt = $conn->prepare("SELECT * FROM application_documents WHERE study_id = ?");
+        $stmt->execute([$applicationId]);
+        $documents = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Determine application type based on which detail table has data
+    $applicationType = 'student';
+    if (!empty($application['nmimr_organization']) || !empty($application['nmimr_department'])) {
+        $applicationType = 'nmimr';
+    } elseif (!empty($application['institution_name']) || !empty($application['principal_investigator'])) {
+        $applicationType = 'non_nmimr';
+    }
+
+    // Store application data for use in HTML display
+    $app_data = $application;
+    $app_reviews = $reviews;
+    $app_documents = $documents;
+    $app_type = $applicationType;
 } catch (PDOException $e) {
-    error_log("Database error: " . $e->getMessage());
-    $_SESSION['error_message'] = 'Database connection error';
-} catch (Exception $e) {
-    error_log("General error: " . $e->getMessage());
-    $_SESSION['error_message'] = $e->getMessage();
+    error_log(__FILE__ . " - Database error: " . $e->getMessage());
+    $error_message = 'Database error: ' . $e->getMessage();
 }
 
 // Set default values for new studies
@@ -220,6 +244,8 @@ function formatFileSize($bytes)
     return round($bytes / pow($k, $i), 2) . ' ' . $sizes[$i];
 }
 
+error_log("Institution Name for Study Initialization: " . $institution_name);
+
 ?>
 <!-- New Study Input Form Content -->
 <div class="content-wrapper p-4">
@@ -230,8 +256,8 @@ function formatFileSize($bytes)
                 <i class="fas fa-file-medical-alt"></i>
             </div>
             <div class="header-content">
-                <h4 class="page-title"><?php echo $is_edit ? 'Edit Study' : 'Add New Study'; ?></h4>
-                <p class="page-subtitle">Register a new research protocol for IRB review</p>
+                <h4 class="page-title"> New Study</h4>
+                <p class="page-subtitle">Research protocol for IRB review</p>
             </div>
         </div>
     </div>
@@ -424,19 +450,19 @@ function formatFileSize($bytes)
                                                 <div class="col-md-4 mb-3">
                                                     <label class="form-label fw-semibold required-field">Study Number</label>
                                                     <input type="text" id="study_number" name="study_number" class="form-control"
-                                                        value="<?php echo esc($study_number); ?>" required>
+                                                        value="<?php echo esc($application['protocol_number']); ?>" required>
                                                     <div class="invalid-feedback">Please enter a study number.</div>
                                                 </div>
                                                 <div class="col-md-4 mb-3">
                                                     <label class="form-label fw-semibold required-field">Reference Number</label>
                                                     <input type="text" id="ref_number" name="ref_number" class="form-control"
-                                                        value="<?php echo esc($ref_number); ?>" readonly required>
+                                                        value="<?php echo esc($application['protocol_number']); ?>" readonly required>
                                                     <div class="invalid-feedback">Please enter a reference number.</div>
                                                 </div>
                                                 <div class="col-md-4 mb-3">
                                                     <label class="form-label fw-semibold required-field">Expiration Date</label>
                                                     <input type="date" id="exp_date" name="exp_date" class="form-control"
-                                                        readonly>
+                                                         readonly>
                                                     <div class="invalid-feedback">Please select an expiration date.</div>
                                                 </div>
                                             </div>
@@ -444,7 +470,7 @@ function formatFileSize($bytes)
                                                 <div class="col-12 mb-3">
                                                     <label class="form-label fw-semibold required-field">Protocol Title</label>
                                                     <input type="text" id="protocol_title" name="protocol_title" class="form-control"
-                                                        value="<?php echo esc($protocol_title); ?>" required>
+                                                        value="<?php echo esc($application['study_title']); ?>" required>
                                                     <div class="invalid-feedback">Please enter the protocol title.</div>
                                                 </div>
                                             </div>
@@ -549,7 +575,7 @@ function formatFileSize($bytes)
                                                                 </option>
                                                             <?php endforeach; ?>
                                                         </select>
-                                                        <button type="button" class="btn btn-outline-primary" data-bs-target="#addSponsor" data-bs-toggle="modal">
+                                                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addSponsor">
                                                             <i class="fas fa-plus"></i>
                                                         </button>
                                                     </div>
@@ -606,11 +632,11 @@ function formatFileSize($bytes)
                                             </div>
 
                                             <div class="row mb-3">
-                                                <div class="col-md-6">
+                                                <!-- <div class="col-md-6">
                                                     <label class="form-label fw-semibold">Approved Enrollment</label>
                                                     <input id="ape" name="ape" type="number" class="form-control" min="0"
-                                                        placeholder="Enter number" value="<?php echo esc($approval_patient_enrollment); ?>">
-                                                </div>
+                                                        placeholder="Enter number" value="">
+                                                </div> -->
                                                 <div class="col-md-6">
                                                     <label class="form-label fw-semibold">Currently Enrolled</label>
                                                     <input id="currentEnroll" name="currentEnroll" type="number" class="form-control" min="0"
@@ -622,7 +648,7 @@ function formatFileSize($bytes)
                                                 <div class="col-12">
                                                     <label class="form-label fw-semibold">IRB of Record</label>
                                                     <input id="ior" name="ior" type="text" class="form-control bg-light"
-                                                        value="NOGUCHI MEMORIAL INSTITUTE FOR MEDICAL RESEARCH-IRB" readonly>
+                                                        value="<?php echo esc($irb_of_record); ?>" readonly>
                                                 </div>
                                             </div>
                                         </div>
@@ -690,9 +716,9 @@ function formatFileSize($bytes)
                                                 <div class="col-md-6">
                                                     <div class="card border-primary">
                                                         <div class="card-body text-center p-2">
-                                                            <h5 class="card-title text-primary mb-1" id="saeCount"><?php echo esc($sae_count); ?></h5>
+                                                            <h5 class="card-title text-primary mb-1" id="saeCount">0</h5>
                                                             <p class="card-text text-muted small mb-0">SAEs</p>
-                                                            <button type="button" class="btn btn-sm btn-outline-primary mt-2 <?php echo !$is_edit ? 'disabled' : ''; ?>"
+                                                            <button type="button" class="btn btn-sm btn-outline-primary mt-2"
                                                                 data-bs-target="#addSAE" data-bs-toggle="modal">
                                                                 View/Add SAEs
                                                             </button>
@@ -702,9 +728,9 @@ function formatFileSize($bytes)
                                                 <div class="col-md-6">
                                                     <div class="card border-info">
                                                         <div class="card-body text-center p-2">
-                                                            <h5 class="card-title text-info mb-1" id="cpaCount"><?php echo esc($cpa_count); ?></h5>
+                                                            <h5 class="card-title text-info mb-1" id="cpaCount">0</h5>
                                                             <p class="card-text text-muted small mb-0">CPAs</p>
-                                                            <button type="button" class="btn btn-sm btn-outline-info mt-2 <?php echo !$is_edit ? 'disabled' : ''; ?>"
+                                                            <button type="button" class="btn btn-sm btn-outline-info mt-2"
                                                                 data-bs-target="#addCPA" data-bs-toggle="modal">
                                                                 View/Add CPAs
                                                             </button>
@@ -779,8 +805,8 @@ function formatFileSize($bytes)
                                                                             </td>
                                                                             <td class="text-center">
                                                                                 <input type="checkbox" class="form-check-input"
-                                                                                    name="exclude_from_agenda[<?php echo esc($doc['id']); ?>]"
-                                                                                    <?php echo $doc['exclude_from_agenda'] ? 'checked' : ''; ?>>
+                                                                                    name="exclude_from_agenda"
+                                                                                    <?php echo $doc['id'] ? 'checked' : ''; ?>>
                                                                             </td>
                                                                             <td>
                                                                                 <div class="btn-group btn-group-sm" role="group">
@@ -911,7 +937,6 @@ function formatFileSize($bytes)
                     </small>
                 </div>
                 <div class="d-flex gap-2">
-
                     <button type="button" class="btn btn-outline-secondary" onclick="window.history.back();">
                         <i class="fas fa-times me-1"></i> Cancel
                     </button>
@@ -925,7 +950,6 @@ function formatFileSize($bytes)
 
     </div>
 </div>
-
 
 <!-- Add Sponsor Modal -->
 <div id="addSponsor" class="modal fade" tabindex="-1" aria-labelledby="addSponsorLabel" aria-hidden="true">
@@ -989,251 +1013,45 @@ function formatFileSize($bytes)
     </div>
 </div>
 
-
-<!-- Add CPA Modal -->
-<div class="modal fade" id="addCPA" tabindex="-1" aria-labelledby="addCPALabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg modal-cpa">
-        <div class="modal-content shadow-sm border-0">
-            <form id="cpaForm">
-                <?php echo csrf_field(); ?>
-                <input type="hidden" name="action" value="add_cpa">
-                <input type="hidden" name="protocol_id" value="<?php echo $study_id; ?>">
-                <!-- Header -->
-                <div class="modal-header cpa-header">
-                    <h5 class="modal-title" id="addCPALabel">
-                        <i class="bi bi-file-earmark-text me-2"></i>Add New CPA
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-
-                <!-- Study Information Card -->
-                <div class="card study-info-card border-0 rounded-0">
-                    <div class="card-body py-3">
-                        <div class="row">
-                            <div class="col-md-2">
-                                <small class="text-muted d-block">Study #</small>
-                                <strong><?= htmlspecialchars($study_number) ?></strong>
-                            </div>
-                            <div class="col-md-4">
-                                <small class="text-muted d-block">Protocol Title</small>
-                                <strong><?= htmlspecialchars($protocol_title) ?></strong>
-                            </div>
-                            <div class="col-md-4">
-                                <small class="text-muted d-block">Study Status</small>
-                                <span class="badge bg-<?= getStatusBadgeColor($status) ?> status-badge"><?= htmlspecialchars($status) ?></span>
-                            </div>
-                            <div class="col-md-2">
-                                <small class="text-muted d-block">Expiration Date</small>
-                                <strong><?= htmlspecialchars($exp_date) ?></strong>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Body -->
-                <div class="modal-body pt-4">
-
-                    <div class="row g-3">
-                        <div class="col-12 d-flex justify-content-end">
-                            <button type="button" class="btn btn-outline-primary" id="showCpaTableBtn">
-                                Hide Table
-                            </button>
-                        </div>
-
-                        <!-- CPA Table Details -->
-                        <div id="cpaTable" class="col-12">
-                            <div class="premium-card mb-4" style="height: 200px; overflow-y: auto;">
-                                <div class="table-responsive">
-                                    <table class="table table-sm table-bordered cpa-table mb-0">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>Date of Change</th>
-                                                <th>Type of Change</th>
-                                                <th>Pre-Meeting Action</th>
-                                                <th>Date Received</th>
-                                                <th>Summary for Agenda</th>
-                                                <th>Internal Remarks</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="cpaTableBody">
-                                            <?php if (!empty($cpas)): ?>
-                                                <?php foreach ($cpas as $cpa): ?>
-                                                    <tr data-id="<?= esc($cpa['id']) ?>">
-                                                        <td><?= esc($cpa['date_of_change']) ?></td>
-                                                        <td><?= esc($cpa['cpa_type']) ?></td>
-                                                        <td><?= esc($cpa['pre_action_meeting']) ?></td>
-                                                       <td><?= esc($cpa['date_received']) ?></td>
-                                                        <td><?= esc($cpa['summary']) ?></td>
-                                                        <td><?= esc($cpa['remarks']) ?></td>
-                                                    </tr>
-                                                <?php endforeach; ?>
-                                            <?php else: ?>
-                                                <!-- CPA entries will be dynamically added here -->
-                                                <tr id="noCpaRow">
-                                                    <td colspan="7" class="text-center text-muted py-4">
-                                                        <i class="fas fa-file-alt fa-2x mb-2 d-block"></i>
-                                                        No CPA reports added yet
-                                                    </td>
-                                                </tr>
-                                            <?php endif; ?>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- CPA Details Section -->
-                        <div class="col-12">
-                            <h6 class="section-divider">CPA Details</h6>
-                        </div>
-
-                        <!-- LEFT COLUMN -->
-                        <div class="col-md-6">
-
-                            <div class="form-floating mb-3">
-                                <input type="text" name="pi" class="form-control" value="<?= esc($study['pi']) ?? '' ?>" readonly>
-                                <label>Principal Investigator</label>
-                            </div>
-
-                            <div class="form-floating mb-3">
-                                <input type="date" name="date_received" class="form-control" value="<?= $date_received ?? '' ?>">
-                                <label>Date Received</label>
-                            </div>
-
-                            <div class="form-floating mb-3">
-                                <select name="cpa_type" class="form-select" required>
-                                    <option value="">Select Type</option>
-                                    <?php foreach ($dropdown_data['cpa_types'] as $type): ?>
-                                        <option value="<?= esc($type) ?>" <?= (isset($cpa_type) && $cpa_type === $type) ? 'selected' : '' ?>>
-                                            <?= esc($type) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <label><span class="text-danger">*</span>Type of Change</label>
-                            </div>
-
-                            <div class="form-floating mb-3">
-                                <select name="pre_action_meeting" class="form-select" required>
-                                    <option value="">Select Action</option>
-                                    <?php foreach ($dropdown_data['cpa_actions'] as $action): ?>
-                                        <option value="<?= esc($action) ?>" <?= (isset($pre_action_meeting) && $pre_action_meeting === $action) ? 'selected' : '' ?>>
-                                            <?= esc($action) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-
-                                </select>
-                                <label><span class="text-danger">*</span>Pre-Meeting Action</label>
-                            </div>
-
-                            <div class="row g-2 align-items-center mt-2">
-                                <div class="col-auto">
-                                    <div class="form-check">
-                                        <input type="checkbox" name="signed" class="form-check-input" id="signedCheck"  required>
-                                        <label class="form-check-label" for="signedCheck"><span class="text-danger">*</span>Signed</label>
-                                    </div>
-                                </div>
-                                <div class="col-auto">
-                                    <input type="date" name="signed_date" class="form-control form-control-sm"  disabled>
-                                </div>
-                            </div>
-
-                            <div class="form-floating mt-3">
-                                <input type="text" name="signed_by" class="form-control"  readonly>
-                                <label>Signed By</label>
-                            </div>
-
-                            <div class="form-check form-switch mt-3">
-                                <input class="form-check-input" type="checkbox" name="expedited" id="expeditedCheck" >
-                                <label class="form-check-label" for="expeditedCheck">Expedited Review</label>
-                            </div>
-
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" name="place_on_agenda" id="agendaCheck" >
-                                <label class="form-check-label" for="agendaCheck">Place on Meeting Agenda</label>
-                            </div>
-
-                        </div>
-
-                        <!-- RIGHT COLUMN -->
-                        <div class="col-md-6">
-
-                            <div class="form-floating mb-3">
-                                <input type="text" name="sponsor" class="form-control" value="<?= $sponsor ?? '' ?>" readonly>
-                                <label>Sponsor</label>
-                            </div>
-
-                            <div class="form-floating mb-3">
-                                <input type="date" name="date_of_change" class="form-control"  required>
-                                <label><span class="text-danger">*</span>Date of Change</label>
-                            </div>
-
-
-                            <div class="mt-3">
-                                <label class="form-label">CPA Summary for Agenda</label>
-                                <textarea name="summary" class="form-control" rows="4" placeholder="Enter summary for meeting agenda"></textarea>
-                            </div>
-
-                            <div class="mt-3">
-                                <label class="form-label">CPA Internal Remarks</label>
-                                <textarea name="remarks" class="form-control" rows="4" placeholder="Enter internal remarks"></textarea>
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Footer -->
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" id="saveCpaBtn" class="btn btn-primary px-4">Save CPA</button>
-                </div>
-
-            </form>
-
-        </div>
-    </div>
-</div>
-
 <!-- SAE Modal (simplified for example) -->
 <div id="addSAE" class="modal fade" tabindex="-1" aria-labelledby="addSAELabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg modal-sae">
         <div class="modal-content">
-            <form id="saeForm">
-                <!-- Modal Header -->
-                <div class="modal-header sae-header">
-                    <h5 class="modal-title" id="saeModalLabel">
-                        <i class="bi bi-clipboard-plus me-2"></i>Add New SAE Report
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
+            <!-- Modal Header -->
+            <div class="modal-header sae-header">
+                <h5 class="modal-title" id="saeModalLabel">
+                    <i class="bi bi-clipboard-plus me-2"></i>Add New SAE Report
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
 
-                <!-- Study Information Card -->
-                <div class="card study-info-card border-0 rounded-0">
-                    <div class="card-body py-3">
-                        <div class="row">
-                            <div class="col-md-3">
-                                <small class="text-muted d-block">Study #</small>
-                                <strong><?= htmlspecialchars($study_number) ?></strong>
-                            </div>
-                            <div class="col-md-3">
-                                <small class="text-muted d-block">Study Status</small>
-                                <span class="badge bg-warning status-badge"><?= htmlspecialchars($status) ?></span>
-                            </div>
-                            <div class="col-md-3">
-                                <small class="text-muted d-block">Active</small>
-                                <span class="badge bg-success status-badge"><?= htmlspecialchars($active) ?></span>
-                            </div>
-                            <div class="col-md-3">
-                                <small class="text-muted d-block">Expiration Date</small>
-                                <strong><?= htmlspecialchars($exp_date) ?></strong>
-                            </div>
+            <!-- Study Information Card -->
+            <div class="card study-info-card border-0 rounded-0">
+                <div class="card-body py-3">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <small class="text-muted d-block">Study #</small>
+                            <strong><?= htmlspecialchars($study_number) ?></strong>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted d-block">Study Status</small>
+                            <span class="badge bg-warning status-badge"><?= htmlspecialchars($status) ?></span>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted d-block">Active</small>
+                            <span class="badge bg-success status-badge"><?= htmlspecialchars($active) ?></span>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted d-block">Expiration Date</small>
+                            <strong><?= htmlspecialchars($exp_date) ?></strong>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Modal Body -->
-                <div class="modal-body">
-
+            <!-- Modal Body -->
+            <div class="modal-body">
+                <form id="saeForm">
                     <?php echo csrf_field(); ?>
                     <input type="hidden" name="action" value="add_sae">
                     <input type="hidden" name="protocol_id" value="<?php echo $study_id; ?>">
@@ -1250,7 +1068,7 @@ function formatFileSize($bytes)
                             <div class="col-md-6">
                                 <label for="eventType" class="form-label">Type of Event</label>
                                 <select class="form-select" id="eventType" name="type_of_event" required>
-                                    <?php foreach ($dropdown_data['sae_types'] as $sae): ?>
+                                    <?php foreach ($sae_types as $sae): ?>
                                         <option value="<?= htmlspecialchars($sae) ?>"><?= htmlspecialchars($sae) ?></option>
                                     <?php endforeach; ?>
                                 </select>
@@ -1376,7 +1194,7 @@ function formatFileSize($bytes)
                             <div class="col-md-6">
                                 <label for="location" class="form-label">Location</label>
                                 <select type="text" class="form-control" id="location" name="location">
-                                    <?php foreach ($dropdown_data['locations'] as $site): ?>
+                                    <?php foreach ($locations as $site): ?>
                                         <option value="<?= htmlspecialchars($site) ?>"><?= htmlspecialchars($site) ?></option>
                                     <?php endforeach; ?>
                                 </select>
@@ -1493,21 +1311,14 @@ function formatFileSize($bytes)
 
 
                         </div>
-
-                    </div>
-
-                    <!-- Modal Footer -->
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary" id="saveSaeBtn">Save SAE Report</button>
-                    </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
 <!-- CPA Modal (simplified for example) -->
-<div id="addCPA" class="modal fade" tabindex="-1" aria-labelledby="addCPALabel" aria-hidden="true">
+<div id="addCPA" class="modal fade" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-info text-white">
@@ -1627,80 +1438,6 @@ function formatFileSize($bytes)
     const totalSteps = 6;
     let isSubmitting = false;
 
-    // Function to load user draft on page load
-    async function loadUserDraft() {
-        // Don't load draft if we're in edit mode
-        if (isEdit) return;
-
-        try {
-            const formData = new FormData();
-            formData.append('action', 'get_user_draft');
-            formData.append('csrf_token', '<?php echo $_SESSION['csrf_token'] ?? ''; ?>');
-
-            const response = await fetch('/admin/handlers/add_study_handler.php', {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.json();
-
-            if (result.status === 'success' && result.has_draft) {
-                console.log('Found user draft, loading...');
-
-                // Populate form fields with draft data
-                const studyData = result.study_data;
-                for (const [key, value] of Object.entries(studyData)) {
-                    const input = document.getElementById(key);
-                    if (input) {
-                        input.value = value || '';
-                        // Trigger change event for any listeners
-                        input.dispatchEvent(new Event('change', {
-                            bubbles: true
-                        }));
-                    }
-                }
-
-                // Also update currentStepField (hidden field for current step)
-                const currentStepField = document.getElementById('currentStepField');
-                if (currentStepField && result.current_step) {
-                    currentStepField.value = result.current_step;
-                }
-
-                // Set study_id and current_step hidden fields
-                const studyIdInput = document.getElementById('study_id');
-                if (studyIdInput && result.study_id) {
-                    studyIdInput.value = result.study_id;
-                }
-
-                // Restore current step
-                if (result.current_step && typeof goToStep === 'function') {
-                    currentStep = result.current_step;
-                    goToStep(result.current_step);
-                }
-
-                // Restore personnel data
-                if (result.personnel && result.personnel.length > 0) {
-                    personnelList = result.personnel.map(p => ({
-                        name: p.name || '',
-                        role: p.role || 'PI',
-                        title: p.title || '',
-                        start_date: p.start_date || '',
-                        company_name: p.company_name || '',
-                        email: p.email || '',
-                        phone: p.phone || '',
-                        comments: p.comments || '',
-                        contact_id: p.contact_id || null
-                    }));
-                    updatePersonnelTable();
-                }
-
-                // Show notification that draft was loaded
-                showToast('info', 'Your previous draft has been loaded. You can continue where you left off.');
-            }
-        } catch (error) {
-            console.error('Error loading user draft:', error);
-        }
-    }
 
     // Initialize stepper
     function initStepper() {
@@ -1770,18 +1507,20 @@ function formatFileSize($bytes)
 
         // Initialize step indicators
         updateStepIndicators();
+        
         // Update content visibility for the loaded step
         const stepContents = document.querySelectorAll('.step-content');
         stepContents.forEach(content => {
             const contentStep = parseInt(content.dataset.step);
             content.classList.toggle('active', contentStep === currentStep);
         });
-
+        
         // Update current step field with loaded value
         const currentStepField = document.getElementById('currentStepField');
         if (currentStepField) {
             currentStepField.value = currentStep;
         }
+        
         updateProgressBar();
         updateNavigationButtons();
     }
@@ -2075,285 +1814,8 @@ function formatFileSize($bytes)
     });
 
     // =====================================================
-    // ADD SAE FUNCTIONALITY
-    // =====================================================
-    function toggleLocalEvent() {
-        const checkbox = document.getElementById('localEventCheckbox');
-        const locationField = document.getElementById('location');
-        if (checkbox.checked) {
-            locationField.disabled = false;
-        } else {
-            locationField.disabled = true;
-            locationField.value = '';
-        }
-    }
-
-
-    function toggleFollowUpReport() {
-        const checkbox = document.getElementById('followUpCheckbox');
-        const followUpField = document.getElementById('followUpReport');
-        if (checkbox.checked) {
-            // enable field and make it required
-            followUpField.disabled = false;
-            followUpField.required = true;
-        } else {
-            followUpField.disabled = true;
-            followUpField.required = false;
-            // Clear follow-up details fields when hiding
-            document.getElementById('followUpReport').value = '';
-        }
-    }
-
-    function toggleSignedByPI() {
-        const checkbox = document.getElementById('signedByPI');
-        const signedDateField = document.getElementById('signedDate');
-        if (checkbox.checked) {
-            signedDateField.disabled = false;
-            signedDateField.required = true;
-        } else {
-            signedDateField.disabled = true;
-            signedDateField.required = false;
-            signedDateField.value = '';
-        }
-    }
-
-
-    document.getElementById('saeForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        saveSaeReport();
-    });
-
-    function saveSaeReport() {
-        const saeBtn = document.getElementById('saveSaeBtn');
-        saeBtn.disabled = true;
-
-        // Add spinner to button
-        const originalBtnContent = saeBtn.innerHTML;
-        saeBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Saving...';
-
-        const form = document.getElementById('saeForm');
-        const formData = new FormData(form);
-
-        fetch('/admin/handlers/add_sae_report.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Clear form and close modal
-                    form.reset();
-                    const addSaeModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('addSAE'));
-                    addSaeModal.hide();
-                    showToast('success', data.message || 'SAE report added successfully');
-                } else {
-                    showToast('error', data.message || 'Error adding SAE report');
-                }
-            })
-            .catch(error => {
-                console.error('Error adding SAE report:', error);
-                showToast('error', 'Error adding SAE report. Please try again.');
-            })
-            .finally(() => {
-                saeBtn.disabled = false;
-                saeBtn.innerHTML = originalBtnContent;
-            });
-    }
-
-
-    // =====================================================
     // EXISTING CODE
     // =====================================================
-
-
-
-    // =====================================================
-    // ADD CPA FUNCTIONALITY
-    // ====================================================
-
-    let cpaEdit = false;
-
-    document.getElementById('signedCheck').addEventListener('change', function() {
-        const signedDateField = document.querySelector('input[name="signed_date"]');
-        const piName = document.querySelector('input[name="pi"]').value.trim();
-        const signedBy = document.querySelector('input[name="signed_by"]');
-        if (this.checked) {
-            signedDateField.disabled = false;
-            signedDateField.required = true;
-            signedBy.value = piName; // Auto-populate signed_by with PI name when checked
-        } else {
-            signedDateField.disabled = true;
-            signedDateField.required = false;
-            signedDateField.value = '';
-            signedBy.value = ''; // Clear signed_by when unchecked
-        }
-    });
-
-    // Show and hide cpa table
-    document.getElementById('showCpaTableBtn').addEventListener('click', function() {
-        const cpaTable = document.getElementById('cpaTable');
-        // Toggle display
-        if (cpaTable.style.display === 'block' || cpaTable.style.display === '') {
-            cpaTable.style.display = 'none';
-            // Change button text to "Show Table"
-            this.textContent = 'Show Table';
-        } else {
-            cpaTable.style.display = 'block';
-            // Change button text to "Hide Table"
-            this.textContent = 'Hide Table';
-        }
-
-    });
-
-  
-
-    document.getElementById('cpaForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        saveCPA();
-    });
-
-    function saveCPA() {
-        const cpaBtn = document.getElementById('saveCpaBtn');
-        cpaBtn.disabled = true;
-
-        // Add spinner to button
-        const originalBtnContent = cpaBtn.innerHTML;
-        cpaBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Saving...';
-
-        const form = document.getElementById('cpaForm');
-        const formData = new FormData(form);
-
-        fetch('/admin/handlers/add_cpa_report.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Clear form and close modal
-                    form.reset();
-                    const addCpaModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('addCPA'));
-                    addCpaModal.hide();
-                    showToast('success', data.message || 'CPA added successfully');
-                } else {
-                    showToast('error', data.message || 'Error adding CPA');
-                }
-            })
-            .catch(error => {
-                console.error('Error adding CPA:', error);
-                showToast('error', 'Error adding CPA. Please try again.');
-            })
-            .finally(() => {
-                cpaBtn.disabled = false;
-                cpaBtn.innerHTML = originalBtnContent;
-            });
-    }
-
-    // When a row is selected in the cpa table, populate the CPA modal with that data for editing
-    document.getElementById('cpaTableBody').addEventListener('click', function(e){
-        // Find the closest table row that was clicked
-        const row = e.target.closest('tr');
-        
-        // Make sure we have a valid row and it's not the "no CPA" row
-        if (!row || row.id === 'noCpaRow') {
-            return;
-        }
-        
-        // Get the CPA ID from the data-id attribute
-        const cpaId = row.dataset.id;
-        
-        if (!cpaId) {
-            console.error('No CPA ID found in row');
-            return;
-        }
-        
-        // Get form field references
-        const cpaTypeInput = document.querySelector("select[name='cpa_type']");
-        const cpaDateChange = document.querySelector("input[name='date_of_change']");
-        const cpaActionInput = document.querySelector("select[name='pre_action_meeting']");
-        const cpaDateReceived = document.querySelector("input[name='date_received']");
-        const checkSigned = document.querySelector("input[name='signed']");
-        const signedDateInput = document.querySelector("input[name='signed_date']");
-        const signedByInput = document.querySelector("input[name='signed_by']");
-        const checkExpedited = document.querySelector("input[name='expedited']");
-        const checkPlaceOnAgenda = document.querySelector("input[name='place_on_agenda']");
-        const cpaRemarks = document.querySelector("textarea[name='remarks']");
-        const cpaSummary = document.querySelector("textarea[name='summary']");
-
-        const cpaSubmitBtn = document.getElementById('saveCpaBtn');
-        cpaSubmitBtn.textContent = 'Update CPA';
-        cpaEdit = true;
-        
-        // Fetch CPA data from server using cpaId
-        fetch('/admin/handlers/get_cpa.php?id=' + cpaId)
-            .then(response => response.json())
-            .then(data => {
-                if(data.status === 'success'){
-                    const cpa = data.data;
-                    
-                    // Populate all form fields
-                    if (cpaTypeInput) cpaTypeInput.value = cpa.cpa_type || '';
-                    if (cpaDateChange) cpaDateChange.value = cpa.date_of_change || '';
-                    if (cpaActionInput) cpaActionInput.value = cpa.pre_action_meeting || '';
-                    if (cpaDateReceived) cpaDateReceived.value = cpa.date_received || '';
-                    if (signedByInput != null || signedByInput != "") checkSigned.checked = 1;
-                    if (signedDateInput) signedDateInput.value = cpa.signed_date || '';
-                    if (signedByInput) signedByInput.value = cpa.signed_by || '';
-                    if (checkExpedited) checkExpedited.checked = cpa.expedited == 1;
-                    if (checkPlaceOnAgenda) checkPlaceOnAgenda.checked = cpa.place_on_agenda == 1;
-                    if (cpaRemarks) cpaRemarks.value = cpa.remarks || '';
-                    if (cpaSummary) cpaSummary.value = cpa.summary || '';
-
-                    
-                   
-                } else {
-                    showToast('error', data.message || 'Error fetching CPA data');
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching CPA data:', error);
-                showToast('error', 'Error fetching CPA data. Please try again.');
-            });
-    });
-
-    // Save edited CPA when form is submitted
-    document.getElementById('cpaForm').addEventListener('submit', function(e){
-        const cpaSubmitBtn = document.getElementById("saveCpaBtn");
-        if(cpaEdit){
-            e.preventDefault();
-            const form = document.getElementById('cpaForm');
-            const formData = new FormData(form);
-            formData.append('action', 'update_cpa');
-            formData.append('cpa_id', currentEditingCpaId); // You need to set this variable when loading CPA data
-
-            fetch('/admin/handlers/update_cpa_report.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if(data.status === 'success'){
-                    showToast('success', data.message || 'CPA updated successfully');
-                    // Optionally, refresh the CPA table or update the row with new data
-                    // Reset form and state
-                    form.reset();
-                    cpaSubmitBtn.textContent = 'Add CPA';
-                    cpaEdit = false;
-                    currentEditingCpaId = null;
-                    // Refresh CPA table here if needed
-                } else {
-                    showToast('error', data.message || 'Error updating CPA');
-                }
-            })
-            .catch(error => {
-                console.error('Error updating CPA:', error);
-                showToast('error', 'Error updating CPA. Please try again.');
-            });
-        }
-    });
-
-
-
 
     // =====================================================
     // SAVE SPONSOR FUNCTIONALITY
@@ -2386,31 +1848,31 @@ function formatFileSize($bytes)
 
         // Add sponsor to server via AJAX
         fetch('/admin/handlers/add_sponsor.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    sponsor_name: sponsorName,
-                    sponsor_contact: sponsorContact,
-                    sponsor_email: sponsorEmail
-                })
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                sponsor_name: sponsorName,
+                sponsor_contact: sponsorContact,
+                sponsor_email: sponsorEmail
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Clear input and close modal
-                    sponsorNameInput.value = '';
-                    const addSponsorModal = bootstrap.Modal.getInstance(document.getElementById('addSponsor'));
-                    addSponsorModal.hide();
-                } else {
-                    showToast('error', data.message || 'Error adding sponsor');
-                }
-            })
-            .catch(error => {
-                console.error('Error adding sponsor:', error);
-                showToast('error', 'Error adding sponsor. Please try again.');
-            });
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Clear input and close modal
+                sponsorNameInput.value = '';
+                const addSponsorModal = bootstrap.Modal.getInstance(document.getElementById('addSponsor'));
+                addSponsorModal.hide();
+            } else {
+                showToast('error', data.message || 'Error adding sponsor');
+            }
+        })
+        .catch(error => {
+            console.error('Error adding sponsor:', error);
+            showToast('error', 'Error adding sponsor. Please try again.');
+        });
 
         // Show in select sponsor field immediately
         const sponsorSelect = document.querySelector('select[name="sponsor"]');
@@ -2421,6 +1883,7 @@ function formatFileSize($bytes)
         sponsorSelect.value = sponsorName;
 
     }
+  
 
     document.addEventListener('DOMContentLoaded', function() {
         // Use global variables isEdit and studyId
@@ -2428,9 +1891,9 @@ function formatFileSize($bytes)
         updatePersonnelTable();
 
         // Load user draft if not in edit mode
-        if (!isEdit) {
-            loadUserDraft();
-        }
+        // if (!isEdit) {
+        //     loadUserDraft();
+        // }
 
         // Initialize Bootstrap form validation
         const forms = document.querySelectorAll('.needs-validation');

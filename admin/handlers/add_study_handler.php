@@ -18,77 +18,7 @@ require_once '../../includes/functions/csrf.php';
 header('Content-Type: application/json');
 
 
-/* ==========================================================
-| SAE SUBMISSION HANDLER (EDIT ONLY)
-========================================================== */
-function processSAESubmission(PDO $conn, int $studyId): void
-{
-    // Check if SAE section was submitted at all
-    if (empty($_POST['sae_description']) || empty($_POST['sae_type_of_event'])) {
-        return; // No SAE submission → silently skip
-    }
 
-    // Required SAE fields
-    $required = [
-        'sae_description' => 'description',
-        'sae_type_of_event' => 'type_of_event',
-    ];
-
-    $data = [
-        'protocol_id' => $studyId
-    ];
-
-    foreach ($required as $postKey => $dbKey) {
-        $value = trim($_POST[$postKey] ?? '');
-        if ($value === '') {
-            throw new Exception("Missing required SAE field");
-        }
-        $data[$dbKey] = $value;
-    }
-
-    // Optional SAE fields
-    $optionalFields = [
-        'follow_up_report',
-        'original_sae_number',
-        'secondary_sae',
-        'internal_sae_number',
-        'ind_report_number',
-        'medwatch_report_filed',
-        'medwatch_number',
-        'local_event',
-        'location',
-        'study_related',
-        'patient_status',
-        'age',
-        'sex',
-        'patient_identifier',
-        'date_of_event',
-        'date_received',
-        'date_pi_aware',
-        'signed_by_pi',
-        'date_signed',
-        'risks_altered',
-        'new_consent_required'
-    ];
-
-    foreach ($optionalFields as $field) {
-        $data[$field] = clean($_POST[$field] ?? '', '');
-    }
-
-    // Build dynamic insert
-    $columns = array_keys($data);
-    $placeholders = array_fill(0, count($columns), '?');
-
-    $sql = "
-        INSERT INTO saes (" . implode(',', $columns) . ", created_at, updated_at)
-        VALUES (" . implode(',', $placeholders) . ", NOW(), NOW())
-    ";
-
-    $stmt = $conn->prepare($sql);
-    $stmt->execute(array_values($data));
-
-    error_log("SAE added for study ID: {$studyId}");
-}
 
 
 /* ==========================================================
@@ -245,7 +175,337 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // CSRF validation already done above (lines 32-37)
 // Note: csrf_validate() clears the token after validation to prevent reuse
 
+// Handle save draft action
+if (isset($_POST['action']) && $_POST['action'] === 'save_draft') {
+    handleSaveDraft($conn);
+}
+
+// Handle get user draft action
+if (isset($_POST['action']) && $_POST['action'] === 'get_user_draft') {
+    handleGetUserDraft($conn);
+}
+
 $nextMeeting = '';
+
+
+/* ==========================================================
+ | SAVE DRAFT HANDLER
+ ========================================================== */
+function handleSaveDraft(PDO $conn): void
+{
+    $personnelRaw = $_POST['personnel'] ?? [];
+    $personnel = decodePersonnel($personnelRaw);
+    $roles = extractRoles($personnel);
+    $data = mapStudyData($_POST);
+    
+    $irb_code = '';
+    
+    // Fetch IRB code based on selected user institution id
+    if (isset($_SESSION['institution_id'])) {
+        $institutionId = (int)$_SESSION['institution_id'];
+        $stmt = $conn->prepare("SELECT institution_name FROM institutions WHERE id = ?");
+        $stmt->execute([$institutionId]);
+        $irb_code = $stmt->fetchColumn() ?: '';
+    }
+    
+    $isEdit = !empty($_POST['study_id']);
+    $studyId = $isEdit ? (int)$_POST['study_id'] : null;
+    $currentStep = isset($_POST['current_step']) ? (int)$_POST['current_step'] : 1;
+    
+    // Check if user already has an existing draft
+    if (!$isEdit && isset($_SESSION['user_id'])) {
+        $userId = (int)$_SESSION['user_id'];
+        $checkStmt = $conn->prepare("
+            SELECT id FROM studies 
+            WHERE is_draft = 1 
+            AND created_by = ?
+            LIMIT 1
+        ");
+        $checkStmt->execute([$userId]);
+        $existingDraft = $checkStmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($existingDraft) {
+            // User has an existing draft - update it instead of inserting new
+            $isEdit = true;
+            $studyId = (int)$existingDraft['id'];
+        }
+    }
+    
+    try {
+        $conn->beginTransaction();
+        
+        if ($isEdit) {
+            /* ---------------- UPDATE STUDY ---------------- */
+            // Ensure created_by column exists - use conditional check instead of ALTER to avoid auto-commit
+            $checkStmt = $conn->prepare("SHOW COLUMNS FROM studies LIKE 'created_by'");
+            $checkStmt->execute();
+            if (!$checkStmt->fetch()) {
+                $conn->exec("ALTER TABLE studies ADD COLUMN created_by INT UNSIGNED NULL");
+            }
+            
+            $createdBy = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
+            
+            $stmt = $conn->prepare("
+                UPDATE studies SET
+                    protocol_number=?, ref_num=?, expiration_date=?, title=?, sponsor_displayname=?,
+                    study_active=?, review_type=?, study_status=?, risk_category=?,
+                    patients_enrolled=?, init_enroll=?, on_agenda_date=?, irb_of_record=?,
+                    cr_required=?, renewal_cycle=?, date_received=?, first_irb_review=?,
+                    approval_date=?, last_irb_review=?, last_renewal_date=?, remarks=?,
+                    pi=?, reviewers=?, admins=?, cols=?, current_step=?, created_by=?
+                WHERE id=?
+            ");
+
+            $stmt->execute([
+                $data['study_number'],
+                $data['ref_number'],
+                $data['expiration_date'],
+                $data['protocol_title'],
+                $data['sponsor'],
+                $data['active'],
+                $data['review_type'],
+                $data['status'],
+                $data['risk_category'],
+                $data['patients_enrolled'],
+                $data['init_enroll'],
+                $data['on_agenda_date'],
+                $data['irb_of_record'],
+                $data['cr_required'],
+                $data['renewal_cycle'],
+                $data['date_received'],
+                $data['first_irb_review'],
+                $data['approval_date'],
+                $data['last_irb_review'],
+                $data['last_renewal_date'],
+                $data['internal_notes'],
+                $roles['pi'],
+                $roles['reviewers'],
+                $roles['admins'],
+                $roles['cols'],
+                $currentStep,
+                $createdBy,
+                $studyId
+            ]);
+            
+            // Update personnel
+            if (!empty($personnel)) {
+                $conn->prepare("DELETE FROM study_personnel WHERE study_id=?")->execute([$studyId]);
+            }
+        } else {
+            /* ---------------- INSERT STUDY (DRAFT) ---------------- */
+            // Ensure created_by column exists - use conditional check instead of ALTER to avoid auto-commit
+            $checkStmt = $conn->prepare("SHOW COLUMNS FROM studies LIKE 'created_by'");
+            $checkStmt->execute();
+            if (!$checkStmt->fetch()) {
+                $conn->exec("ALTER TABLE studies ADD COLUMN created_by INT UNSIGNED NULL");
+            }
+            
+            $createdBy = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
+            
+            $stmt = $conn->prepare("
+                INSERT INTO studies (
+                    protocol_number, ref_num, expiration_date, title, sponsor_displayname,
+                    study_active, review_type, study_status, risk_category, patients_enrolled,
+                    init_enroll, on_agenda_date, irb_of_record, irb_code, cr_required,
+                    renewal_cycle, date_received, first_irb_review, approval_date,
+                    last_irb_review, last_renewal_date, remarks,
+                    pi, reviewers, admins, cols, current_step, is_draft, created_by
+                ) VALUES (
+                    ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,?
+                )
+
+            ");
+
+            $stmt->execute([
+                $data['study_number'],
+                $data['ref_number'],
+                $data['expiration_date'],
+                $data['protocol_title'],
+                $data['sponsor'],
+                $data['active'],
+                $data['review_type'],
+                $data['status'],
+                $data['risk_category'],
+                $data['patients_enrolled'],
+                $data['init_enroll'],
+                $data['on_agenda_date'],
+                $data['irb_of_record'],
+                $irb_code,
+                $data['cr_required'],
+                $data['renewal_cycle'],
+                $data['date_received'],
+                $data['first_irb_review'],
+                $data['approval_date'],
+                $data['last_irb_review'],
+                $data['last_renewal_date'],
+                $data['internal_notes'],
+                $roles['pi'],
+                $roles['reviewers'],
+                $roles['admins'],
+                $roles['cols'],
+                $currentStep,
+                $createdBy
+            ]);
+            
+            $studyId = (int)$conn->lastInsertId();
+        }
+        
+        /* ---------------- PERSONNEL INSERT (DRAFT) ---------------- */
+        if (!empty($personnel)) {
+            $stmt = $conn->prepare("
+                INSERT INTO study_personnel
+                (study_id, contact_id, name, role, title, start_date, company_name, email, phone, comments)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+
+            foreach ($personnel as $p) {
+                $stmt->execute([
+                    $studyId,
+                    $p['contact_id'] ?? null,
+                    $p['name'],
+                    $p['role'],
+                    $p['title'],
+                    $p['start_date'],
+                    $p['company_name'],
+                    $p['email'],
+                    $p['phone'],
+                    $p['comments']
+                ]);
+            }
+        }
+        
+        // Commit the transaction - only if there's an active transaction
+        if ($conn->inTransaction()) {
+            $conn->commit();
+        }
+        
+        // Return success response with proper format
+        echo json_encode([
+            'status' => 'success', 
+            'success' => true,
+            'message' => 'Draft saved successfully',
+            'study_id' => $studyId,
+            'current_step' => $currentStep
+        ]);
+        exit;
+        
+    } catch (Exception $e) {
+        // Only rollback if there's an active transaction
+        if ($conn->inTransaction()) {
+            $conn->rollBack();
+        }
+        error_log("Save draft error: " . $e->getMessage());
+        // Return error response with proper format
+        echo json_encode([
+            'status' => 'error', 
+            'success' => false,
+            'message' => 'Error saving draft: ' . $e->getMessage()
+        ]);
+        exit;
+    }
+}
+
+/* ==========================================================
+ | GET USER DRAFT HANDLER
+ ========================================================== */
+function handleGetUserDraft(PDO $conn): void
+{
+    // Check if user is logged in
+    if (empty($_SESSION['user_id'])) {
+        jsonError("User not logged in", 401);
+    }
+    
+    $userId = (int)$_SESSION['user_id'];
+    
+    try {
+        // First ensure the created_by column exists
+        try {
+            $conn->exec("ALTER TABLE studies ADD COLUMN created_by INT UNSIGNED NULL");
+        } catch (Exception $e) {
+            // Column might already exist, ignore error
+        }
+        
+        // Fetch the current user's draft
+        $stmt = $conn->prepare("
+            SELECT * FROM studies 
+            WHERE is_draft = 1 
+            AND created_by = ?
+            ORDER BY id DESC 
+            LIMIT 1
+        ");
+        $stmt->execute([$userId]);
+        $draft = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$draft) {
+            echo json_encode([
+                'status' => 'success',
+                'has_draft' => false,
+                'message' => 'No draft found'
+            ]);
+            exit;
+        }
+        
+        // Fetch personnel for this draft
+        $personnelStmt = $conn->prepare("
+            SELECT * FROM study_personnel WHERE study_id = ?
+        ");
+        $personnelStmt->execute([$draft['id']]);
+        $personnel = $personnelStmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Map study data to form fields
+        $studyData = [
+            // Step 1 fields
+            'study_number' => $draft['protocol_number'] ?? '',
+            'ref_number' => $draft['ref_num'] ?? '',
+            'exp_date' => $draft['expiration_date'] ?? '',
+            'protocol_title' => $draft['title'] ?? '',
+            
+            // Step 3 fields
+            'sponsor' => $draft['sponsor_displayname'] ?? '',
+            'status' => $draft['study_status'] ?? '',
+            'actv' => $draft['study_active'] ?? '',
+            'review_type' => $draft['review_type'] ?? '',
+            'riskCat' => $draft['risk_category'] ?? '',
+            'ape' => $draft['patients_enrolled'] ?? '',
+            'currentEnroll' => $draft['init_enroll'] ?? '',
+            'ior' => $draft['irb_of_record'] ?? '',
+            'oad' => $draft['on_agenda_date'] ?? '',
+            'cRequired' => $draft['cr_required'] ?? '',
+            
+            // Step 4 fields
+            'rcm' => $draft['renewal_cycle'] ?? '',
+            'date_received' => $draft['date_received'] ?? '',
+            'first_irb_review' => $draft['first_irb_review'] ?? '',
+            'original_approval' => $draft['approval_date'] ?? '',
+            'last_seen_by_irb' => $draft['last_irb_review'] ?? '',
+            'last_irb_renewal' => $draft['last_renewal_date'] ?? '',
+            'internal_notes' => $draft['remarks'] ?? '',
+            'lsbr' => $draft['last_seen_by_irb'] ?? '',
+            
+            // Hidden fields
+            'study_id' => $draft['id'] ?? '',
+            'current_step' => $draft['current_step'] ?? 1
+        ];
+        
+        echo json_encode([
+            'status' => 'success',
+            'has_draft' => true,
+            'study_id' => $draft['id'],
+            'current_step' => (int)($draft['current_step'] ?? 1),
+            'study_data' => $studyData,
+            'personnel' => $personnel
+        ]);
+        exit;
+        
+    } catch (Exception $e) {
+        error_log("Get user draft error: " . $e->getMessage());
+        echo json_encode([
+            'status' => 'error', 
+            'message' => 'Error fetching draft: ' . $e->getMessage()
+        ]);
+        exit;
+    }
+}
 
 
 
@@ -256,7 +516,10 @@ $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 
 $personnelRaw = $_POST['personnel'] ?? [];
-if (!$personnelRaw) jsonError("At least one personnel is required");
+if (!$personnelRaw) {
+    // Allow saving draft without personnel, but personnel is required for full submission
+    $personnelRaw = [];
+}
 
 error_log("Raw personnel input: " . json_encode($personnelRaw));
 
@@ -284,6 +547,25 @@ if (isset($_SESSION['institution_id'])) {
 $isEdit = !empty($_POST['study_id']);
 $studyId = $isEdit ? (int)$_POST['study_id'] : null;
 
+// Check if user has an existing draft when submitting a new study
+if (!$isEdit && isset($_SESSION['user_id'])) {
+    $userId = (int)$_SESSION['user_id'];
+    $checkStmt = $conn->prepare("
+        SELECT id FROM studies 
+        WHERE is_draft = 1 
+        AND created_by = ?
+        LIMIT 1
+    ");
+    $checkStmt->execute([$userId]);
+    $existingDraft = $checkStmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($existingDraft) {
+        // User has an existing draft - update it instead of inserting new
+        $isEdit = true;
+        $studyId = (int)$existingDraft['id'];
+    }
+}
+
 try {
     $conn->beginTransaction();
 
@@ -306,7 +588,7 @@ try {
                 patients_enrolled=?, init_enroll=?, on_agenda_date=?, irb_of_record=?,
                 cr_required=?, renewal_cycle=?, date_received=?, first_irb_review=?,
                 approval_date=?, last_irb_review=?, last_renewal_date=?, remarks=?,
-                pi=?, reviewers=?, admins=?, cols=?
+                pi=?, reviewers=?, admins=?, cols=?, is_draft=0
             WHERE id=?
         ");
 
@@ -353,9 +635,9 @@ try {
                 init_enroll, on_agenda_date, irb_of_record, irb_code, cr_required,
                 renewal_cycle, date_received, first_irb_review, approval_date, meeting_date,
                 last_irb_review, last_renewal_date, remarks,
-                pi, reviewers, admins, cols
+                pi, reviewers, admins, cols, is_draft
             ) VALUES (
-                ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
+                ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
             )
         ");
 
@@ -386,7 +668,8 @@ try {
             $roles['pi'],
             $roles['reviewers'],
             $roles['admins'],
-            $roles['cols']
+            $roles['cols'],
+            0
         ]);
         error_log("DEBUG: studies insert complete, lastInsertId: " . $conn->lastInsertId());
 
@@ -469,10 +752,7 @@ try {
         error_log("DEBUG: agenda_items insert complete");
     }
 
-    // ================= SAE (EDIT ONLY) =================
-    if ($isEdit) {
-        processSAESubmission($conn, $studyId);
-    }
+    
 
     handleUploads($conn, $studyId);
 

@@ -1,12 +1,4 @@
 <?php
-// session_start();
-// if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-//     header('Location: /login');
-//     exit;
-// }
-
-// Include CSRF protection
-// require_once '../../includes/functions/csrf.php';
 
 // Pagination parameters
 $limit = 5;
@@ -70,7 +62,7 @@ function buildQueryString($exclude = [])
                         <td><?php echo htmlspecialchars($institution['institution_name']); ?></td>
                         <td><?php echo htmlspecialchars($institution['email']); ?></td>
                         <td>
-                            <button class="btn btn-sm btn-warning edit-institution-btn" data-id="<?php echo $institution['id']; ?>">Edit</button>
+                            <button class="btn btn-sm btn-warning edit-institution-btn" data-id="<?php echo $institution['id']; ?>" data-name="<?php echo htmlspecialchars($institution['institution_name']); ?>" data-email="<?php echo htmlspecialchars($institution['email'] ?? ''); ?>">Edit</button>
                             <button class="btn btn-sm btn-danger delete-institution-btn" data-id="<?php echo $institution['id']; ?>">Delete</button>
                         </td>
                     </tr>
@@ -191,6 +183,37 @@ function buildQueryString($exclude = [])
         </div>
     </div>
 
+    <!-- Edit Institution Modal -->
+    <div class="modal fade" id="editInstitutionModal" tabindex="-1" aria-labelledby="editInstitutionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editInstitutionModalLabel">Edit Institution</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Institution edit form -->
+                    <form id="editInstitutionForm">
+                        <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
+                        <input type="hidden" id="editInstitutionId" name="institution_id">
+                        <div class="mb-3">
+                            <label for="editInstitutionName" class="form-label">Institution Name</label>
+                            <input type="text" class="form-control" id="editInstitutionName" name="institution_name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editInstitutionEmail" class="form-label">Institution Email</label>
+                            <input type="email" class="form-control" id="editInstitutionEmail" name="email">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" form="editInstitutionForm" class="btn btn-warning">Update Institution</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Utility functions
         function showToast(type, message) {
@@ -230,30 +253,19 @@ function buildQueryString($exclude = [])
         }
         // JavaScript to handle edit and delete actions
         document.querySelectorAll('.edit-institution-btn').forEach(button => {
-            button.addEventListener('click', async function() {
+            button.addEventListener('click', function() {
                 const institutionId = this.getAttribute('data-id');
-                // Implement edit functionality here
-                try {
-                    const response = await fetch('/admin/handlers/update_institution.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            id: institutionId
-                        })
-                    });
-                    if (data.status === 'success') {
-                        row.remove();
-                        showToast('success', data.message);
-                    } else {
-                        showToast('error', data.message);
-                    }
-                } catch (error) {
-                    showToast('error', 'Error updating institution.');
-                    console.error('Error:', error);
-                }
-
+                const institutionName = this.getAttribute('data-name');
+                const institutionEmail = this.getAttribute('data-email');
+                
+                // Populate the edit modal form
+                document.getElementById('editInstitutionId').value = institutionId;
+                document.getElementById('editInstitutionName').value = institutionName;
+                document.getElementById('editInstitutionEmail').value = institutionEmail || '';
+                
+                // Open the edit modal
+                const editModal = new bootstrap.Modal(document.getElementById('editInstitutionModal'));
+                editModal.show();
             });
         });
 
@@ -296,6 +308,7 @@ function buildQueryString($exclude = [])
             event.preventDefault();
             const institutionName = document.getElementById('institutionName').value;
             const institutionEmail = document.getElementById('institutionEmail').value;
+            const csrfToken = document.querySelector('input[name="csrf_token"]').value;
 
             try {
                 const response = await fetch('/admin/handlers/add_institution.php', {
@@ -305,7 +318,8 @@ function buildQueryString($exclude = [])
                     },
                     body: JSON.stringify({
                         institution_name: institutionName,
-                        email: institutionEmail
+                        email: institutionEmail,
+                        csrf_token: csrfToken
                     })
                 });
                 const data = await response.json();
@@ -320,6 +334,44 @@ function buildQueryString($exclude = [])
                 }
             } catch (error) {
                 showToast('error', 'Error creating institution.');
+                console.error('Error:', error);
+            }
+        });
+
+        // Handle institution edit form submission
+        document.getElementById('editInstitutionForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const institutionId = document.getElementById('editInstitutionId').value;
+            const institutionName = document.getElementById('editInstitutionName').value;
+            const institutionEmail = document.getElementById('editInstitutionEmail').value;
+            const csrfToken = document.querySelector('#editInstitutionForm input[name="csrf_token"]').value;
+
+            try {
+                const response = await fetch('/admin/handlers/update_institution.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id: institutionId,
+                        institution_name: institutionName,
+                        email: institutionEmail,
+                        csrf_token: csrfToken
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    // Close modal
+                    const editInstitutionModal = bootstrap.Modal.getInstance(document.getElementById('editInstitutionModal'));
+                    editInstitutionModal.hide();
+                    showToast('success', 'Institution updated successfully!');
+                    // Optionally, refresh the page or update the table dynamically
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showToast('error', data.message || 'Failed to update institution.');
+                }
+            } catch (error) {
+                showToast('error', 'Error updating institution.');
                 console.error('Error:', error);
             }
         });

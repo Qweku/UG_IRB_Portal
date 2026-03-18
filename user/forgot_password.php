@@ -3,13 +3,13 @@
 require_once __DIR__ . '/../includes/functions/helpers.php';
 require_once __DIR__ . '/../includes/functions/csrf.php';
 
-if (is_admin_logged_in()) {
-    header('Location: /dashboard');
-    exit;
-} elseif (is_applicant_logged_in()) {
-    header('Location: /applicant-dashboard');
-    exit;
-}
+// if (is_admin_logged_in()) {
+//     header('Location: /dashboard');
+//     exit;
+// } elseif (is_applicant_logged_in()) {
+//     header('Location: /applicant-dashboard');
+//     exit;
+// }
 
 ?>
 
@@ -39,7 +39,7 @@ if (is_admin_logged_in()) {
                 Please enter your email address and we'll send you a link to reset your password.
             </p>
             
-            <form action="/authenticate" method="post" class="auth-form">
+            <form id="forgotPasswordForm" class="auth-form">
                 <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
                 <div class="mb-4">
                     <label for="email" class="form-label">Email Address</label>
@@ -49,25 +49,13 @@ if (is_admin_logged_in()) {
                     </div>
                 </div>
                 <div class="d-grid">
-                    <button type="submit" class="btn auth-btn auth-btn-primary">
+                    <button type="submit" class="btn auth-btn auth-btn-primary text-white" id="submitBtn">
                         <i class="fas fa-paper-plane me-2"></i>Send Reset Link
                     </button>
                 </div>
             </form>
             
-            <?php if (isset($_GET['error'])): ?>
-                <div class="alert auth-alert auth-alert-danger" role="alert">
-                    <i class="fas fa-exclamation-circle me-2"></i>
-                    Unable to send reset link. Please try again.
-                </div>
-            <?php endif; ?>
-            
-            <?php if (isset($_GET['success'])): ?>
-                <div class="alert auth-alert auth-alert-success" role="alert">
-                    <i class="fas fa-check-circle me-2"></i>
-                    Password reset link has been sent to your email.
-                </div>
-            <?php endif; ?>
+            <div id="messageContainer"></div>
             
             <div class="auth-divider">
                 <span>Remember your password?</span>
@@ -82,6 +70,44 @@ if (is_admin_logged_in()) {
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('forgotPasswordForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitBtn = document.getElementById('submitBtn');
+            const messageContainer = document.getElementById('messageContainer');
+            
+            // Disable button and show loading
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sending...';
+            messageContainer.innerHTML = '';
+            
+            fetch('/forgot-password-action', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    messageContainer.innerHTML = '<div class="alert auth-alert auth-alert-success" role="alert">' +
+                        '<i class="fas fa-check-circle me-2"></i>' + data.message + '</div>';
+                    document.getElementById('forgotPasswordForm').reset();
+                } else {
+                    messageContainer.innerHTML = '<div class="alert auth-alert auth-alert-danger" role="alert">' +
+                        '<i class="fas fa-exclamation-circle me-2"></i>' + data.message + '</div>';
+                }
+            })
+            .catch(error => {
+                messageContainer.innerHTML = '<div class="alert auth-alert auth-alert-danger" role="alert">' +
+                    '<i class="fas fa-exclamation-circle me-2"></i>An error occurred. Please try again.</div>';
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Send Reset Link';
+            });
+        });
+    </script>
 </body>
 
 </html>

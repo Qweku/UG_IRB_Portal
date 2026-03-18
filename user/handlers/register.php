@@ -57,6 +57,7 @@ try {
     $last_name = trim($_POST['last_name'] ?? '');
     $phone_number = trim($_POST['phone_number'] ?? '');
     $email = trim($_POST['email'] ?? '');
+    $institution = trim($_POST['institution'] ?? '');
     $application_type = trim($_POST['application_type'] ?? '');
     $password = $_POST['password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
@@ -100,10 +101,28 @@ try {
         $errors[] = 'Please enter a valid email address.';
     }
 
+    if (empty($institution)) {
+        $errors[] = 'Institution is required.';
+    }
+
     if (empty($application_type)) {
         $errors[] = 'Application type is required.';
     } elseif (!in_array($application_type, ['student', 'nmimr', 'non_nmimr'], true)) {
         $errors[] = 'Invalid application type selected.';
+    }
+
+    // Student ID validation - only required for student applicants
+    if ($application_type === 'student') {
+        if (empty($studentId)) {
+            $errors[] = 'Student ID is required.';
+        } elseif (!preg_match('/^[a-zA-Z0-9\-]+$/', $studentId)) {
+            $errors[] = 'Student ID can only contain letters, numbers, and hyphens.';
+        }
+    } else {
+        // For nmimr and non_nmimr, student_id is optional - validate format only if provided
+        if (!empty($studentId) && !preg_match('/^[a-zA-Z0-9\-]+$/', $studentId)) {
+            $errors[] = 'Student ID can only contain letters, numbers, and hyphens.';
+        }
     }
 
     if (empty($password)) {
@@ -194,11 +213,23 @@ try {
         exit;
     }
 
+    $stmt = $conn->prepare("SELECT id FROM institutions WHERE id = ? LIMIT 1");
+    $stmt->execute([$institution]);
+    $institutionData = $stmt->fetch();
+    if (!$institutionData) {
+        $response['message'] = 'Selected institution does not exist.';
+        echo json_encode($response);
+        exit;
+    }else{
+        $institutionId = $institutionData['id'];
+    }
+
+
     // Add user to applicant user table
     $stmt = $conn->prepare("
-        INSERT INTO applicant_users (user_id, first_name, middle_name, last_name, phone_number, email,
+        INSERT INTO applicant_users (user_id, first_name, middle_name, last_name, phone_number, email, institution_id,
             student_id, applicant_type, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
     ");
     $stmt->execute([
         $conn->lastInsertId(),
@@ -207,6 +238,7 @@ try {
         $last_name,
         $phone_number,
         $email,
+        $institutionId,
         $studentId,
         $application_type
     ]);

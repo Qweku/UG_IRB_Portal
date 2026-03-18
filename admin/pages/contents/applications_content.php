@@ -309,9 +309,9 @@ function populateTable(applications) {
                 <td>${reviewersHtml}</td>
                 <td>
                     <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary" onclick="viewApplication(${app.id})" title="View Details">
+                        <a class="btn btn-outline-primary" href="/applications/view-application?id=${app.id}" title="View Details">
                             <i class="fas fa-eye"></i>
-                        </button>
+                        </a>
                         <button class="btn btn-outline-success" onclick="openAssignModal(${app.id}, '${app.protocol_number}', '${app.study_title}')" title="Assign Reviewer">
                             <i class="fas fa-user-plus"></i>
                         </button>
