@@ -46,6 +46,7 @@ function generateCPANumber(){
 }
 
 $studyId = $_POST['protocol_id'] ?? $_POST['study_id'] ?? null;
+$signedDate = $_POST['signed_date'] ?? date('Y-m-d'); // Default to today's date if not provided
 $ref_number = $_POST['ref_number'] ?? null;
 $expedited = isset($_POST['expedited']) ? 1 : 0;
 $placedOnAgenda = isset($_POST['place_on_agenda']) ? 1 : 0;
@@ -69,7 +70,8 @@ $data = [
     'reference_number' => $ref_number,
     'cpa_number' => $cpa_number,
     'expedited' => $expedited,
-    'place_on_agenda' => $placedOnAgenda
+    'place_on_agenda' => $placedOnAgenda,
+    'signed_date' => $signedDate
 ];
 
 foreach ($required as $postKey => $dbKey) {
@@ -88,7 +90,6 @@ $optionalFields = [
     'date_of_change',
     'date_received',
     'summary',
-    'signed_date',
     'signed_by',    
     'remarks'
 ];

@@ -68,7 +68,6 @@ $data = [
     'cpa_number' => $cpaNumber,
     'expedited' => $expedited,
     'place_on_agenda' => $placedOnAgenda,
-    'signed' => $signed
 ];
 
 foreach ($required as $postKey => $dbKey) {

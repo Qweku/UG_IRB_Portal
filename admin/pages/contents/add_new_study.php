@@ -998,6 +998,9 @@ function formatFileSize($bytes)
                 <?php echo csrf_field(); ?>
                 <input type="hidden" name="action" value="add_cpa">
                 <input type="hidden" name="protocol_id" value="<?php echo $study_id; ?>">
+                <input type="hidden" name="cpa_number">
+                <input type="hidden" name="reference_number" value="<?php echo esc($reference_number); ?>">
+
                 <!-- Header -->
                 <div class="modal-header cpa-header">
                     <h5 class="modal-title" id="addCPALabel">
@@ -1062,7 +1065,7 @@ function formatFileSize($bytes)
                                                         <td><?= esc($cpa['date_of_change']) ?></td>
                                                         <td><?= esc($cpa['cpa_type']) ?></td>
                                                         <td><?= esc($cpa['pre_action_meeting']) ?></td>
-                                                       <td><?= esc($cpa['date_received']) ?></td>
+                                                        <td><?= esc($cpa['date_received']) ?></td>
                                                         <td><?= esc($cpa['summary']) ?></td>
                                                         <td><?= esc($cpa['remarks']) ?></td>
                                                     </tr>
@@ -1128,27 +1131,27 @@ function formatFileSize($bytes)
                             <div class="row g-2 align-items-center mt-2">
                                 <div class="col-auto">
                                     <div class="form-check">
-                                        <input type="checkbox" name="signed" class="form-check-input" id="signedCheck"  required>
+                                        <input type="checkbox" name="signed" class="form-check-input" id="signedCheck" required>
                                         <label class="form-check-label" for="signedCheck"><span class="text-danger">*</span>Signed</label>
                                     </div>
                                 </div>
                                 <div class="col-auto">
-                                    <input type="date" name="signed_date" class="form-control form-control-sm"  disabled>
+                                    <input type="date" name="signed_date" class="form-control form-control-sm" disabled>
                                 </div>
                             </div>
 
                             <div class="form-floating mt-3">
-                                <input type="text" name="signed_by" class="form-control"  readonly>
+                                <input type="text" name="signed_by" class="form-control" readonly>
                                 <label>Signed By</label>
                             </div>
 
                             <div class="form-check form-switch mt-3">
-                                <input class="form-check-input" type="checkbox" name="expedited" id="expeditedCheck" >
+                                <input class="form-check-input" type="checkbox" name="expedited" id="expeditedCheck">
                                 <label class="form-check-label" for="expeditedCheck">Expedited Review</label>
                             </div>
 
                             <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" name="place_on_agenda" id="agendaCheck" >
+                                <input class="form-check-input" type="checkbox" name="place_on_agenda" id="agendaCheck">
                                 <label class="form-check-label" for="agendaCheck">Place on Meeting Agenda</label>
                             </div>
 
@@ -1163,7 +1166,7 @@ function formatFileSize($bytes)
                             </div>
 
                             <div class="form-floating mb-3">
-                                <input type="date" name="date_of_change" class="form-control"  required>
+                                <input type="date" name="date_of_change" class="form-control" required>
                                 <label><span class="text-danger">*</span>Date of Change</label>
                             </div>
 
@@ -1506,20 +1509,7 @@ function formatFileSize($bytes)
     </div>
 </div>
 
-<!-- CPA Modal (simplified for example) -->
-<div id="addCPA" class="modal fade" tabindex="-1" aria-labelledby="addCPALabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-info text-white">
-                <h5 class="modal-title"><i class="fas fa-file-contract me-2"></i>Add CPA</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>CPA functionality would be implemented here.</p>
-            </div>
-        </div>
-    </div>
-</div>
+
 
 
 
@@ -2172,6 +2162,7 @@ function formatFileSize($bytes)
     // ====================================================
 
     let cpaEdit = false;
+    var cpaId = null;
 
     document.getElementById('signedCheck').addEventListener('change', function() {
         const signedDateField = document.querySelector('input[name="signed_date"]');
@@ -2205,11 +2196,15 @@ function formatFileSize($bytes)
 
     });
 
-  
+
 
     document.getElementById('cpaForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        saveCPA();
+        if (cpaEdit == false) {
+            saveCPA();
+        } else {
+            updateCPA();
+        }
     });
 
     function saveCPA() {
@@ -2229,11 +2224,24 @@ function formatFileSize($bytes)
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
+                // DEBUG: Log response data to diagnose issue
+                console.log('Add CPA Response:', data);
+                console.log('Response keys:', Object.keys(data));
+                
+                if (data.success === true) {
                     // Clear form and close modal
                     form.reset();
-                    const addCpaModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('addCPA'));
+                    
+                    // DEBUG: Log modal element details
+                    const modalElement = document.getElementById('addCPA');
+                    console.log('Modal element found:', modalElement);
+                    console.log('Modal element ID:', modalElement?.id);
+                    console.log('Modal element classList:', modalElement?.classList);
+                    
+                    const addCpaModal = bootstrap.Modal.getOrCreateInstance(modalElement);
+                    console.log('Modal instance:', addCpaModal);
                     addCpaModal.hide();
+                    console.log('hide() called');
                     showToast('success', data.message || 'CPA added successfully');
                 } else {
                     showToast('error', data.message || 'Error adding CPA');
@@ -2250,23 +2258,23 @@ function formatFileSize($bytes)
     }
 
     // When a row is selected in the cpa table, populate the CPA modal with that data for editing
-    document.getElementById('cpaTableBody').addEventListener('click', function(e){
+    document.getElementById('cpaTableBody').addEventListener('click', function(e) {
         // Find the closest table row that was clicked
         const row = e.target.closest('tr');
-        
+
         // Make sure we have a valid row and it's not the "no CPA" row
         if (!row || row.id === 'noCpaRow') {
             return;
         }
-        
+
         // Get the CPA ID from the data-id attribute
-        const cpaId = row.dataset.id;
-        
+        cpaId = row.dataset.id;
+
         if (!cpaId) {
             console.error('No CPA ID found in row');
             return;
         }
-        
+
         // Get form field references
         const cpaTypeInput = document.querySelector("select[name='cpa_type']");
         const cpaDateChange = document.querySelector("input[name='date_of_change']");
@@ -2279,33 +2287,40 @@ function formatFileSize($bytes)
         const checkPlaceOnAgenda = document.querySelector("input[name='place_on_agenda']");
         const cpaRemarks = document.querySelector("textarea[name='remarks']");
         const cpaSummary = document.querySelector("textarea[name='summary']");
+        const cpaNumber = document.querySelector("input[name='cpa_number']");
+        const refNumberInput = document.querySelector("input[name='reference_number']");
 
         const cpaSubmitBtn = document.getElementById('saveCpaBtn');
         cpaSubmitBtn.textContent = 'Update CPA';
         cpaEdit = true;
-        
+
         // Fetch CPA data from server using cpaId
         fetch('/admin/handlers/get_cpa.php?id=' + cpaId)
             .then(response => response.json())
             .then(data => {
-                if(data.status === 'success'){
+                if (data.status === 'success') {
                     const cpa = data.data;
-                    
+
                     // Populate all form fields
                     if (cpaTypeInput) cpaTypeInput.value = cpa.cpa_type || '';
                     if (cpaDateChange) cpaDateChange.value = cpa.date_of_change || '';
                     if (cpaActionInput) cpaActionInput.value = cpa.pre_action_meeting || '';
                     if (cpaDateReceived) cpaDateReceived.value = cpa.date_received || '';
-                    if (signedByInput != null || signedByInput != "") checkSigned.checked = 1;
+                    if (signedByInput != null || signedByInput != "") {
+                        checkSigned.checked = 1;
+                        signedDateInput.disabled = false;
+                    }
                     if (signedDateInput) signedDateInput.value = cpa.signed_date || '';
                     if (signedByInput) signedByInput.value = cpa.signed_by || '';
                     if (checkExpedited) checkExpedited.checked = cpa.expedited == 1;
                     if (checkPlaceOnAgenda) checkPlaceOnAgenda.checked = cpa.place_on_agenda == 1;
                     if (cpaRemarks) cpaRemarks.value = cpa.remarks || '';
                     if (cpaSummary) cpaSummary.value = cpa.summary || '';
+                    if (cpaNumber) cpaNumber.value = cpa.cpa_number || '0001';
+                    if (refNumberInput) refNumberInput.value = cpa.reference_number || '0001';
 
-                    
-                   
+
+
                 } else {
                     showToast('error', data.message || 'Error fetching CPA data');
                 }
@@ -2317,40 +2332,54 @@ function formatFileSize($bytes)
     });
 
     // Save edited CPA when form is submitted
-    document.getElementById('cpaForm').addEventListener('submit', function(e){
+    function updateCPA() {
         const cpaSubmitBtn = document.getElementById("saveCpaBtn");
-        if(cpaEdit){
-            e.preventDefault();
+        cpaSubmitBtn.disabled = true;
+
+        // Add spinner to button
+        const originalBtnContent = cpaSubmitBtn.innerHTML;
+        cpaSubmitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Updating...';
+
+
+        if (cpaEdit) {
             const form = document.getElementById('cpaForm');
             const formData = new FormData(form);
             formData.append('action', 'update_cpa');
-            formData.append('cpa_id', currentEditingCpaId); // You need to set this variable when loading CPA data
+            formData.append('id', cpaId); // You need to set this variable when loading CPA data
 
             fetch('/admin/handlers/update_cpa_report.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if(data.status === 'success'){
-                    showToast('success', data.message || 'CPA updated successfully');
-                    // Optionally, refresh the CPA table or update the row with new data
-                    // Reset form and state
-                    form.reset();
-                    cpaSubmitBtn.textContent = 'Add CPA';
-                    cpaEdit = false;
-                    currentEditingCpaId = null;
-                    // Refresh CPA table here if needed
-                } else {
-                    showToast('error', data.message || 'Error updating CPA');
-                }
-            })
-            .catch(error => {
-                console.error('Error updating CPA:', error);
-                showToast('error', 'Error updating CPA. Please try again.');
-            });
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // DEBUG: Log response data to diagnose issue
+                     
+                    if (data.success === true) {
+                        showToast('success', data.message || 'CPA updated successfully');
+                        // Optionally, refresh the CPA table or update the row with new data
+                        // Reset form and state
+                        form.reset();
+                        cpaSubmitBtn.textContent = 'Add CPA';
+                        cpaEdit = false;
+                        cpaId = null;
+                        
+                        // DEBUG: Log modal element details
+                        const modalElement = document.getElementById('addCPA');
+                       
+                        const addCpaModal = bootstrap.Modal.getInstance(modalElement);
+                        addCpaModal.hide();
+                          // Refresh CPA table here if needed
+                    } else {
+                        showToast('error', data.message || 'Error updating CPA');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating CPA:', error);
+                    showToast('error', 'Error updating CPA. Please try again.');
+                });
         }
-    });
+    }
 
 
 
