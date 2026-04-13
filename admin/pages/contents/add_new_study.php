@@ -54,7 +54,10 @@ $is_edit = false;
 $study_id = null;
 $personnel_data = [];
 $documents = [];
-$sae_count = 0;;
+$sae_count = 0;
+$saes = [];
+$cpa_count = 0;
+
 $cpas = [];
 // Get staff types from the database
 $dropdown_data = [
@@ -116,6 +119,7 @@ try {
         $study_id = (int)$_GET['id'];
 
         $sae_count = getSAECount($study_id);
+        $saes = getSAEList($study_id);
         $cpa_count = getCPACount($study_id);
         $cpas = getCPAList($study_id);
 
@@ -1240,6 +1244,55 @@ function formatFileSize($bytes)
                     <?php echo csrf_field(); ?>
                     <input type="hidden" name="action" value="add_sae">
                     <input type="hidden" name="protocol_id" value="<?php echo $study_id; ?>">
+                    <input type="hidden" name="reference_number" value="<?php echo esc($reference_number); ?>">
+
+                    <div class="row g-3">
+                        <div class="col-12 d-flex justify-content-end">
+                            <button type="button" class="btn btn-outline-primary" id="showSaeTableBtn">
+                                Hide Table
+                            </button>
+                        </div>
+
+                        <!-- SAE Table Details -->
+                        <div id="cpaTable" class="col-12">
+                            <div class="premium-card mb-4" style="height: 200px; overflow-y: auto;">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered cpa-table mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Date of Event</th>
+                                               <th>Internal SAE Number</th>
+                                               <th>Local</th>
+                                               <th>Location</th>
+                                               <th>Reference Number</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="saeTableBody">
+                                            <?php if (!empty($saes)): ?>
+                                                <?php foreach ($saes as $sae): ?>
+                                                    <tr data-id="<?= esc($sae['id']) ?>">
+                                                        <td><?= esc($sae['date_of_event']) ?></td>
+                                                        <td><?= esc($sae['internal_sae_number']) ?></td>
+                                                        <td><?= esc($sae['local_event']) ?></td>
+                                                        <td><?= esc($sae['location']) ?></td>
+                                                        <td><?= esc($sae['reference_number'] ?? "0001") ?></td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php else: ?>
+                                                <!-- SAE entries will be dynamically added here -->
+                                                <tr id="noSaeRow">
+                                                    <td colspan="7" class="text-center text-muted py-4">
+                                                        <i class="fas fa-file-alt fa-2x mb-2 d-block"></i>
+                                                        No SAE reports added yet
+                                                    </td>
+                                                </tr>
+                                            <?php endif; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
                     <!-- Event Details Section -->
                     <div class="mb-4">
                         <h6 class="section-divider">Event Details</h6>

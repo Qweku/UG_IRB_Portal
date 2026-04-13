@@ -314,13 +314,13 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label for="protocol_number" class="form-label fw-semibold">Protocol Number <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="protocol_number" name="protocol_number" value="<?php echo htmlspecialchars($existingApplication['protocol_number'] ?? ''); ?>" required>
+                                    <label for="protocol_number" class="form-label fw-semibold">Protocol Number</label>
+                                    <input type="text" class="form-control" id="protocol_number" name="protocol_number" value="<?php echo htmlspecialchars($existingApplication['protocol_number'] ?? ''); ?>" readonly>
                                     <small class="text-muted">Unique identifier for your study</small>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label for="version_number" class="form-label fw-semibold">Version Number <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="version_number" name="version_number" placeholder="e.g., 1.0" value="<?php echo htmlspecialchars($existingApplication['version_number'] ?? ''); ?>" required>
+                                    <label for="version_number" class="form-label fw-semibold">Version Number </label>
+                                    <input type="text" class="form-control" id="version_number" name="version_number" placeholder="e.g., 1.0" value="<?php echo htmlspecialchars($existingApplication['version_number'] ?? ''); ?>" readonly>
                                     <small class="text-muted">Document version (start with 1.0)</small>
                                 </div>
                                 <div class="col-12 mb-3">
@@ -536,12 +536,19 @@ $currentType = $applicationTypes[$type] ?? $applicationTypes['student'];
                                     <div class="col-md-12 mb-3">
                                         <label for="prior_irb_review" class="form-label fw-semibold">Prior IRB Review</label>
                                         <textarea class="form-control" id="prior_irb_review" name="prior_irb_review" rows="2" placeholder="Name any other IRB this proposal has been submitted to and attach approval letter if applicable. In case of rejection, state reasons"><?php echo htmlspecialchars($existingApplication['prior_irb_review'] ?? ''); ?></textarea>
+                                        <input type="file" class="form-control mt-2" id="approval_letter" name="approval_letter" accept=".pdf,.doc,.docx">
+                                        <?php if (!empty($existingApplication['approval_letter'])): ?>
+                                            <small class="text-success d-block mt-1">
+                                                <i class="bi bi-file-earmark"></i> Current file: <?php echo htmlspecialchars(basename($existingApplication['approval_letter'])); ?>
+                                            </small>
+                                        <?php endif; ?>
+                                        <small class="text-muted">Attach Letter of Approval if applicable</small>
                                     </div>
 
                                     <div class="col-md-12 mb-3">
                                         <label for="collaborating_institutions" class="form-label fw-semibold">Collaborating Institutions</label>
                                         <textarea class="form-control" id="collaborating_institutions" name="collaborating_institutions" rows="2" placeholder="List collaborating institutions"><?php echo htmlspecialchars($existingApplication['collaborating_institutions'] ?? ''); ?></textarea>
-                                        <input type="file" class="form-control mt-2" id="collaboration_letter" name="collaboration_letter" accept=".pdf,.doc,.docx">
+                                        <input type="file" class="form-control mt-2" id="collaboration_letter" name="collaboration_letter" accept=".pdf,.doc,.docx" multiple>
                                         <?php if (!empty($existingApplication['collaboration_letter'])): ?>
                                             <small class="text-success d-block mt-1">
                                                 <i class="bi bi-file-earmark"></i> Current file: <?php echo htmlspecialchars(basename($existingApplication['collaboration_letter'])); ?>

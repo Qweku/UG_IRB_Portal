@@ -21,6 +21,13 @@ function clean(?string $value, string $default = ''): string
     return $value === '' ? $default : $value;
 }
 
+$secondarySAE = isset($_POST['secondary_sae']) ? 1 : 0;
+$medwatchReportFiled = isset($_POST['medwatch_report_filed']) ? 1 : 0;
+$studyRelated = isset($_POST['study_related']) ? 1 : 0;
+$localEvent = isset($_POST['local_event']) ? 1 : 0;
+$risksAltered = isset($_POST['risks_altered']) ? 1 : 0;
+$newConsentRequired = isset($_POST['new_consent_required']) ? 1 : 0;
+$referenceNumber = $_POST['reference_number'] ?? null;
 $studyId = $_POST['protocol_id'] ?? $_POST['study_id'] ?? null;
 if (!$studyId) {
     error_log("SAE Report Handler - Missing study ID");
@@ -35,7 +42,14 @@ $required = [
 ];
 
 $data = [
-    'protocol_id' => $studyId
+    'protocol_id' => $studyId,
+    'secondary_sae' => $secondarySAE,
+    'medwatch_report_filed' => $medwatchReportFiled,
+    'study_related' => $studyRelated,
+    'local_event' => $localEvent,
+    'risks_altered' => $risksAltered,
+    'new_consent_required' => $newConsentRequired,
+    'reference_number' => $referenceNumber,
 ];
 
 foreach ($required as $postKey => $dbKey) {
@@ -53,14 +67,10 @@ error_log("SAE Report Handler - Data to insert: " . json_encode($data));
 $optionalFields = [
     'follow_up_report',
     'original_sae_number',
-    'secondary_sae',
     'internal_sae_number',
     'ind_report_number',
-    'medwatch_report_filed',
     'medwatch_number',
-    'local_event',
     'location',
-    'study_related',
     'patient_status',
     'age',
     'sex',
@@ -70,8 +80,6 @@ $optionalFields = [
     'date_pi_aware',
     'signed_by_pi',
     'date_signed',
-    'risks_altered',
-    'new_consent_required'
 ];
 
 foreach ($optionalFields as $field) {

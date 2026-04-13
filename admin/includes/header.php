@@ -112,11 +112,47 @@
                         </div>
                     </div> -->
 
-                    <!-- Logout -->
-                    <a href="/logout" class="nav-btn logout" title="Logout">
+                    <!-- Logout - triggers confirmation modal -->
+                    <a href="#" class="nav-btn logout" title="Logout" data-bs-toggle="modal" data-bs-target="#logoutConfirmModal">
                         <i class="fas fa-sign-out-alt"></i>
                     </a>
                 </div>
             </div>
-        </div>
+        </div> 
     </nav>
+
+    <!-- Logout Confirmation Modal -->
+    <div class="modal fade" id="logoutConfirmModal" tabindex="-1" aria-labelledby="logoutConfirmLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="logoutConfirmLabel">Confirm Logout</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to log out?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="cancelLogoutBtn">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmLogoutBtn">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var logoutModal = document.getElementById('logoutConfirmModal');
+            var confirmBtn = document.getElementById('confirmLogoutBtn');
+            
+            // Handle Confirm button click
+            confirmBtn.addEventListener('click', function() {
+                window.location.href = '/logout';
+            });
+            
+            // Trap focus within modal when open
+            logoutModal.addEventListener('shown.bs.modal', function() {
+                confirmBtn.focus();
+            });
+        });
+    </script>

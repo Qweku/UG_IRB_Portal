@@ -923,6 +923,25 @@ function getCPACount(int $study_id)
         return 0;
     }
 }
+// Get SAE List
+function getSAEList(int $study_id)
+{
+    $db = new Database();
+    $conn = $db->connect();
+    if (!$conn) {
+        return [];
+    }
+
+    try {
+        // Assuming a sae_reports table exists
+        $stmt = $conn->prepare("SELECT * FROM saes WHERE protocol_id = ? ORDER BY created_at DESC");
+        $stmt->execute([$study_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error fetching SAE list: " . $e->getMessage());
+        return [];
+    }
+}
 
 // CPA List
 function getCPAList(int $study_id)
