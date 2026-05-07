@@ -18,11 +18,13 @@ $applicant_type = $profile['applicant_type'] ?? ($_SESSION['applicant_type'] ?? 
 
 function getApplicantTypeName($applicant_type){
     if($applicant_type === 'student'){
-        return 'Student';
+        return 'UG Student';
+    } elseif($applicant_type === 'non_ug_student'){
+        return 'Non-UG Student';
     } elseif($applicant_type === 'nmimr'){
-        return 'NMIMR Researcher';
+        return 'UG Researcher';
     } else {
-        return 'Non-NMIMR Researcher';
+        return 'Non-UG Researcher';
     }
 }
 
@@ -33,12 +35,18 @@ $phone = $profile['phone_number'] ?? ($_SESSION['phone_number'] ?? 'Not provided
 $applicant_type = $profile['applicant_type'] ?? ($_SESSION['applicant_type'] ?? 'student');
 $institution_id = $profile['institution_id'] ?? ($_SESSION['institution_id'] ?? null);
 $institutionName = 'Not provided';
+$institutionEmail = 'N/A';
+$institutionPhone = 'N/A';
 
 try{
     $institution = getInstitutionById($institution_id);
     $institutionName = $institution['institution_name'] ?? 'Not provided';
+    $institutionEmail = $institution['email'] ?? 'N/A';
+    $institutionPhone = $institution['phone'] ?? 'N/A';
 } catch (Exception $e) {
     $institutionName = 'Not provided';
+    $institutionEmail = 'N/A';
+    $institutionPhone = 'N/A';
 }
 $institution = $profile['institution'] ?? ($_SESSION['institution'] ?? 'Not provided');
 
@@ -212,21 +220,21 @@ $stats = getApplicantStats($userId, $applicant_type);
                                 <i class="fas fa-envelope"></i>
                                 <div>
                                     <h6>Email Support</h6>
-                                    <p class="mb-0">nirb@noguchi.ug.edu.gh</p>
+                                    <p class="mb-0"><?php echo htmlspecialchars($institutionEmail); ?></p>
                                 </div>
                             </a>
                             <div class="contact-link">
                                 <i class="fas fa-phone"></i>
                                 <div>
                                     <h6>Phone</h6>
-                                    <p class="mb-0">+233 302 501 382 / +233 302 501 383</p>
+                                    <p class="mb-0"><?php echo htmlspecialchars($institutionPhone); ?></p>
                                 </div>
                             </div>
                             <div class="contact-link">
                                 <i class="fas fa-map-marker-alt"></i>
                                 <div>
                                     <h6>Location</h6>
-                                    <p class="mb-0">NMIMR, University of Ghana, Legon</p>
+                                    <p class="mb-0"><?php echo htmlspecialchars($institutionName); ?>, University of Ghana, Legon</p>
                                 </div>
                             </div>
                         </div>

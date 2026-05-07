@@ -161,11 +161,7 @@ abstract class BaseAbstractHandler implements IApplicationHandler
                 return $uploadResult;
             }
 
-            // Step 8: Generate protocol number if new application
-            if (empty($this->sanitizedData['protocol_number'])) {
-                $this->sanitizedData['protocol_number'] = $this->generateProtocolNumber();
-            }
-
+          
             // Step 9: Save to database
             $saveResult = $this->saveToDatabase();
             if (!$saveResult['success']) {
@@ -179,7 +175,6 @@ abstract class BaseAbstractHandler implements IApplicationHandler
             $this->sendNewApplicationNotification($saveResult);
 
             return $saveResult;
-
         } catch (\Exception $e) {
             return $this->handleError($e);
         }
@@ -197,17 +192,17 @@ abstract class BaseAbstractHandler implements IApplicationHandler
     {
         // For drafts, we only do minimal validation - just check that basic fields are present
         // This allows saving partial progress without requiring all fields to be filled
-        
+
         // Skip the strict field-by-field validation for drafts
         // Just save whatever data is available
-        
+
         // Skip file uploads for drafts - just save the data
         $this->uploadedPaths = [];
 
         // Generate a temporary protocol number for drafts (will be finalized on submit)
-        if (empty($this->sanitizedData['protocol_number'])) {
-            $this->sanitizedData['protocol_number'] = $this->generateProtocolNumber();
-        }
+        // if (empty($this->sanitizedData['protocol_number'])) {
+        //     $this->sanitizedData['protocol_number'] = $this->generateProtocolNumber();
+        // }
 
         // Save to database (will check for existing draft)
         $saveResult = $this->saveDraftToDatabase();
@@ -217,7 +212,7 @@ abstract class BaseAbstractHandler implements IApplicationHandler
                 'success' => true,
                 'message' => 'Draft saved successfully.',
                 'application_id' => $saveResult['application_id'],
-                'protocol_number' => $saveResult['protocol_number'],
+                'protocol_number' => 'N/A',
                 'is_draft' => true
             ];
         }
@@ -267,9 +262,8 @@ abstract class BaseAbstractHandler implements IApplicationHandler
                 'success' => true,
                 'message' => 'Draft saved successfully',
                 'application_id' => $applicationId,
-                'protocol_number' => $this->sanitizedData['protocol_number']
+                'protocol_number' => 'N/A'
             ];
-
         } catch (\Exception $e) {
             $this->db->rollBack();
             return $this->handleError($e);
@@ -317,10 +311,7 @@ abstract class BaseAbstractHandler implements IApplicationHandler
                 version_number = :version_number,
                 study_title = :study_title,
                 research_type = :research_type,
-                abstract = :abstract,
-                ethical_considerations = :ethical_considerations,
-                work_plan = :work_plan,
-                budget = :budget,
+                research_type_other = :research_type_other,               
                 current_step = :current_step,
                 updated_at = NOW()
             WHERE id = :id
@@ -328,14 +319,11 @@ abstract class BaseAbstractHandler implements IApplicationHandler
 
         $stmt->execute([
             ':id' => $applicationId,
-            ':protocol_number' => $this->sanitizedData['protocol_number'] ?? '',
-            ':version_number' => $this->sanitizedData['version_number'] ?? '1.0',
+            ':protocol_number' => 'N/A',
+            ':version_number' => 'N/A',
             ':study_title' => $this->sanitizedData['study_title'] ?? '',
             ':research_type' => json_encode($this->sanitizedData['research_type'] ?? []),
-            ':abstract' => $this->sanitizedData['abstract'] ?? '',
-            ':ethical_considerations' => $this->sanitizedData['ethical_considerations'] ?? '',
-            ':work_plan' => $this->sanitizedData['work_plan'] ?? '',
-            ':budget' => $this->sanitizedData['budget'] ?? '',
+            ':research_type_other' => $this->sanitizedData['research_type_other'] ?? '',
             ':current_step' => $this->sanitizedData['current_step'] ?? 1
         ]);
 
@@ -481,6 +469,11 @@ abstract class BaseAbstractHandler implements IApplicationHandler
                 ? $_POST['research_type']
                 : [$_POST['research_type']];
         }
+
+        // Handle research type "Other" text field
+        if (isset($_POST['research_type_other'])) {
+            $this->sanitizedData['research_type_other'] = trim($_POST['research_type_other']);
+        }
     }
 
     /**
@@ -502,7 +495,7 @@ abstract class BaseAbstractHandler implements IApplicationHandler
         if (!$validation['success']) {
             // Log missing fields for debugging
             error_log('Validation failed. Missing fields: ' . json_encode($validation['missing']));
-            
+
             return [
                 'success' => false,
                 'message' => 'Please fill in all required fields.',
@@ -512,13 +505,13 @@ abstract class BaseAbstractHandler implements IApplicationHandler
         }
 
         // Validate version number format
-        if (!empty($data['version_number']) &&
-            !$this->validator->validateVersionNumber($data['version_number'])) {
-            return [
-                'success' => false,
-                'message' => 'Invalid version number format. Use format like 1.0 or 2.1'
-            ];
-        }
+        // if (!empty($data['version_number']) &&
+        //     !$this->validator->validateVersionNumber($data['version_number'])) {
+        //     return [
+        //         'success' => false,
+        //         'message' => 'Invalid version number format. Use format like 1.0 or 2.1'
+        //     ];
+        // }
 
         // Validate common emails
         $emailValidation = $this->validateEmails($data);
@@ -537,9 +530,8 @@ abstract class BaseAbstractHandler implements IApplicationHandler
     protected function getCommonRequiredFields(): array
     {
         return [
-            'version_number',
             'study_title',
-            'abstract'
+
         ];
     }
 
@@ -606,54 +598,65 @@ abstract class BaseAbstractHandler implements IApplicationHandler
         $uploadDir = $this->getUploadBaseDir();
 
         foreach ($this->getFileRequirements() as $field => $config) {
-            // Skip if no file uploaded
-            if (!isset($_FILES[$field]) || $_FILES[$field]['error'] === UPLOAD_ERR_NO_FILE) {
+            // Skip if no file uploaded - FIXED: Check if field exists in $_FILES
+            if (!isset($_FILES[$field]) || (isset($_FILES[$field]['error']) && $_FILES[$field]['error'] === UPLOAD_ERR_NO_FILE)) {
                 $this->uploadedPaths[$field] = null;
+                $this->debugLog("No file for field: $field");
                 continue;
             }
-            
-            // Check if this is a multiple file upload
+
+            $file = $_FILES[$field];
+
+            // Check if this is a multiple file upload - FIXED: Check if 'name' is array
             $isMultiple = isset($config['type']) && $config['type'] === 'multiple';
-            
-            if ($isMultiple) {
-                // Use uploadMultiple for multiple file uploads
-                $result = $this->fileService->uploadMultiple($_FILES[$field], $field, $uploadDir);
-                
+            $isMultipleFile = isset($file['name']) && is_array($file['name']);
+
+            if ($isMultiple || $isMultipleFile) {
+                // Multiple file upload
+                $result = $this->fileService->uploadMultiple($file, $field, $uploadDir);
+
                 if (!$result['success']) {
                     return [
                         'success' => false,
-                        'message' => 'File upload failed: ' . $result['error']
+                        'message' => 'File upload failed for ' . $config['label'] . ': ' . $result['error']
                     ];
                 }
-                
+
                 $this->uploadedPaths[$field] = json_encode($result['paths'] ?? []);
+                $this->debugLog("Uploaded multiple files for $field", ['paths' => $result['paths']]);
             } else {
                 // Single file upload
-                $result = $this->fileService->upload($_FILES[$field], $field, $uploadDir);
-                
+                $result = $this->fileService->upload($file, $field, $uploadDir);
+
                 if (!$result['success']) {
                     return [
                         'success' => false,
-                        'message' => 'File upload failed: ' . $result['error']
+                        'message' => 'File upload failed for ' . $config['label'] . ': ' . $result['error']
                     ];
                 }
-                
+
                 $this->uploadedPaths[$field] = $result['path'] ?? null;
+                $this->debugLog("Uploaded single file for $field", ['path' => $result['path']]);
             }
         }
 
         return ['success' => true, 'paths' => $this->uploadedPaths];
     }
 
-    /**
-     * Generate protocol number
-     *
-     * @return string Protocol number
-     */
-    protected function generateProtocolNumber(): string
-    {
-        return $this->protocolGenerator->generate($this->db, $this->getType());
+   /**
+ * Debug logging method
+ *
+ * @param string $message
+ * @param array $data
+ */
+protected function debugLog(string $message, array $data = []): void
+{
+    $logMessage = '[BaseAbstractHandler] ' . $message;
+    if (!empty($data)) {
+        $logMessage .= ': ' . json_encode($data);
     }
+    error_log($logMessage);
+}
 
     /**
      * Save to database
@@ -698,9 +701,8 @@ abstract class BaseAbstractHandler implements IApplicationHandler
                 'success' => true,
                 'message' => 'Application submitted successfully',
                 'application_id' => $applicationId,
-                'protocol_number' => $this->sanitizedData['protocol_number']
+                'protocol_number' => 'N/A'
             ];
-
         } catch (\Exception $e) {
             $this->db->rollBack();
             return $this->handleError($e);
@@ -721,10 +723,6 @@ abstract class BaseAbstractHandler implements IApplicationHandler
                 version_number = :version_number,
                 study_title = :study_title,
                 research_type = :research_type,
-                abstract = :abstract,
-                ethical_considerations = :ethical_considerations,
-                work_plan = :work_plan,
-                budget = :budget,
                 status = 'submitted',
                 current_step = :current_step,
                 updated_at = NOW()
@@ -733,14 +731,10 @@ abstract class BaseAbstractHandler implements IApplicationHandler
 
         $stmt->execute([
             ':id' => $applicationId,
-            ':protocol_number' => $this->sanitizedData['protocol_number'] ?? '',
-            ':version_number' => $this->sanitizedData['version_number'] ?? '1.0',
+            ':protocol_number' =>  'N/A',
+            ':version_number' => 'N/A',
             ':study_title' => $this->sanitizedData['study_title'] ?? '',
             ':research_type' => json_encode($this->sanitizedData['research_type'] ?? []),
-            ':abstract' => $this->sanitizedData['abstract'] ?? '',
-            ':ethical_considerations' => $this->sanitizedData['ethical_considerations'] ?? '',
-            ':work_plan' => $this->sanitizedData['work_plan'] ?? '',
-            ':budget' => $this->sanitizedData['budget'] ?? '',
             ':current_step' => $this->sanitizedData['current_step'] ?? 1
         ]);
 
@@ -765,14 +759,14 @@ abstract class BaseAbstractHandler implements IApplicationHandler
             INSERT INTO applications (
                 applicant_id, application_type, protocol_number,
                 version_number, study_title, research_type,
-                abstract, ethical_considerations, work_plan,
-                budget, status, current_step,
+                research_type_other,
+                status, current_step,
                 created_at, updated_at
             ) VALUES (
                 :applicant_id, :application_type, :protocol_number,
                 :version_number, :study_title, :research_type,
-                :abstract, :ethical_considerations, :work_plan,
-                :budget, :status, :current_step,
+                :research_type_other,
+                :status, :current_step,
                 NOW(), NOW()
             )
         ");
@@ -780,14 +774,11 @@ abstract class BaseAbstractHandler implements IApplicationHandler
         $stmt->execute([
             ':applicant_id' => $this->session->getUserId(),
             ':application_type' => $this->getType(),
-            ':protocol_number' => $this->sanitizedData['protocol_number'] ?? '',
-            ':version_number' => $this->sanitizedData['version_number'] ?? '1.0',
+            ':protocol_number' =>  'N/A',
+            ':version_number' => 'N/A',
             ':study_title' => $this->sanitizedData['study_title'] ?? '',
             ':research_type' => json_encode($this->sanitizedData['research_type'] ?? []),
-            ':abstract' => $this->sanitizedData['abstract'] ?? '',
-            ':ethical_considerations' => $this->sanitizedData['ethical_considerations'] ?? '',
-            ':work_plan' => $this->sanitizedData['work_plan'] ?? '',
-            ':budget' => $this->sanitizedData['budget'] ?? '',
+            ':research_type_other' => $this->sanitizedData['research_type_other'] ?? '',
             ':status' => $this->isDraft ? 'draft' : 'submitted',
             ':current_step' => 1
         ]);
@@ -810,35 +801,48 @@ abstract class BaseAbstractHandler implements IApplicationHandler
      */
     protected function saveDocuments(int $applicationId): void
     {
+        $documents = [];
         foreach ($this->uploadedPaths as $field => $path) {
             if ($path === null || $path === '') {
                 continue;
             }
-
-            $documentType = $this->getDocumentType($field);
-            $stmt = $this->db->prepare("
-                INSERT INTO application_documents (
-                    application_id, document_type, file_name, file_path,
-                    uploaded_at, uploaded_by
-                ) VALUES (
-                    :application_id, :document_type, :file_name, :file_path,
-                    NOW(), :uploaded_by
-                )
-            ");
-
-            $result = $stmt->execute([
+            $documents[] = [
                 ':application_id' => $applicationId,
-                ':document_type' => $documentType,
+                ':document_type' => $this->getDocumentType($field),
                 ':file_name' => basename($path),
                 ':file_path' => $path,
                 ':uploaded_by' => $this->session->getUserId()
-            ]);
-            
-            if (!$result) {
-                $error = $stmt->errorInfo();
-                error_log("[saveDocuments] INSERT FAILED for field: $field - Error: " . print_r($error, true));
-            }
+            ];
         }
+
+        if (!empty($documents)) {
+            $this->batchInsertDocuments($documents);
+        }
+    }
+
+    protected function batchInsertDocuments(array $documents): void
+    {
+        $sql = "INSERT INTO application_documents 
+            (application_id, document_type, file_name, file_path, uploaded_at, uploaded_by) 
+            VALUES ";
+
+        $values = [];
+        $params = [];
+        $i = 0;
+
+        foreach ($documents as $doc) {
+            $values[] = "(:app_id{$i}, :doc_type{$i}, :file_name{$i}, :file_path{$i}, NOW(), :uploaded_by{$i})";
+            $params[":app_id{$i}"] = $doc[':application_id'];
+            $params[":doc_type{$i}"] = $doc[':document_type'];
+            $params[":file_name{$i}"] = $doc[':file_name'];
+            $params[":file_path{$i}"] = $doc[':file_path'];
+            $params[":uploaded_by{$i}"] = $doc[':uploaded_by'];
+            $i++;
+        }
+
+        $sql .= implode(', ', $values);
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
     }
 
     /**
@@ -875,7 +879,7 @@ abstract class BaseAbstractHandler implements IApplicationHandler
 
         $this->emailService->sendSubmissionConfirmation(
             $email,
-            $this->sanitizedData['protocol_number'],
+           "N/A",
             $this->getType()
         );
     }
@@ -904,8 +908,8 @@ abstract class BaseAbstractHandler implements IApplicationHandler
     protected function getPiName(): string
     {
         // Try various PI name fields
-        return $this->sanitizedData['pi_name'] 
-            ?? $this->sanitizedData['supervisor1_name'] 
+        return $this->sanitizedData['pi_name']
+            ?? $this->sanitizedData['supervisor1_name']
             ?? $this->session->get('full_name', 'Unknown PI')
             ?? 'Principal Investigator';
     }

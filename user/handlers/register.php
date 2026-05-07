@@ -207,6 +207,9 @@ try {
         $password_hash
     ]);
 
+    // Get the new user ID
+    $user_id = $conn->lastInsertId();
+
     if (!$result) {
         $response['message'] = 'Failed to create account. Please try again.';
         echo json_encode($response);
@@ -232,7 +235,7 @@ try {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
     ");
     $stmt->execute([
-        $conn->lastInsertId(),
+        $user_id,
         $first_name,
         $middle_name,
         $last_name,
@@ -243,8 +246,7 @@ try {
         $application_type
     ]);
 
-    // Get the new user ID
-    $user_id = $conn->lastInsertId();
+    
 
     // Log the registration (optional - for audit trail)
     error_log("New user registered: ID=$user_id, Email=$email, Role=applicant");

@@ -22,8 +22,6 @@ $declarations = [];
 
 // Field mapping: form field name => database field name
 $fieldMapping = [
-    'protocol_number' => 'protocol_number',
-    'version_number' => 'version_number',
     'submission_date' => 'submission_date',
     'pi_name' => 'pi_name',
     'pi_institution' => 'pi_institution',
@@ -34,16 +32,6 @@ $fieldMapping = [
     'project_duration' => 'project_duration',
     'funding_source' => 'funding_source',
     'prior_irb' => 'prior_irb',
-    'abstract' => 'abstract',
-    'introduction' => 'introduction',
-    'literature_review' => 'literature_review',
-    'study_aims' => 'study_aims',
-    'methodology' => 'methodology',
-    'ethical_considerations' => 'ethical_considerations',
-    'expected_outcomes' => 'expected_outcomes',
-    'nmimr_references' => 'nmimr_references',
-    'work_plan' => 'work_plan',
-    'budget' => 'budget',
     'pi_signature' => 'pi_signature',
     'pi_date' => 'pi_date',
     'copi_signature' => 'copi_signature',
@@ -71,14 +59,17 @@ if ($userId > 0) {
 
             error_log("Draft query executed for user_id $userId: " . ($draftData ? "Draft found with application_id=" . $draftData['id'] : "No draft found"));
 
-            $stmt = $conn->prepare(
-                "SELECT * FROM nmimr_application_details 
-                 WHERE application_id = :application_id 
-                 ORDER BY id DESC LIMIT 1"
-            );
+            $draftDataDetails = [];
+            if ($draftData) {
+                $stmt = $conn->prepare(
+                    "SELECT * FROM nmimr_application_details
+                     WHERE application_id = :application_id
+                     ORDER BY id DESC LIMIT 1"
+                );
 
-            $stmt->execute(['application_id' => $draftData['id']]);
-            $draftDataDetails = $stmt->fetch(PDO::FETCH_ASSOC);
+                $stmt->execute(['application_id' => $draftData['id']]);
+                $draftDataDetails = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+            }
 
             error_log("Draft details query executed for application_id " . ($draftData['id'] ?? 'N/A') . ": " . ($draftData ? "Details found" : "No details found"));
 
@@ -220,7 +211,7 @@ function isResearchTypeChecked($value)
 <div class="container-fluid dashboard-container">
     <div class="row">
         <!-- Main Content Area -->
-        <div class="content-section col-lg-10 col-md-9 ms-sm-auto px-4 py-3">
+        <div class="content-section col-lg-12 col-md-9 px-4 py-3">
             <div class="add-new-protocol container-fluid mt-4 mb-4 p-4">
                 <!-- Header -->
                 <div class="welcome-header text-white p-4 rounded mb-4 position-relative overflow-hidden"
@@ -228,7 +219,7 @@ function isResearchTypeChecked($value)
                     <div class="header-gradient"></div>
                     <div class="d-flex align-items-center position-relative z-1">
                         <div>
-                            <h2 class="mb-1 fw-bold">Initial Submission Form A - NMIMR Researchers</h2>
+                            <h2 class="mb-1 fw-bold">Initial Submission - UG Researchers</h2>
                             <p class="mb-0 opacity-75">Complete all sections for ethics review consideration</p>
                         </div>
                     </div>
@@ -266,30 +257,14 @@ function isResearchTypeChecked($value)
                                 </h5>
 
                                 <div class="stepper-vertical">
-                                    <!-- Step 1: Instructions -->
+                                    <!-- Step 1: Basic Information -->
                                     <div class="step active" data-step="1">
                                         <div class="step-header d-flex align-items-center mb-2">
                                             <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center">
                                                 1
                                             </div>
                                             <div class="step-title ms-3">
-                                                <h6 class="fw-semibold mb-0">Instructions & Header</h6>
-                                                <small class="text-muted">Protocol details</small>
-                                            </div>
-                                        </div>
-                                        <div class="step-progress ms-4 ps-3">
-                                            <div class="step-line"></div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Step 2: Section A -->
-                                    <div class="step" data-step="2">
-                                        <div class="step-header d-flex align-items-center mb-2">
-                                            <div class="step-number bg-light text-muted border rounded-circle d-flex align-items-center justify-content-center">
-                                                2
-                                            </div>
-                                            <div class="step-title ms-3">
-                                                <h6 class="fw-semibold mb-0 text-muted">Section A: Background</h6>
+                                                <h6 class="fw-semibold mb-0">Basic Information</h6>
                                                 <small class="text-muted">PI details & project info</small>
                                             </div>
                                         </div>
@@ -298,63 +273,31 @@ function isResearchTypeChecked($value)
                                         </div>
                                     </div>
 
-                                    <!-- Step 3: Section B Part 1 -->
-                                    <div class="step" data-step="3">
+                                    <!-- Step 2: Document Uploads -->
+                                    <div class="step" data-step="2">
                                         <div class="step-header d-flex align-items-center mb-2">
+                                            <div class="step-number bg-light text-muted border rounded-circle d-flex align-items-center justify-content-center">
+                                                2
+                                            </div>
+                                            <div class="step-title ms-3">
+                                                <h6 class="fw-semibold mb-0 text-muted">Document Uploads</h6>
+                                                <small class="text-muted">Proposal & attachments</small>
+                                            </div>
+                                        </div>
+                                        <div class="step-progress ms-4 ps-3">
+                                            <div class="step-line"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Step 3: Review & Submission -->
+                                    <div class="step" data-step="3">
+                                        <div class="step-header d-flex align-items-center">
                                             <div class="step-number bg-light text-muted border rounded-circle d-flex align-items-center justify-content-center">
                                                 3
                                             </div>
                                             <div class="step-title ms-3">
-                                                <h6 class="fw-semibold mb-0 text-muted">Section B - Part 1</h6>
-                                                <small class="text-muted">Abstract to Aims</small>
-                                            </div>
-                                        </div>
-                                        <div class="step-progress ms-4 ps-3">
-                                            <div class="step-line"></div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Step 4: Section B Part 2 -->
-                                    <div class="step" data-step="4">
-                                        <div class="step-header d-flex align-items-center mb-2">
-                                            <div class="step-number bg-light text-muted border rounded-circle d-flex align-items-center justify-content-center">
-                                                4
-                                            </div>
-                                            <div class="step-title ms-3">
-                                                <h6 class="fw-semibold mb-0 text-muted">Section B - Part 2</h6>
-                                                <small class="text-muted">Methodology & Ethics</small>
-                                            </div>
-                                        </div>
-                                        <div class="step-progress ms-4 ps-3">
-                                            <div class="step-line"></div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Step 5: Section B Part 3 -->
-                                    <div class="step" data-step="5">
-                                        <div class="step-header d-flex align-items-center mb-2">
-                                            <div class="step-number bg-light text-muted border rounded-circle d-flex align-items-center justify-content-center">
-                                                5
-                                            </div>
-                                            <div class="step-title ms-3">
-                                                <h6 class="fw-semibold mb-0 text-muted">Section B - Part 3</h6>
-                                                <small class="text-muted">Additional Materials</small>
-                                            </div>
-                                        </div>
-                                        <div class="step-progress ms-4 ps-3">
-                                            <div class="step-line"></div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Step 6: Section C -->
-                                    <div class="step" data-step="6">
-                                        <div class="step-header d-flex align-items-center">
-                                            <div class="step-number bg-light text-muted border rounded-circle d-flex align-items-center justify-content-center">
-                                                6
-                                            </div>
-                                            <div class="step-title ms-3">
-                                                <h6 class="fw-semibold mb-0 text-muted">Section C: Signatures</h6>
-                                                <small class="text-muted">Declarations & submission</small>
+                                                <h6 class="fw-semibold mb-0 text-muted">Review & Submission</h6>
+                                                <small class="text-muted">Declarations & submit</small>
                                             </div>
                                         </div>
                                     </div>
@@ -365,7 +308,7 @@ function isResearchTypeChecked($value)
                                     <div class="progress-bar bg-primary" role="progressbar" style="width: 0%" id="stepperProgress"></div>
                                 </div>
                                 <div class="text-center mt-2">
-                                    <small class="text-muted">Step <span id="currentStep">1</span> of 6</small>
+                                    <small class="text-muted">Step <span id="currentStep">1</span> of 3</small>
                                 </div>
 
                                 <!-- Navigation Buttons -->
@@ -400,43 +343,18 @@ function isResearchTypeChecked($value)
                                 <div class="card mb-4">
                                     <div class="card-header bg-light d-flex justify-content-between align-items-center">
                                         <div>
-                                            <h5 class="mb-0"><i class="fas fa-file-signature me-2"></i>Protocol Identification</h5>
-                                            <p class="text-muted mb-0 small">Step 1 of 6 - Basic study information</p>
+                                            <h5 class="mb-0"><i class="fas fa-file-signature me-2"></i>Basic Information</h5>
+                                            <p class="mb-0 opacity-75 small">Step 1 of 3 - Primary metadata</p>
                                         </div>
                                         <span class="badge bg-primary">Required</span>
                                     </div>
                                     <div class="card-body">
                                         <div class="row">
-                                            <div class="col-md-6 mb-3">
-                                                <label for="protocolNumber" class="form-label fw-semibold">Protocol Number <span class="text-danger">*</span></label>
-                                                <input type="text" class="form-control" id="protocolNumber" name="protocol_number" value="<?php echo getDraftValue('protocol_number'); ?>" required>
-                                                <small class="text-muted">Unique identifier for your study (Format: NIRB-YYYY-XXXX)</small>
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label for="versionNumber" class="form-label fw-semibold">Version Number <span class="text-danger">*</span></label>
-                                                <input type="text" class="form-control" id="versionNumber" name="version_number" value="<?php echo getDraftValue('version_number'); ?>" placeholder="e.g., 1.0" required>
-                                                <small class="text-muted">Document version (start with 1.0)</small>
-                                            </div>
                                             <div class="col-md-12 mb-3">
                                                 <label for="submissionDate" class="form-label fw-semibold">Submission Date <span class="text-danger">*</span></label>
                                                 <input type="date" class="form-control" id="submissionDate" name="submission_date" value="<?php echo getDraftValue('submission_date') ?: date('Y-m-d'); ?>" required>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Step 2: Section A - Background Information -->
-                            <div class="step-content" data-step="2">
-                                <div class="card mb-4 border-primary">
-                                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h5 class="mb-0"><i class="fas fa-address-card me-2"></i>SECTION A - BACKGROUND INFORMATION</h5>
-                                            <p class="mb-0 opacity-75 small">Step 2 of 6 - Principal Investigator details</p>
-                                        </div>
-                                        <span class="badge bg-white text-primary">Required</span>
-                                    </div>
-                                    <div class="card-body">
 
                                         <!-- PI Information -->
                                         <div class="pi-info mb-4 p-3 border rounded">
@@ -533,122 +451,50 @@ function isResearchTypeChecked($value)
                                             </div>
                                         </div>
                                     </div>
+                                    
                                 </div>
                             </div>
 
-                            <!-- Step 3: Section B Part 1 -->
-                            <div class="step-content" data-step="3">
+
+
+                            <!-- Step 2: Document Uploads -->
+                            <div class="step-content" data-step="2">
                                 <div class="card mb-4 border-info">
                                     <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
                                         <div>
-                                            <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>SECTION B - PROPOSAL OUTLINE - PART 1</h5>
-                                            <p class="mb-0 opacity-75 small">Step 3 of 6 - Abstract, Introduction, Literature Review & Aims</p>
+                                            <h5 class="mb-0"><i class="fas fa-upload me-2"></i>DOCUMENT UPLOADS</h5>
+                                            <p class="mb-0 opacity-75 small">Step 2 of 3 - Proposal document & attachments</p>
                                         </div>
                                         <span class="badge bg-white text-info">Required</span>
                                     </div>
                                     <div class="card-body">
 
-                                        <!-- Abstract/Executive Summary -->
-                                        <div class="mb-4">
-                                            <label for="abstract" class="form-label fw-semibold">ABSTRACT/EXECUTIVE SUMMARY <span class="text-danger">*</span></label>
-                                            <textarea class="form-control" id="abstract" name="abstract" rows="5" maxlength="250" required><?php echo getDraftValue('abstract'); ?></textarea>
-                                            <div class="d-flex justify-content-between mt-1">
-                                                <small class="text-muted">Not more than 250 words</small>
-                                                <small class="text-muted"><span id="abstract-count">0</span>/250 words</small>
+                                        <div class="alert alert-info mb-4">
+                                            <div class="d-flex align-items-start">
+                                                <i class="fas fa-info-circle me-3 mt-1 fs-4"></i>
+                                                <div>
+                                                    <h6 class="alert-heading mb-2">Upload the following in ONE pdf document file for the Consolidated Document Upload</h6>
+                                                    <ol class="mb-0 ps-3">
+                                                        <li class="mb-1">Abstract/Executive Summary (Not more than 250 words)</li>
+                                                        <li class="mb-1">Introduction/Rationale (Not more than 5 pages)</li>
+                                                        <li class="mb-1">Literature Review (Not more than 5 pages)</li>
+                                                        <li class="mb-1">Aims or Objectives of study</li>
+                                                        <li class="mb-1">Methodology (Include Inclusion and Exclusion Criteria) </li>
+                                                        <li class="mb-1">Ethical Considerations: (i.e. consent procedures, confidentiality, privacy, risks and benefits, etc.)</li>
+                                                        <li class="mb-1">Expected Outcome/Results</li>
+                                                        <li class="mb-1">References</li>
+                                                        <li class="mb-1">Work Plan</li>
+                                                        <li class="mb-1">Budget and Budget Justification</li>
+                                                    </ol>
+                                                </div>
                                             </div>
                                         </div>
 
-                                        <!-- Introduction/Rationale -->
+                                        <!-- Consolidated Proposal Document -->
                                         <div class="mb-4">
-                                            <label for="introduction" class="form-label fw-semibold">INTRODUCTION/RATIONALE <span class="text-danger">*</span></label>
-                                            <textarea class="form-control" id="introduction" name="introduction" rows="8" required><?php echo getDraftValue('introduction'); ?></textarea>
-                                            <small class="text-muted">Not more than 5 pages</small>
-                                        </div>
-
-                                        <!-- Literature Review -->
-                                        <div class="mb-4">
-                                            <label for="literatureReview" class="form-label fw-semibold">LITERATURE REVIEW <span class="text-danger">*</span></label>
-                                            <textarea class="form-control" id="literatureReview" name="literature_review" rows="8" required><?php echo getDraftValue('literature_review'); ?></textarea>
-                                            <small class="text-muted">Not more than 5 pages</small>
-                                        </div>
-
-                                        <!-- Aims or Objectives -->
-                                        <div class="mb-4">
-                                            <label for="studyAims" class="form-label fw-semibold">AIMS OR OBJECTIVES OF STUDY <span class="text-danger">*</span></label>
-                                            <textarea class="form-control" id="studyAims" name="study_aims" rows="4" required><?php echo getDraftValue('study_aims'); ?></textarea>
-                                            <small class="text-muted">List the main aims and objectives of your study</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Step 4: Section B Part 2 -->
-                            <div class="step-content" data-step="4">
-                                <div class="card mb-4 border-info">
-                                    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h5 class="mb-0"><i class="fas fa-microscope me-2"></i>SECTION B - PROPOSAL OUTLINE - PART 2</h5>
-                                            <p class="mb-0 opacity-75 small">Step 4 of 6 - Methodology & Ethical Considerations</p>
-                                        </div>
-                                        <span class="badge bg-white text-info">Required</span>
-                                    </div>
-                                    <div class="card-body">
-
-                                        <!-- Methodology -->
-                                        <div class="mb-4">
-                                            <label for="methodology" class="form-label fw-semibold">METHODOLOGY <span class="text-danger">*</span></label>
-                                            <textarea class="form-control" id="methodology" name="methodology" rows="8" required><?php echo getDraftValue('methodology'); ?></textarea>
-                                            <small class="text-muted">Include Inclusion and Exclusion Criteria</small>
-                                        </div>
-
-                                        <!-- Ethical Considerations -->
-                                        <div class="mb-4">
-                                            <label for="ethicalConsiderations" class="form-label fw-semibold">ETHICAL CONSIDERATIONS <span class="text-danger">*</span></label>
-                                            <textarea class="form-control" id="ethicalConsiderations" name="ethical_considerations" rows="6" required><?php echo getDraftValue('ethical_considerations'); ?></textarea>
-                                            <small class="text-muted">Consent procedures, confidentiality, privacy, risks and benefits, etc.</small>
-                                        </div>
-
-                                        <!-- Expected Outcome/Results -->
-                                        <div class="mb-4">
-                                            <label for="expectedOutcomes" class="form-label fw-semibold">EXPECTED OUTCOME/RESULTS <span class="text-danger">*</span></label>
-                                            <textarea class="form-control" id="expectedOutcomes" name="expected_outcomes" rows="4" required><?php echo getDraftValue('expected_outcomes'); ?></textarea>
-                                            <small class="text-muted">Describe expected outcomes and results</small>
-                                        </div>
-
-                                        <!-- References -->
-                                        <div class="mb-4">
-                                            <label for="references" class="form-label fw-semibold">REFERENCES <span class="text-danger">*</span></label>
-                                            <textarea class="form-control" id="references" name="nmimr_references" rows="6" required placeholder="List all references in appropriate format"><?php echo getDraftValue('nmimr_references'); ?></textarea>
-                                            <small class="text-muted">List all references in appropriate format</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Step 5: Section B Part 3 -->
-                            <div class="step-content" data-step="5">
-                                <div class="card mb-4 border-warning">
-                                    <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h5 class="mb-0"><i class="fas fa-paperclip me-2"></i>SECTION B - PROPOSAL OUTLINE - PART 3</h5>
-                                            <p class="mb-0 opacity-75 small">Step 5 of 6 - Additional Materials & Documents</p>
-                                        </div>
-                                        <span class="badge bg-white text-warning">Required</span>
-                                    </div>
-                                    <div class="card-body">
-
-                                        <!-- Work Plan -->
-                                        <div class="mb-4">
-                                            <label for="workPlan" class="form-label fw-semibold">WORK PLAN</label>
-                                            <textarea class="form-control" id="workPlan" name="work_plan" rows="4"><?php echo getDraftValue('work_plan'); ?></textarea>
-                                            <small class="text-muted">Outline your work plan/timeline</small>
-                                        </div>
-
-                                        <!-- Budget -->
-                                        <div class="mb-4">
-                                            <label for="budget" class="form-label fw-semibold">BUDGET AND BUDGET JUSTIFICATION</label>
-                                            <textarea class="form-control" id="budget" name="budget" rows="5"><?php echo getDraftValue('budget'); ?></textarea>
-                                            <small class="text-muted">Provide detailed budget and justification</small>
+                                            <label for="consolidatedProposal" class="form-label fw-semibold">CONSOLIDATED PROPOSAL DOCUMENT <span class="text-danger">*</span></label>
+                                            <input type="file" class="form-control" id="consolidatedProposal" name="consolidated_proposal" accept=".pdf" required>
+                                            <small class="text-muted">Upload a single PDF document containing the list of items in the instructions above</small>
                                         </div>
 
                                         <!-- Required Attachments -->
@@ -659,7 +505,7 @@ function isResearchTypeChecked($value)
                                             <div class="mb-3">
                                                 <label for="consentForm" class="form-label fw-semibold">CONSENT FORM <span class="text-danger">*</span></label>
                                                 <input type="file" class="form-control" id="consentForm" name="consent_form" accept=".pdf,.doc,.docx" required>
-                                                <small class="text-muted">Download NMIMR-IRB Consent form template</small>
+                                                <small class="text-muted">Download Consent form template</small>
                                             </div>
 
                                             <!-- Assent Form -->
@@ -687,17 +533,37 @@ function isResearchTypeChecked($value)
                                 </div>
                             </div>
 
-                            <!-- Step 6: Section C - Signatures -->
-                            <div class="step-content" data-step="6">
+
+
+                            <!-- Step 3: Review & Submission -->
+                            <div class="step-content" data-step="3">
                                 <div class="card mb-4 border-success">
                                     <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
                                         <div>
-                                            <h5 class="mb-0"><i class="fas fa-signature me-2"></i>SECTION C - SIGNATURES & SUBMISSION</h5>
-                                            <p class="mb-0 opacity-75 small">Step 6 of 6 - Declarations & final submission</p>
+                                            <h5 class="mb-0"><i class="fas fa-check-circle me-2"></i>REVIEW & SUBMISSION</h5>
+                                            <p class="mb-0 opacity-75 small">Step 3 of 3 - Declarations & final submission</p>
                                         </div>
                                         <span class="badge bg-white text-success">Required</span>
                                     </div>
                                     <div class="card-body">
+
+                                        <!-- Application Summary -->
+                                        <div class="summary-section mb-4 p-3 border rounded bg-light">
+                                            <h6 class="fw-semibold mb-3"><i class="fas fa-list-check me-2"></i>Application Summary</h6>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <p><strong>Submission Date:</strong> <?php echo htmlspecialchars(getDraftValue('submission_date')); ?></p>
+                                                    <p><strong>PI Name:</strong> <?php echo htmlspecialchars(getDraftValue('pi_name')); ?></p>
+                                                    <p><strong>Study Title:</strong> <?php echo htmlspecialchars(getDraftValue('study_title')); ?></p>
+                                                    <p><strong>Project Duration:</strong> <?php echo htmlspecialchars(getDraftValue('project_duration')); ?></p>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <p><strong>Funding Source:</strong> <?php echo htmlspecialchars(getDraftValue('funding_source')); ?></p>
+                                                    <p><strong>Research Type:</strong> <?php echo htmlspecialchars(getDraftValue('research_type')); ?></p>
+                                                    <p><strong>Documents Uploaded:</strong> Check uploaded files below</p>
+                                                </div>
+                                            </div>
+                                        </div>
 
                                         <!-- PI Declaration -->
                                         <div class="declaration-card mb-4 p-4 border rounded bg-light">
@@ -985,7 +851,7 @@ function isResearchTypeChecked($value)
                 let currentLoader = 'spinner';
                 // Current step tracking
                 let currentStep = 1;
-                const totalSteps = 6;
+                const totalSteps = 3;
                 const completedSteps = new Set();
                 let coInvestigatorCount = 1;
                 let isSubmitting = false; // Flag to prevent multiple submissions
@@ -1193,13 +1059,13 @@ function isResearchTypeChecked($value)
                 }
 
                 // Update abstract word count
-                function updateAbstractCount() {
-                    const abstractTextarea = document.getElementById('abstract');
-                    if (abstractTextarea) {
-                        const words = abstractTextarea.value.trim().split(/\s+/).filter(word => word.length > 0);
-                        document.getElementById('abstract-count').textContent = words.length;
-                    }
-                }
+                // function updateAbstractCount() {
+                //     const abstractTextarea = document.getElementById('abstract');
+                //     if (abstractTextarea) {
+                //         const words = abstractTextarea.value.trim().split(/\s+/).filter(word => word.length > 0);
+                //         document.getElementById('abstract-count').textContent = words.length;
+                //     }
+                // }
 
                 // Populate Co-Investigators from draft
                 function populateCoInvestigatorsFromDraft() {
@@ -1367,7 +1233,7 @@ function isResearchTypeChecked($value)
                                 goToStep(currentStep + 1);
                             }
                         } else {
-                            alert(data.message || 'Failed to save draft. Please try again.');
+                            alert( 'Failed to save draft. Please try again.');
                         }
                     } catch (error) {
                         hideLoading('nextStepBtn', '<span class="button-text">Next <i class="fas fa-arrow-right ms-2"></i></span>');
@@ -1482,18 +1348,23 @@ function isResearchTypeChecked($value)
                             throw new Error(`Server returned non-JSON response (status ${response.status}). Response: ${rawResponse.substring(0, 200)}`);
                         }
 
-                        hideLoadingOverlay();
-                        hideLoading('submitBtn', '<i class="fas fa-paper-plane me-2"></i>Submit Protocol');
-                        window.location.href = '/applicant-dashboard';
+                        
+                         window.location.href = '/applicant-dashboard';
 
                         if (result.success) {
-                            // alert(result.message);
+                            hideLoadingOverlay();
+
+                            alert(result.message);
                             // Redirect to dashboard or another page after successful submission
 
-
+                            hideLoading('submitBtn', '<i class="fas fa-paper-plane me-2"></i>Submit Protocol');
+                       
                             window.location.href = '/applicant-dashboard';
+                            
 
                         } else {
+                            hideLoadingOverlay();
+
                             alert(result.message || 'An error occurred. Please try again.');
                             if (result.errors) {
                                 console.error('Validation errors:', result.errors);

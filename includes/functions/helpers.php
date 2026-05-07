@@ -341,6 +341,11 @@ function getAllInstitutions($limit = null, $offset = null)
     return executeAssocQuery("SELECT * FROM institutions ORDER BY id ASC");
 }
 
+function getAllInstitutionsList()
+{
+    return executeAssocQuery("SELECT institution_name FROM institutions ORDER BY institution_name ASC");
+}
+
 /**
  * Get studies with filtering capabilities
  * @param string $status Filter by status (all, open, closed, pending)
@@ -1888,7 +1893,7 @@ function getApplicationForReview($applicationId)
             "SELECT a.*, 
                     u.full_name as applicant_name,
                     u.email as applicant_email,
-                    sa.created_at as submitted_at
+                    a.created_at as submitted_at
              FROM applications a
              LEFT JOIN users u ON a.applicant_id = u.id
              WHERE a.id = ?"

@@ -9,10 +9,18 @@
 $userId = $_SESSION['user_id'] ?? 0;
 $userName = $_SESSION['full_name'] ?? 'Applicant';
 
+
+
 $profile = getApplicantProfile($userId);
 
 // Check for draft application
 $applicant_type = $profile['applicant_type'] ?? 'student';
+
+// Institution details (for display purposes)
+$institution = getInstitutionById($profile['institution_id'] ?? 0);
+$institutionName = $institution['institution_name'] ?? 'Unknown Institution';
+$institutionEmail = $institution['email'] ?? 'N/A';
+$institutionPhone = $institution['phone'] ?? 'N/A';
 
 
 $draftApplication = getDraftApplication($userId);
@@ -471,7 +479,7 @@ if ($status_filter !== 'all') {
                                 <i class="fas fa-envelope"></i>
                                 <div>
                                     <h6>Email Support</h6>
-                                    <p class="mb-0">nirb@noguchi.ug.edu.gh</p>
+                                    <p class="mb-0"><?php echo htmlspecialchars($institutionEmail); ?></p>
                                 </div>
                             </a>
                         </div>
@@ -480,7 +488,7 @@ if ($status_filter !== 'all') {
                                 <i class="fas fa-phone"></i>
                                 <div>
                                     <h6>Phone</h6>
-                                    <p class="mb-0">+233 302 501 382 / 383</p>
+                                    <p class="mb-0"><?php echo htmlspecialchars($institutionPhone); ?></p>
                                 </div>
                             </div>
                         </div>
@@ -489,7 +497,7 @@ if ($status_filter !== 'all') {
                                 <i class="fas fa-map-marker-alt"></i>
                                 <div>
                                     <h6>Location</h6>
-                                    <p class="mb-0">NMIMR, University of Ghana</p>
+                                    <p class="mb-0"><?php echo htmlspecialchars($institutionName); ?>, University of Ghana</p>
                                 </div>
                             </div>
                         </div>

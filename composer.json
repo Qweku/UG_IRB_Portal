@@ -9,5 +9,8 @@
         "psr-4": {
             "UGIRB\\SubmissionEngine\\": "includes/submission_engine/"
         }
+    },
+    "require-dev": {
+        "laravel/breeze": "^2.4"
     }
 }

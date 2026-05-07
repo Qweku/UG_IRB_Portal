@@ -61,14 +61,6 @@ class NmimrHandler extends BaseAbstractHandler
             'study_title',
             'project_duration',
 
-            // Research Content
-            'introduction',
-            'literature_review',
-            'study_aims',
-            'methodology',
-            'expected_outcomes',
-            'nmimr_references',
-
             // Signatures
             'pi_signature',
             'pi_date'
@@ -83,6 +75,11 @@ class NmimrHandler extends BaseAbstractHandler
     public function getFileRequirements(): array
     {
         return [
+            'consolidated_proposal' => [
+                'required' => true,
+                'label' => 'Consolidated Proposal Document',
+                'type' => 'single'
+            ],
             'consent_form' => [
                 'required' => true,
                 'label' => 'Consent Form',
@@ -135,13 +132,13 @@ class NmimrHandler extends BaseAbstractHandler
         // Handle research types (checkboxes)
         $researchTypes = [];
         if (!empty($_POST['research_type_biomedical'])) {
-            $researchTypes[] = 'biomedical';
+            $researchTypes[] = 'Biomedical';
         }
         if (!empty($_POST['research_type_social'])) {
-            $researchTypes[] = 'social';
+            $researchTypes[] = 'Social/Behavioural';
         }
         if (!empty($_POST['research_type_other'])) {
-            $researchTypes[] = 'other: ' . $this->validator->sanitizeString($_POST['research_type_other_specify'] ?? '');
+            $researchTypes[] = $this->validator->sanitizeString($_POST['research_type_other_specify'] ?? '');
         }
         $this->sanitizedData['research_type'] = $researchTypes;
 
@@ -188,12 +185,12 @@ class NmimrHandler extends BaseAbstractHandler
         // Look for numeric value at the beginning
         if (preg_match('/^(\d+(?:\.\d+)?)/', trim($duration), $matches)) {
             $value = (float) $matches[1];
-            
+
             // Convert years to months if "year" is mentioned
             if (preg_match('/year/i', $duration)) {
                 $value = $value * 12;
             }
-            
+
             return $value;
         }
         return null;
@@ -307,99 +304,83 @@ class NmimrHandler extends BaseAbstractHandler
      */
     protected function saveTypeSpecific(int $applicationId): bool
     {
-        // Check if a record already exists for this application_id
-        $checkStmt = $this->db->prepare("SELECT COUNT(*) FROM nmimr_application_details WHERE application_id = :application_id");
+        // 🔍 Reliable existence check
+        $checkStmt = $this->db->prepare("
+        SELECT 1 
+        FROM nmimr_application_details 
+        WHERE application_id = :application_id 
+        LIMIT 1
+    ");
+
         $checkStmt->execute([':application_id' => $applicationId]);
-        $recordExists = $checkStmt->fetchColumn() > 0;
+
+        $recordExists = $checkStmt->fetchColumn() !== false;
+
+        error_log("Record exists? " . ($recordExists ? 'YES' : 'NO'));
 
         if ($recordExists) {
-            // UPDATE existing record
             return $this->updateTypeSpecific($applicationId);
         }
 
-        // INSERT new record
-        $stmt = $this->db->prepare("
-            INSERT INTO nmimr_application_details (
-                application_id,
-                submission_date,
-                pi_name,
-                pi_institution,
-                pi_address,
-                pi_phone,
-                pi_email,
-                co_investigators,
-                project_duration,
-                funding_source,
-                prior_irb,
-                introduction,
-                literature_review,
-                study_aims,
-                methodology,
-                expected_outcomes,
-                nmimr_references,
-                work_plan,
-                budget,
-                pi_signature,
-                pi_date,
-                copi_signature,
-                copi_date,
-                final_confirmation,
-                submitted_at
-            ) VALUES (
-                :application_id,
-                :submission_date,
-                :pi_name,
-                :pi_institution,
-                :pi_address,
-                :pi_phone,
-                :pi_email,
-                :co_investigators,
-                :project_duration,
-                :funding_source,
-                :prior_irb,
-                :introduction,
-                :literature_review,
-                :study_aims,
-                :methodology,
-                :expected_outcomes,
-                :nmimr_references,
-                :work_plan,
-                :budget,
-                :pi_signature,
-                :pi_date,
-                :copi_signature,
-                :copi_date,
-                :final_confirmation,
-                NOW()
-            )
-        ");
+        return $this->insertTypeSpecific($applicationId);
+    }
 
-        return $stmt->execute([
-            ':application_id' => $applicationId,
-            ':submission_date' => $this->sanitizedData['submission_date'] ?? null,
-            ':pi_name' => $this->sanitizedData['pi_name'] ?? '',
-            ':pi_institution' => $this->sanitizedData['pi_institution'] ?? '',
-            ':pi_address' => $this->sanitizedData['pi_address'] ?? '',
-            ':pi_phone' => $this->sanitizedData['pi_phone'] ?? '',
-            ':pi_email' => $this->sanitizedData['pi_email'] ?? '',
-            ':co_investigators' => json_encode($this->sanitizedData['co_investigators'] ?? []),
-            ':project_duration' => $this->sanitizedData['project_duration'] ?? '',
-            ':funding_source' => $this->sanitizedData['funding_source'] ?? '',
-            ':prior_irb' => $this->sanitizedData['prior_irb'] ?? '',
-            ':introduction' => $this->sanitizedData['introduction'] ?? '',
-            ':literature_review' => $this->sanitizedData['literature_review'] ?? '',
-            ':study_aims' => $this->sanitizedData['study_aims'] ?? '',
-            ':methodology' => $this->sanitizedData['methodology'] ?? '',
-            ':expected_outcomes' => $this->sanitizedData['expected_outcomes'] ?? '',
-            ':nmimr_references' => $this->sanitizedData['nmimr_references'] ?? '',
-            ':work_plan' => $this->sanitizedData['work_plan'] ?? '',
-            ':budget' => $this->sanitizedData['budget'] ?? '',
-            ':pi_signature' => $this->sanitizedData['pi_signature'] ?? '',
-            ':pi_date' => $this->sanitizedData['pi_date'] ?? null,
-            ':copi_signature' => $this->sanitizedData['copi_signature'] ?? '',
-            ':copi_date' => $this->sanitizedData['copi_date'] ?? null,
-            ':final_confirmation' => !empty($this->sanitizedData['final_confirmation']) ? 1 : 0
-        ]);
+    private function insertTypeSpecific(int $applicationId): bool
+    {
+        $stmt = $this->db->prepare("
+        INSERT INTO nmimr_application_details (
+            application_id,
+            submission_date,
+            pi_name,
+            pi_institution,
+            pi_address,
+            pi_phone,
+            pi_email,
+            co_investigators,
+            project_duration,
+            funding_source,
+            prior_irb,
+            pi_signature,
+            pi_date,
+            copi_signature,
+            copi_date,
+            final_confirmation,
+            submitted_at
+        ) VALUES (
+            :application_id,
+            :submission_date,
+            :pi_name,
+            :pi_institution,
+            :pi_address,
+            :pi_phone,
+            :pi_email,
+            :co_investigators,
+            :project_duration,
+            :funding_source,
+            :prior_irb,
+            :pi_signature,
+            :pi_date,
+            :copi_signature,
+            :copi_date,
+            :final_confirmation,
+            NOW()
+        )
+    ");
+
+        $data = $this->getSqlData($applicationId);
+
+        error_log("Executing INSERT...");
+        error_log(json_encode($data));
+
+        $result = $stmt->execute($data);
+
+        if (!$result) {
+            error_log('SQL Error: ' . json_encode($stmt->errorInfo()));
+        }
+
+        error_log('Rows inserted: ' . $stmt->rowCount());
+
+        return $result;
     }
 
     /**
@@ -411,35 +392,45 @@ class NmimrHandler extends BaseAbstractHandler
     protected function updateTypeSpecific(int $applicationId): bool
     {
         $stmt = $this->db->prepare("
-            UPDATE nmimr_application_details SET
-                submission_date = :submission_date,
-                pi_name = :pi_name,
-                pi_institution = :pi_institution,
-                pi_address = :pi_address,
-                pi_phone = :pi_phone,
-                pi_email = :pi_email,
-                co_investigators = :co_investigators,
-                project_duration = :project_duration,
-                funding_source = :funding_source,
-                prior_irb = :prior_irb,
-                introduction = :introduction,
-                literature_review = :literature_review,
-                study_aims = :study_aims,
-                methodology = :methodology,
-                expected_outcomes = :expected_outcomes,
-                nmimr_references = :nmimr_references,
-                work_plan = :work_plan,
-                budget = :budget,
-                pi_signature = :pi_signature,
-                pi_date = :pi_date,
-                copi_signature = :copi_signature,
-                copi_date = :copi_date,
-                final_confirmation = :final_confirmation,
-                submitted_at = NOW()
-            WHERE application_id = :application_id
-        ");
+        UPDATE nmimr_application_details SET
+            submission_date = :submission_date,
+            pi_name = :pi_name,
+            pi_institution = :pi_institution,
+            pi_address = :pi_address,
+            pi_phone = :pi_phone,
+            pi_email = :pi_email,
+            co_investigators = :co_investigators,
+            project_duration = :project_duration,
+            funding_source = :funding_source,
+            prior_irb = :prior_irb,
+            pi_signature = :pi_signature,
+            pi_date = :pi_date,
+            copi_signature = :copi_signature,
+            copi_date = :copi_date,
+            final_confirmation = :final_confirmation,
+            submitted_at = NOW()
+        WHERE application_id = :application_id
+    ");
 
-        return $stmt->execute([
+        $data = $this->getSqlData($applicationId);
+
+        error_log("Executing UPDATE...");
+        error_log(json_encode($data));
+
+        $result = $stmt->execute($data);
+
+        if (!$result) {
+            error_log('SQL Error: ' . json_encode($stmt->errorInfo()));
+        }
+
+        error_log('Rows updated: ' . $stmt->rowCount());
+
+        return $result;
+    }
+
+    private function getSqlData(int $applicationId): array
+    {
+        return [
             ':application_id' => $applicationId,
             ':submission_date' => $this->sanitizedData['submission_date'] ?? null,
             ':pi_name' => $this->sanitizedData['pi_name'] ?? '',
@@ -451,20 +442,12 @@ class NmimrHandler extends BaseAbstractHandler
             ':project_duration' => $this->sanitizedData['project_duration'] ?? '',
             ':funding_source' => $this->sanitizedData['funding_source'] ?? '',
             ':prior_irb' => $this->sanitizedData['prior_irb'] ?? '',
-            ':introduction' => $this->sanitizedData['introduction'] ?? '',
-            ':literature_review' => $this->sanitizedData['literature_review'] ?? '',
-            ':study_aims' => $this->sanitizedData['study_aims'] ?? '',
-            ':methodology' => $this->sanitizedData['methodology'] ?? '',
-            ':expected_outcomes' => $this->sanitizedData['expected_outcomes'] ?? '',
-            ':nmimr_references' => $this->sanitizedData['nmimr_references'] ?? '',
-            ':work_plan' => $this->sanitizedData['work_plan'] ?? '',
-            ':budget' => $this->sanitizedData['budget'] ?? '',
             ':pi_signature' => $this->sanitizedData['pi_signature'] ?? '',
             ':pi_date' => $this->sanitizedData['pi_date'] ?? null,
             ':copi_signature' => $this->sanitizedData['copi_signature'] ?? '',
             ':copi_date' => $this->sanitizedData['copi_date'] ?? null,
             ':final_confirmation' => !empty($this->sanitizedData['final_confirmation']) ? 1 : 0
-        ]);
+        ];
     }
 
     /**
@@ -561,7 +544,7 @@ class NmimrHandler extends BaseAbstractHandler
     protected function getFieldsForStep(int $step): array
     {
         $commonFields = $this->getCommonRequiredFields();
-        
+
         switch ($step) {
             case 1: // PI Information
                 return array_merge($commonFields, [
@@ -569,43 +552,24 @@ class NmimrHandler extends BaseAbstractHandler
                     'pi_institution',
                     'pi_address',
                     'pi_phone',
-                    'pi_email'
-                ]);
-            
-            case 2: // Project Information
-                return [
+                    'pi_email',
                     'study_title',
                     'project_duration',
                     'funding_source',
                     'prior_irb'
-                ];
-            
-            case 3: // Research Content
-                return [
-                    'introduction',
-                    'literature_review'
-                ];
-            
-            case 4: // Methodology
-                return [
-                    'study_aims',
-                    'methodology',
-                    'expected_outcomes'
-                ];
-            
-            case 5: // References and Work Plan
-                return [
-                    'nmimr_references',
-                    'work_plan',
-                    'budget'
-                ];
-            
-            case 6: // Signatures
+                ]);
+
+            case 2: // Project Information
+                return [];
+
+
+
+            case 3: // Signatures
                 return [
                     'pi_signature',
                     'pi_date'
                 ];
-            
+
             default:
                 return $commonFields;
         }

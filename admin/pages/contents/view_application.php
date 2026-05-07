@@ -77,7 +77,8 @@ $dropdown_data = [
     'locations' => [],
     'study_statuses' => [],
     'risk_categories' => [],
-    'contacts' => []
+    'contacts' => [],
+    'irb_of_record' => []
 ];
 
 try {
@@ -96,6 +97,8 @@ try {
     $dropdown_data['risk_categories'] = getRiskCategoriesList();
     $dropdown_data['sae_types'] = getSAETypesList();
     $dropdown_data['locations'] = getStudyLocationsList();
+    // $dropdown_data['contacts'] = getContactsList();
+    $dropdown_data['irb_of_record'] = getAllInstitutionsList();
 
     $applicationId = $_GET['id'] ?? null;
 
@@ -103,6 +106,8 @@ try {
         echo json_encode(['status' => 'error', 'message' => 'Application ID is required']);
         exit;
     }
+
+    error_log("FETCHING INSTITUTIONS: " . print_r($dropdown_data['irb_of_record'], true));
 
     // Get main application data with all three detail tables
     $stmt = $conn->prepare("SELECT a.*, 
@@ -240,7 +245,7 @@ function formatFileSize($bytes)
     if ($bytes == 0) return '0 Bytes';
     $k = 1024;
     $sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    $i = floor(log($bytes) / log($k));
+    $i = (int) floor(log($bytes) / log($k));
     return round($bytes / pow($k, $i), 2) . ' ' . $sizes[$i];
 }
 
@@ -647,8 +652,20 @@ error_log("Institution Name for Study Initialization: " . $institution_name);
                                             <div class="row">
                                                 <div class="col-12">
                                                     <label class="form-label fw-semibold">IRB of Record</label>
+                                                    <?php if(is_admin_logged_in()):?>
+                                                        <select id="ior" name="ior" class="form-select">
+                                                            <option value="">Select IRB of Record</option>
+                                                            <?php foreach ($dropdown_data['irb_of_record'] as $irb): ?>
+                                                                <option value="<?php echo esc($irb['institution_name']); ?>"
+                                                                    <?php echo $irb['institution_name'] == $irb_of_record ? 'selected' : ''; ?>>
+                                                                    <?php echo esc($irb['institution_name']); ?>
+                                                                </option>
+                                                            <?php endforeach; ?>
+                                                        </select>
+                                                    <?php else:?>
                                                     <input id="ior" name="ior" type="text" class="form-control bg-light"
                                                         value="<?php echo esc($irb_of_record); ?>" readonly>
+                                                        <?php endif;?>
                                                 </div>
                                             </div>
                                         </div>
@@ -810,10 +827,10 @@ error_log("Institution Name for Study Initialization: " . $institution_name);
                                                                             </td>
                                                                             <td>
                                                                                 <div class="btn-group btn-group-sm" role="group">
-                                                                                    <a href="<?php echo esc($doc['file_path']); ?>" class="btn btn-outline-primary" target="_blank">
+                                                                                    <a href="<?php echo esc("/includes/uploads/".$doc['file_path']); ?>" class="btn btn-outline-primary" target="_blank">
                                                                                         <i class="fas fa-eye"></i>
                                                                                     </a>
-                                                                                    <a href="<?php echo esc($doc['file_path']); ?>" class="btn btn-outline-success" download>
+                                                                                    <a href="<?php echo esc("/includes/uploads/".$doc['file_path']); ?>" class="btn btn-outline-success" download>
                                                                                         <i class="fas fa-download"></i>
                                                                                     </a>
                                                                                     <button type="button" class="btn btn-outline-danger delete-document"

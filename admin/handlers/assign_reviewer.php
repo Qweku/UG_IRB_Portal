@@ -111,13 +111,13 @@ try {
     
     // Create notification for the applicant that their application is under review
     // First, get the applicant_id from the application record
-    $stmt = $conn->prepare("SELECT user_id, study_title FROM applications WHERE id = ?");
+    $stmt = $conn->prepare("SELECT applicant_id, study_title FROM applications WHERE id = ?");
     $stmt->execute([$applicationId]);
     $applicationDetails = $stmt->fetch(PDO::FETCH_ASSOC);
     
-    if ($applicationDetails && !empty($applicationDetails['user_id'])) {
+    if ($applicationDetails && !empty($applicationDetails['applicant_id'])) {
         createApplicationUnderReviewNotification(
-            $applicationDetails['user_id'],
+            $applicationDetails['applicant_id'],
             $applicationId,
             $applicationDetails['study_title'] ?? 'Unknown Study'
         );

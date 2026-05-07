@@ -50,23 +50,40 @@ $institutions = getAllInstitutions();
                 <h5 class="register-section-title">
                     <i class="fas fa-user me-2"></i>Personal Information
                 </h5>
-
                 <div class="row">
                     <div class="col-md-4 mb-3">
+                        <label for="prefix" class="form-label">Prefix</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-user"></i></span>
+                            <select name="prefix" id="prefix" class="form-select">
+                                <option value="">Select Prefix</option>
+                                <option value="Dr.">Dr.</option>
+                                <option value="Prof.">Prof.</option>
+                                <option value="Mr.">Mr.</option>
+                                <option value="Mrs.">Mrs.</option>
+                                <option value="Ms.">Ms.</option>
+                            </select>
+                           </div>
+                    </div>
+                    <div class="col-md-8 mb-3">
                         <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-user"></i></span>
                             <input type="text" class="form-control" id="first_name" name="first_name" placeholder="First name" required>
                         </div>
                     </div>
-                    <div class="col-md-4 mb-3">
+                </div>
+
+                <div class="row">
+                    
+                    <div class="col-md-6 mb-3">
                         <label for="middle_name" class="form-label">Middle Name</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-user"></i></span>
                             <input type="text" class="form-control" id="middle_name" name="middle_name" placeholder="Middle name">
                         </div>
                     </div>
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-6 mb-3">
                         <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-user"></i></span>
@@ -92,7 +109,7 @@ $institutions = getAllInstitutions();
                 </div>
 
                  <div class="mb-3">
-                    <label for="institution" class="form-label">Institution <span class="text-danger">*</span></label>
+                    <label for="institution" class="form-label">Committee/ Board <span class="text-danger">*</span></label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-file-alt"></i></span>
                         <select class="form-select" id="institution" name="institution" required>
@@ -105,14 +122,15 @@ $institutions = getAllInstitutions();
                 </div>
 
                 <div class="mb-3">
-                    <label for="application_type" class="form-label">Application Type <span class="text-danger">*</span></label>
+                    <label for="application_type" class="form-label">Applicant Category <span class="text-danger">*</span></label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-file-alt"></i></span>
                         <select class="form-select" id="application_type" name="application_type" required>
-                            <option class="text-muted" selected disabled>Select Application Type</option>
-                            <option value="student">Student</option>
-                            <option value="nmimr">NMIMR Researchers</option>
-                            <option value="non_nmimr">Non-NMIMR Researchers</option>
+                            <option class="text-muted" selected disabled>Select Applicant Category</option>
+                            <option value="student">UG Student</option>
+                            <option value="student">Non UG Student</option>
+                            <option value="nmimr">UG Researchers</option>
+                            <option value="non_nmimr">Non UG Researchers</option>
                         </select>
                     </div>
                 </div>

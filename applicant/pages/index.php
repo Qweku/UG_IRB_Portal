@@ -16,7 +16,8 @@ $userId = $_SESSION['user_id'] ?? 0;
 $userName = $_SESSION['full_name'] ?? 'Applicant';
 
 $profile = getApplicantProfile($userId);
-$applicant_type = $profile['applicant_type'] ?? 'student';
+error_log("Applicant Profile for User ID $userId: " . print_r($profile, true));
+$applicant_type = $profile['applicant_type'] ?? 'student'; // Default to 'student' if not set
 
 // Get applicant stats
 $stats = getApplicantStats($userId, $applicant_type);

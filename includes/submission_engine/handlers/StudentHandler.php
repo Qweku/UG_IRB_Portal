@@ -62,10 +62,6 @@ class StudentHandler extends BaseAbstractHandler
             'study_start_date',
             'study_end_date',
 
-            // Research Content
-            'background',
-            'methods',
-            'expected_outcome',
 
             // Declarations
             'student_declaration_name',
@@ -138,14 +134,18 @@ class StudentHandler extends BaseAbstractHandler
         $errors = [];
 
         // Validate supervisor 1 email
-        if (!empty($data['supervisor1_email']) &&
-            !$this->validator->validateEmail($data['supervisor1_email'])) {
+        if (
+            !empty($data['supervisor1_email']) &&
+            !$this->validator->validateEmail($data['supervisor1_email'])
+        ) {
             $errors[] = 'Invalid supervisor1 email format';
         }
 
         // Validate supervisor 2 email if provided
-        if (!empty($data['supervisor2_email']) &&
-            !$this->validator->validateEmail($data['supervisor2_email'])) {
+        if (
+            !empty($data['supervisor2_email']) &&
+            !$this->validator->validateEmail($data['supervisor2_email'])
+        ) {
             $errors[] = 'Invalid supervisor2 email format';
         }
 
@@ -158,14 +158,18 @@ class StudentHandler extends BaseAbstractHandler
 
         // Validate student status
         $validStatuses = ['undergraduate', 'masters', 'phd', 'postdoctoral', 'other'];
-        if (!empty($data['student_status']) &&
-            !in_array(strtolower($data['student_status']), $validStatuses)) {
+        if (
+            !empty($data['student_status']) &&
+            !in_array(strtolower($data['student_status']), $validStatuses)
+        ) {
             $errors[] = 'Invalid student status';
         }
 
         // Validate study duration is numeric
-        if (!empty($data['study_duration_years']) &&
-            !$this->validator->validateNumber($data['study_duration_years'], 0.1, 10)) {
+        if (
+            !empty($data['study_duration_years']) &&
+            !$this->validator->validateNumber($data['study_duration_years'], 0.1, 10)
+        ) {
             $errors[] = 'Study duration must be a number between 0.1 and 10 years';
         }
 
@@ -220,6 +224,76 @@ class StudentHandler extends BaseAbstractHandler
         return 'student_applications/' . date('Y/m');
     }
 
+    private function recordExists(int $applicationId): bool
+    {
+        $stmt = $this->db->prepare("
+        SELECT 1 
+        FROM student_application_details 
+        WHERE application_id = :application_id 
+        LIMIT 1
+    ");
+
+        $stmt->execute([':application_id' => $applicationId]);
+
+        return $stmt->fetchColumn() !== false;
+    }
+
+    private function getSqlData(int $applicationId): array
+    {
+        return [
+            ':application_id' => $applicationId,
+
+            // Student
+            ':student_name' => $this->sanitizedData['student_name'] ?? '',
+            ':student_institution' => $this->sanitizedData['student_institution'] ?? '',
+            ':student_department' => $this->sanitizedData['student_department'] ?? '',
+            ':student_address' => $this->sanitizedData['student_address'] ?? '',
+            ':student_number' => $this->sanitizedData['student_number'] ?? '',
+            ':student_phone' => $this->sanitizedData['student_phone'] ?? '',
+            ':student_email' => $this->sanitizedData['student_email'] ?? '',
+
+            // Supervisor 1
+            ':supervisor1_name' => $this->sanitizedData['supervisor1_name'] ?? '',
+            ':supervisor1_institution' => $this->sanitizedData['supervisor1_institution'] ?? '',
+            ':supervisor1_address' => $this->sanitizedData['supervisor1_address'] ?? '',
+            ':supervisor1_phone' => $this->sanitizedData['supervisor1_phone'] ?? '',
+            ':supervisor1_email' => $this->sanitizedData['supervisor1_email'] ?? '',
+
+            // Supervisor 2
+            ':supervisor2_name' => $this->sanitizedData['supervisor2_name'] ?? '',
+            ':supervisor2_institution' => $this->sanitizedData['supervisor2_institution'] ?? '',
+            ':supervisor2_address' => $this->sanitizedData['supervisor2_address'] ?? '',
+            ':supervisor2_phone' => $this->sanitizedData['supervisor2_phone'] ?? '',
+            ':supervisor2_email' => $this->sanitizedData['supervisor2_email'] ?? '',
+
+            // Study
+            ':student_status' => $this->sanitizedData['student_status'] ?? '',
+            ':study_duration_years' => $this->sanitizedData['study_duration_years'] ?? '',
+            ':study_start_date' => $this->sanitizedData['study_start_date'] ?? null,
+            ':study_end_date' => $this->sanitizedData['study_end_date'] ?? null,
+            ':funding_sources' => $this->sanitizedData['funding_sources'] ?? '',
+            ':prior_irb_review' => $this->sanitizedData['prior_irb_review'] ?? '',
+            ':collaborating_institutions' => $this->sanitizedData['collaborating_institutions'] ?? '',
+
+            // Files
+            ':approval_letter' => $this->uploadedPaths['approval_letter'] ?? null,
+            ':collaboration_letter' => $this->uploadedPaths['collaboration_letter'] ?? null,
+            ':consent_form' => $this->uploadedPaths['consent_form'] ?? null,
+            ':assent_form' => $this->uploadedPaths['assent_form'] ?? null,
+            ':data_instruments' => $this->uploadedPaths['data_instruments'] ?? null,
+            ':additional_documents' => $this->sanitizedData['additional_documents'] ?? '',
+
+            // Declarations
+            ':declarations' => json_encode($this->sanitizedData['declarations'] ?? []),
+            ':student_declaration_name' => $this->sanitizedData['student_declaration_name'] ?? '',
+            ':student_declaration_date' => $this->sanitizedData['student_declaration_date'] ?? null,
+            ':student_declaration_signature' => $this->sanitizedData['student_declaration_signature'] ?? '',
+            ':supervisor_declaration_name' => $this->sanitizedData['supervisor_declaration_name'] ?? '',
+            ':supervisor_declaration_date' => $this->sanitizedData['supervisor_declaration_date'] ?? null,
+            ':supervisor_declaration_signature' => $this->sanitizedData['supervisor_declaration_signature'] ?? ''
+        ];
+    }
+
     /**
      * Save type-specific details
      *
@@ -228,153 +302,48 @@ class StudentHandler extends BaseAbstractHandler
      */
     protected function saveTypeSpecific(int $applicationId): bool
     {
-        // Check if a record already exists for this application_id
-        $checkStmt = $this->db->prepare("SELECT COUNT(*) FROM student_application_details WHERE application_id = :application_id");
-        $checkStmt->execute([':application_id' => $applicationId]);
-        $recordExists = $checkStmt->fetchColumn() > 0;
-
-        if ($recordExists) {
-            // UPDATE existing record
-            error_log("StudentHandler: UPDATE operation reached for student application ID: " . $applicationId);
+        if ($this->recordExists($applicationId)) {
+            error_log("StudentHandler: UPDATE for ID {$applicationId}");
             return $this->updateTypeSpecific($applicationId);
         }
 
-        // INSERT new record
-        error_log("StudentHandler: INSERT operation reached for student application ID: " . $applicationId);
-        $stmt = $this->db->prepare("
-            INSERT INTO student_application_details (
-                application_id,
-                student_name,
-                student_institution,
-                student_department,
-                student_address,
-                student_number,
-                student_phone,
-                student_email,
-                supervisor1_name,
-                supervisor1_institution,
-                supervisor1_address,
-                supervisor1_phone,
-                supervisor1_email,
-                supervisor2_name,
-                supervisor2_institution,
-                supervisor2_address,
-                supervisor2_phone,
-                supervisor2_email,
-                student_status,
-                study_duration_years,
-                study_start_date,
-                study_end_date,
-                funding_sources,
-                approval_letter,
-                prior_irb_review,
-                collaborating_institutions,
-                collaboration_letter,
-                background,
-                methods,
-                expected_outcome,
-                key_references,
-                consent_form,
-                assent_form,
-                data_instruments,
-                additional_documents,
-                declarations,
-                student_declaration_name,
-                student_declaration_date,
-                student_declaration_signature,
-                supervisor_declaration_name,
-                supervisor_declaration_date,
-                supervisor_declaration_signature
-            ) VALUES (
-                :application_id,
-                :student_name,
-                :student_institution,
-                :student_department,
-                :student_address,
-                :student_number,
-                :student_phone,
-                :student_email,
-                :supervisor1_name,
-                :supervisor1_institution,
-                :supervisor1_address,
-                :supervisor1_phone,
-                :supervisor1_email,
-                :supervisor2_name,
-                :supervisor2_institution,
-                :supervisor2_address,
-                :supervisor2_phone,
-                :supervisor2_email,
-                :student_status,
-                :study_duration_years,
-                :study_start_date,
-                :study_end_date,
-                :funding_sources,
-                :approval_letter,
-                :prior_irb_review,
-                :collaborating_institutions,
-                :collaboration_letter,
-                :background,
-                :methods,
-                :expected_outcome,
-                :key_references,
-                :consent_form,
-                :assent_form,
-                :data_instruments,
-                :additional_documents,
-                :declarations,
-                :student_declaration_name,
-                :student_declaration_date,
-                :student_declaration_signature,
-                :supervisor_declaration_name,
-                :supervisor_declaration_date,
-                :supervisor_declaration_signature
-            )
-        ");
+        error_log("StudentHandler: INSERT for ID {$applicationId}");
+        return $this->insertTypeSpecific($applicationId);
+    }
 
-        return $stmt->execute([
-            ':application_id' => $applicationId,
-            ':student_name' => $this->sanitizedData['student_name'] ?? '',
-            ':student_institution' => $this->sanitizedData['student_institution'] ?? '',
-            ':student_department' => $this->sanitizedData['student_department'] ?? '',
-            ':student_address' => $this->sanitizedData['student_address'] ?? '',
-            ':student_number' => $this->sanitizedData['student_number'] ?? '',
-            ':student_phone' => $this->sanitizedData['student_phone'] ?? '',
-            ':student_email' => $this->sanitizedData['student_email'] ?? '',
-            ':supervisor1_name' => $this->sanitizedData['supervisor1_name'] ?? '',
-            ':supervisor1_institution' => $this->sanitizedData['supervisor1_institution'] ?? '',
-            ':supervisor1_address' => $this->sanitizedData['supervisor1_address'] ?? '',
-            ':supervisor1_phone' => $this->sanitizedData['supervisor1_phone'] ?? '',
-            ':supervisor1_email' => $this->sanitizedData['supervisor1_email'] ?? '',
-            ':supervisor2_name' => $this->sanitizedData['supervisor2_name'] ?? '',
-            ':supervisor2_institution' => $this->sanitizedData['supervisor2_institution'] ?? '',
-            ':supervisor2_address' => $this->sanitizedData['supervisor2_address'] ?? '',
-            ':supervisor2_phone' => $this->sanitizedData['supervisor2_phone'] ?? '',
-            ':supervisor2_email' => $this->sanitizedData['supervisor2_email'] ?? '',
-            ':student_status' => $this->sanitizedData['student_status'] ?? '',
-            ':study_duration_years' => $this->sanitizedData['study_duration_years'] ?? '',
-            ':study_start_date' => $this->sanitizedData['study_start_date'] ?? null,
-            ':study_end_date' => $this->sanitizedData['study_end_date'] ?? null,
-            ':funding_sources' => $this->sanitizedData['funding_sources'] ?? '',
-            ':approval_letter' => $this->uploadedPaths['approval_letter'] ?? null,
-            ':prior_irb_review' => $this->sanitizedData['prior_irb_review'] ?? '',
-            ':collaborating_institutions' => $this->sanitizedData['collaborating_institutions'] ?? '',
-            ':collaboration_letter' => $this->uploadedPaths['collaboration_letter'] ?? null,
-            ':background' => $this->sanitizedData['background'] ?? '',
-            ':methods' => $this->sanitizedData['methods'] ?? '',
-            ':expected_outcome' => $this->sanitizedData['expected_outcome'] ?? '',
-            ':key_references' => $this->sanitizedData['key_references'] ?? '',
-            ':consent_form' => $this->uploadedPaths['consent_form'] ?? null,
-            ':assent_form' => $this->uploadedPaths['assent_form'] ?? null,
-            ':data_instruments' => $this->uploadedPaths['data_instruments'] ?? null,
-            ':additional_documents' => $this->sanitizedData['additional_documents'] ?? '',
-            ':declarations' => json_encode($this->sanitizedData['declarations'] ?? []),
-            ':student_declaration_name' => $this->sanitizedData['student_declaration_name'] ?? '',
-            ':student_declaration_date' => $this->sanitizedData['student_declaration_date'] ?? null,
-            ':student_declaration_signature' => $this->sanitizedData['student_declaration_signature'] ?? '',
-            ':supervisor_declaration_name' => $this->sanitizedData['supervisor_declaration_name'] ?? '',
-            ':supervisor_declaration_date' => $this->sanitizedData['supervisor_declaration_date'] ?? null,
-            ':supervisor_declaration_signature' => $this->sanitizedData['supervisor_declaration_signature'] ?? ''
-        ]);
+    private function insertTypeSpecific(int $applicationId): bool
+    {
+        $stmt = $this->db->prepare("
+        INSERT INTO student_application_details (
+            application_id,
+            student_name, student_institution, student_department, student_address,
+            student_number, student_phone, student_email,
+            supervisor1_name, supervisor1_institution, supervisor1_address, supervisor1_phone, supervisor1_email,
+            supervisor2_name, supervisor2_institution, supervisor2_address, supervisor2_phone, supervisor2_email,
+            student_status, study_duration_years, study_start_date, study_end_date,
+            funding_sources, approval_letter, prior_irb_review,
+            collaborating_institutions, collaboration_letter,
+            consent_form, assent_form, data_instruments, additional_documents,
+            declarations,
+            student_declaration_name, student_declaration_date, student_declaration_signature,
+            supervisor_declaration_name, supervisor_declaration_date, supervisor_declaration_signature
+        ) VALUES (
+            :application_id,
+            :student_name, :student_institution, :student_department, :student_address,
+            :student_number, :student_phone, :student_email,
+            :supervisor1_name, :supervisor1_institution, :supervisor1_address, :supervisor1_phone, :supervisor1_email,
+            :supervisor2_name, :supervisor2_institution, :supervisor2_address, :supervisor2_phone, :supervisor2_email,
+            :student_status, :study_duration_years, :study_start_date, :study_end_date,
+            :funding_sources, :approval_letter, :prior_irb_review,
+            :collaborating_institutions, :collaboration_letter,
+            :consent_form, :assent_form, :data_instruments, :additional_documents,
+            :declarations,
+            :student_declaration_name, :student_declaration_date, :student_declaration_signature,
+            :supervisor_declaration_name, :supervisor_declaration_date, :supervisor_declaration_signature
+        )
+    ");
+
+        return $this->executeStatement($stmt, $applicationId);
     }
 
     /**
@@ -385,97 +354,67 @@ class StudentHandler extends BaseAbstractHandler
      */
     protected function updateTypeSpecific(int $applicationId): bool
     {
-        error_log("StudentHandler: UPDATE operation executing for student application ID: " . $applicationId);
         $stmt = $this->db->prepare("
-            UPDATE student_application_details SET
-                student_name = :student_name,
-                student_institution = :student_institution,
-                student_department = :student_department,
-                student_address = :student_address,
-                student_number = :student_number,
-                student_phone = :student_phone,
-                student_email = :student_email,
-                supervisor1_name = :supervisor1_name,
-                supervisor1_institution = :supervisor1_institution,
-                supervisor1_address = :supervisor1_address,
-                supervisor1_phone = :supervisor1_phone,
-                supervisor1_email = :supervisor1_email,
-                supervisor2_name = :supervisor2_name,
-                supervisor2_institution = :supervisor2_institution,
-                supervisor2_address = :supervisor2_address,
-                supervisor2_phone = :supervisor2_phone,
-                supervisor2_email = :supervisor2_email,
-                student_status = :student_status,
-                study_duration_years = :study_duration_years,
-                study_start_date = :study_start_date,
-                study_end_date = :study_end_date,
-                funding_sources = :funding_sources,
-                approval_letter = :approval_letter,
-                prior_irb_review = :prior_irb_review,
-                collaborating_institutions = :collaborating_institutions,
-                collaboration_letter = :collaboration_letter,
-                background = :background,
-                methods = :methods,
-                expected_outcome = :expected_outcome,
-                key_references = :key_references,
-                consent_form = :consent_form,
-                assent_form = :assent_form,
-                data_instruments = :data_instruments,
-                additional_documents = :additional_documents,
-                declarations = :declarations,
-                student_declaration_name = :student_declaration_name,
-                student_declaration_date = :student_declaration_date,
-                student_declaration_signature = :student_declaration_signature,
-                supervisor_declaration_name = :supervisor_declaration_name,
-                supervisor_declaration_date = :supervisor_declaration_date,
-                supervisor_declaration_signature = :supervisor_declaration_signature
-            WHERE application_id = :application_id
-        ");
+        UPDATE student_application_details SET
+            student_name = :student_name,
+            student_institution = :student_institution,
+            student_department = :student_department,
+            student_address = :student_address,
+            student_number = :student_number,
+            student_phone = :student_phone,
+            student_email = :student_email,
+            supervisor1_name = :supervisor1_name,
+            supervisor1_institution = :supervisor1_institution,
+            supervisor1_address = :supervisor1_address,
+            supervisor1_phone = :supervisor1_phone,
+            supervisor1_email = :supervisor1_email,
+            supervisor2_name = :supervisor2_name,
+            supervisor2_institution = :supervisor2_institution,
+            supervisor2_address = :supervisor2_address,
+            supervisor2_phone = :supervisor2_phone,
+            supervisor2_email = :supervisor2_email,
+            student_status = :student_status,
+            study_duration_years = :study_duration_years,
+            study_start_date = :study_start_date,
+            study_end_date = :study_end_date,
+            funding_sources = :funding_sources,
+            approval_letter = :approval_letter,
+            prior_irb_review = :prior_irb_review,
+            collaborating_institutions = :collaborating_institutions,
+            collaboration_letter = :collaboration_letter,
+            consent_form = :consent_form,
+            assent_form = :assent_form,
+            data_instruments = :data_instruments,
+            additional_documents = :additional_documents,
+            declarations = :declarations,
+            student_declaration_name = :student_declaration_name,
+            student_declaration_date = :student_declaration_date,
+            student_declaration_signature = :student_declaration_signature,
+            supervisor_declaration_name = :supervisor_declaration_name,
+            supervisor_declaration_date = :supervisor_declaration_date,
+            supervisor_declaration_signature = :supervisor_declaration_signature
+        WHERE application_id = :application_id
+    ");
 
-        return $stmt->execute([
-            ':application_id' => $applicationId,
-            ':student_name' => $this->sanitizedData['student_name'] ?? '',
-            ':student_institution' => $this->sanitizedData['student_institution'] ?? '',
-            ':student_department' => $this->sanitizedData['student_department'] ?? '',
-            ':student_address' => $this->sanitizedData['student_address'] ?? '',
-            ':student_number' => $this->sanitizedData['student_number'] ?? '',
-            ':student_phone' => $this->sanitizedData['student_phone'] ?? '',
-            ':student_email' => $this->sanitizedData['student_email'] ?? '',
-            ':supervisor1_name' => $this->sanitizedData['supervisor1_name'] ?? '',
-            ':supervisor1_institution' => $this->sanitizedData['supervisor1_institution'] ?? '',
-            ':supervisor1_address' => $this->sanitizedData['supervisor1_address'] ?? '',
-            ':supervisor1_phone' => $this->sanitizedData['supervisor1_phone'] ?? '',
-            ':supervisor1_email' => $this->sanitizedData['supervisor1_email'] ?? '',
-            ':supervisor2_name' => $this->sanitizedData['supervisor2_name'] ?? '',
-            ':supervisor2_institution' => $this->sanitizedData['supervisor2_institution'] ?? '',
-            ':supervisor2_address' => $this->sanitizedData['supervisor2_address'] ?? '',
-            ':supervisor2_phone' => $this->sanitizedData['supervisor2_phone'] ?? '',
-            ':supervisor2_email' => $this->sanitizedData['supervisor2_email'] ?? '',
-            ':student_status' => $this->sanitizedData['student_status'] ?? '',
-            ':study_duration_years' => $this->sanitizedData['study_duration_years'] ?? '',
-            ':study_start_date' => $this->sanitizedData['study_start_date'] ?? null,
-            ':study_end_date' => $this->sanitizedData['study_end_date'] ?? null,
-            ':funding_sources' => $this->sanitizedData['funding_sources'] ?? '',
-            ':approval_letter' => $this->uploadedPaths['approval_letter'] ?? null,
-            ':prior_irb_review' => $this->sanitizedData['prior_irb_review'] ?? '',
-            ':collaborating_institutions' => $this->sanitizedData['collaborating_institutions'] ?? '',
-            ':collaboration_letter' => $this->uploadedPaths['collaboration_letter'] ?? null,
-            ':background' => $this->sanitizedData['background'] ?? '',
-            ':methods' => $this->sanitizedData['methods'] ?? '',
-            ':expected_outcome' => $this->sanitizedData['expected_outcome'] ?? '',
-            ':key_references' => $this->sanitizedData['key_references'] ?? '',
-            ':consent_form' => $this->uploadedPaths['consent_form'] ?? null,
-            ':assent_form' => $this->uploadedPaths['assent_form'] ?? null,
-            ':data_instruments' => $this->uploadedPaths['data_instruments'] ?? null,
-            ':additional_documents' => $this->sanitizedData['additional_documents'] ?? '',
-            ':declarations' => json_encode($this->sanitizedData['declarations'] ?? []),
-            ':student_declaration_name' => $this->sanitizedData['student_declaration_name'] ?? '',
-            ':student_declaration_date' => $this->sanitizedData['student_declaration_date'] ?? null,
-            ':student_declaration_signature' => $this->sanitizedData['student_declaration_signature'] ?? '',
-            ':supervisor_declaration_name' => $this->sanitizedData['supervisor_declaration_name'] ?? '',
-            ':supervisor_declaration_date' => $this->sanitizedData['supervisor_declaration_date'] ?? null,
-            ':supervisor_declaration_signature' => $this->sanitizedData['supervisor_declaration_signature'] ?? ''
-        ]);
+        return $this->executeStatement($stmt, $applicationId);
+    }
+
+    private function executeStatement($stmt, int $applicationId): bool
+    {
+        $data = $this->getSqlData($applicationId);
+
+        error_log("Executing SQL for student ID {$applicationId}");
+        error_log(json_encode($data));
+
+        $result = $stmt->execute($data);
+
+        if (!$result) {
+            error_log('SQL Error: ' . json_encode($stmt->errorInfo()));
+        }
+
+        error_log('Rows affected: ' . $stmt->rowCount());
+
+        return $result;
     }
 
     /**
@@ -505,7 +444,7 @@ class StudentHandler extends BaseAbstractHandler
     protected function getFieldsForStep(int $step): array
     {
         $commonFields = $this->getCommonRequiredFields();
-        
+
         switch ($step) {
             case 1: // Student Information
                 return array_merge($commonFields, [
@@ -517,7 +456,7 @@ class StudentHandler extends BaseAbstractHandler
                     'student_phone',
                     'student_email'
                 ]);
-            
+
             case 2: // Supervisor Information
                 return [
                     'supervisor1_name',
@@ -526,7 +465,7 @@ class StudentHandler extends BaseAbstractHandler
                     'supervisor1_phone',
                     'supervisor1_email'
                 ];
-            
+
             case 3: // Study Details
                 return [
                     'student_status',
@@ -536,20 +475,15 @@ class StudentHandler extends BaseAbstractHandler
                     'funding_sources',
                     'prior_irb_review'
                 ];
-            
-            case 4: // Research Content
-                return [
-                    'background',
-                    'methods',
-                    'expected_outcome'
-                ];
-            
-            case 5: // Collaborations
+
+
+
+            case 4: // Collaborations
                 return [
                     'collaborating_institutions'
                 ];
-            
-            case 6: // Signatures
+
+            case 5: // Signatures
                 return [
                     'student_declaration_name',
                     'student_declaration_date',
@@ -558,7 +492,7 @@ class StudentHandler extends BaseAbstractHandler
                     'supervisor_declaration_date',
                     'supervisor_declaration_signature'
                 ];
-            
+
             default:
                 return $commonFields;
         }

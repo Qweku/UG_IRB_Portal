@@ -18,9 +18,9 @@ class ProtocolNumberGenerator
 {
     /** @var array Application type to prefix mapping */
     private const PREFIX_MAP = [
-        'student' => 'STU',
-        'nmimr' => 'NIRB',
-        'non_nmimr' => 'EXT'
+        'student' => '',
+        'nmimr' => '',
+        'non_nmimr' => ''
     ];
 
     /** @var int Sequence number padding length */

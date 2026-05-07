@@ -186,6 +186,7 @@ $routes = [
     /* ---------- APPLICATIONS ---------- */
     'applications' => [
         'view-application' => ['file' => 'contents/view_application.php', 'roles' => ['admin', 'super_admin']],
+        'file-viewer' => ['file' => 'contents/file_viewer.php', 'roles' => ['admin', 'super_admin']],
     ],
 
     /* ---------- STUDIES ---------- */
@@ -232,7 +233,7 @@ $routes = [
     ],
 ];
 
-
+ 
 
 
 /* ==========================================================
